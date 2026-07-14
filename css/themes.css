@@ -1,0 +1,83 @@
+/* ============================================================
+   HUNTER'S CODEX — THEME TOKENS
+   "Software oficial da Guilda" — não é uma skin de fantasia,
+   é a interface de trabalho de um Caçador registrado.
+   ============================================================ */
+
+:root {
+  /* ---- Core palette -------------------------------------- */
+  --void:          #12100d;   /* fundo principal — couro na sombra */
+  --void-deep:      #0b0a08;  /* fundo mais profundo, gradientes */
+  --iron-panel:     #211c16;  /* painéis / cards — couro trabalhado */
+  --iron-panel-lt:  #2b241c;  /* painéis elevados / hover */
+  --iron-line:      #3c3226;  /* bordas, costuras */
+  --iron-line-lt:   #524432;  /* bordas em foco */
+
+  --parchment:      #e9dfc4;  /* texto principal — pergaminho */
+  --parchment-dim:  #b3a888;  /* texto secundário */
+  --parchment-faint: #8a806a; /* texto terciário / placeholders */
+
+  --ember:          #c9622f;  /* accent primário — brasa da forja */
+  --ember-bright:   #e37c42;  /* hover / ativo */
+  --ember-dim:      #7a3a1c;  /* variante escura */
+
+  --guild-gold:     #b8925a;  /* latão / ouro — selo da guilda */
+  --guild-gold-br:  #d6b378;  /* brilho do ouro */
+  --guild-gold-dim: #7d6234;
+
+  --blood:          #8c2c2c;  /* perigo / HP crítico */
+  --blood-bright:   #b8433a;
+  --moss:           #5c6b45;  /* mana / natureza / sucesso */
+  --moss-bright:    #7c8f5c;
+  --arcane:         #4a5a78;  /* estamina / azul acinzentado */
+  --arcane-bright:  #647aa3;
+  --sanity:         #7a6a9c;  /* sanidade — violeta pálido */
+  --corruption:     #5e2a4a;  /* corrupção — vinho escuro */
+
+  /* ---- Rank colors (Guild Seal) --------------------------- */
+  --rank-low:       #a1652f;  /* Low Rank — cobre, início de jornada */
+  --rank-high:      #9aa3ab;  /* High Rank — prata, caçador experiente */
+  --rank-master:    #cfa347;  /* Master Rank — ouro, mestre reconhecido */
+  --rank-mhunter:   #b8433a;  /* Monster Hunter — brasa, o ápice da Guilda */
+
+  /* ---- Typography ------------------------------------------ */
+  --font-display: 'Cinzel', 'Times New Roman', serif;
+  --font-body:    'Crimson Pro', Georgia, serif;
+  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+  /* ---- Elevation / texture --------------------------------- */
+  --shadow-panel: 0 4px 18px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.03);
+  --shadow-inset: inset 0 2px 6px rgba(0,0,0,0.5);
+  --shadow-lift:  0 10px 30px rgba(0,0,0,0.6);
+  --rivet: radial-gradient(circle at 35% 30%, var(--guild-gold-br), var(--guild-gold) 45%, var(--guild-gold-dim) 100%);
+
+  /* ---- Spacing scale ---------------------------------------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --border-thin: 1px solid var(--iron-line);
+  --border-gold: 1px solid var(--guild-gold-dim);
+}
+
+/* Light "Pergaminho" theme override (Fase 5 hook — mantido leve aqui) */
+[data-theme="pergaminho"] {
+  --void:         #d9cba4;
+  --void-deep:    #cabb92;
+  --iron-panel:   #ece0bd;
+  --iron-panel-lt:#f2e8cb;
+  --iron-line:    #b7a678;
+  --iron-line-lt: #a1906a;
+  --parchment:    #2c2415;
+  --parchment-dim:#4f4530;
+  --parchment-faint:#6b6142;
+}

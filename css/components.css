@@ -1,0 +1,382 @@
+/* ============================================================
+   HUNTER'S CODEX — COMPONENTS
+   ============================================================ */
+
+/* ---------------- Editable fields ---------------- */
+.field-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+  color: inherit;
+  font: inherit;
+  padding: 1px 3px;
+  min-width: 40px;
+  border-radius: 2px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.field-input:hover { border-bottom-color: var(--iron-line-lt); }
+.field-input:focus {
+  outline: none;
+  border-bottom-color: var(--ember);
+  background: rgba(201,98,47,0.06);
+}
+.field-input.select-like { appearance: none; }
+
+select.field-input option { background: var(--void-deep); color: var(--parchment); }
+
+/* ---------------- Buttons ---------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: var(--border-gold);
+  background: linear-gradient(180deg, var(--iron-panel-lt), var(--iron-panel));
+  color: var(--guild-gold-br);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease;
+}
+.btn:hover {
+  background: linear-gradient(180deg, var(--ember-dim), var(--iron-panel));
+  box-shadow: 0 0 0 1px var(--ember-dim), var(--shadow-lift);
+  transform: translateY(-1px);
+}
+.btn:active { transform: translateY(0); }
+
+.btn--primary {
+  background: linear-gradient(180deg, var(--ember-bright), var(--ember-dim));
+  color: var(--parchment);
+  border-color: var(--ember-dim);
+}
+.btn--primary:hover { box-shadow: 0 0 0 1px var(--ember-bright), var(--shadow-lift); }
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--iron-line);
+  color: var(--parchment-dim);
+}
+.btn--ghost:hover { border-color: var(--guild-gold-dim); color: var(--guild-gold-br); background: rgba(184,146,90,0.06); }
+
+.btn--icon {
+  padding: 7px 9px;
+  font-size: 0.9rem;
+}
+
+.btn--sm { padding: 6px 10px; font-size: 0.68rem; }
+
+.btn-row { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+
+/* ---------------- Guild Seal (signature element) ---------------- */
+.guild-seal {
+  --rank-color: var(--rank-low);
+  position: relative;
+  width: 108px;
+  height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.guild-seal__ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--rank-color);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.5),
+    0 0 14px -2px var(--rank-color),
+    inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+.guild-seal__ring::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px dashed color-mix(in srgb, var(--rank-color) 60%, transparent);
+  animation: seal-rotate 24s linear infinite;
+}
+
+.guild-seal__core {
+  position: relative;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--iron-panel-lt), var(--void-deep));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.guild-seal__level {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--parchment);
+  line-height: 1;
+}
+.guild-seal__level-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--parchment-faint);
+}
+.guild-seal__rank {
+  margin-top: 3px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rank-color);
+  font-family: var(--font-mono);
+}
+
+@keyframes seal-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------- Attribute tile (shield) ---------------- */
+.attr-tile {
+  position: relative;
+  background: linear-gradient(160deg, var(--iron-panel-lt), var(--iron-panel));
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3) var(--sp-2);
+  text-align: center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.attr-tile:hover { border-color: var(--guild-gold-dim); box-shadow: var(--shadow-inset); }
+
+.attr-tile__label {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--guild-gold-dim);
+}
+
+.attr-tile__score {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  color: var(--parchment);
+  margin: 4px 0 2px;
+}
+
+.attr-tile__mod {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--void-deep);
+  color: var(--ember-bright);
+  border: 1px solid var(--iron-line);
+}
+.attr-tile__mod[data-neg="true"] { color: var(--sanity); }
+
+/* ---------------- Resource bar ---------------- */
+.resource {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.resource__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--parchment-dim);
+}
+
+.resource__name {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: var(--parchment);
+  text-transform: uppercase;
+}
+
+.resource__values { display: flex; align-items: baseline; gap: 3px; }
+.resource__values input { width: 42px; text-align: right; }
+
+.resource__track {
+  position: relative;
+  height: 14px;
+  border-radius: 4px;
+  background: var(--void-deep);
+  border: 1px solid var(--iron-line);
+  box-shadow: var(--shadow-inset);
+  overflow: hidden;
+}
+
+.resource__fill {
+  height: 100%;
+  border-radius: 3px 0 0 3px;
+  transition: width 0.35s cubic-bezier(.2,.9,.3,1);
+  background: linear-gradient(90deg, var(--fill-color-dim, var(--ember-dim)), var(--fill-color, var(--ember)));
+}
+
+.resource--hp        { --fill-color: var(--blood-bright); --fill-color-dim: var(--blood); }
+.resource--atp       { --fill-color: var(--arcane-bright); --fill-color-dim: var(--arcane); }
+.resource--sanidade  { --fill-color: var(--sanity); --fill-color-dim: #4d4265; }
+.resource--evo       { --fill-color: #9c3f6c; --fill-color-dim: var(--corruption); }
+.resource--custom    { --fill-color: var(--guild-gold-br); --fill-color-dim: var(--guild-gold-dim); }
+
+.resource__remove {
+  opacity: 0;
+  transition: opacity 0.15s;
+  color: var(--parchment-faint);
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+}
+.resource:hover .resource__remove { opacity: 0.7; }
+.resource__remove:hover { color: var(--blood-bright); opacity: 1; }
+
+/* ---------------- Tabs (hanging guild plaques) ---------------- */
+.tab-btn {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 20px 12px;
+  background: var(--iron-panel);
+  border: var(--border-thin);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  color: var(--parchment-dim);
+  top: 2px;
+  transition: color 0.15s, background 0.15s, top 0.15s;
+}
+.tab-btn:hover { color: var(--guild-gold-br); }
+.tab-btn[aria-selected="true"] {
+  color: var(--parchment);
+  background: var(--iron-panel-lt);
+  border-color: var(--guild-gold-dim);
+  top: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+}
+.tab-btn[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 12px; right: 12px; bottom: -1px;
+  height: 2px;
+  background: var(--ember);
+}
+
+.tab-panel {
+  background: var(--iron-panel-lt);
+  border: var(--border-thin);
+  border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: var(--sp-4);
+}
+.tab-panel[hidden] { display: none; }
+
+/* ---------------- Entry cards (poderes/magias/diário) ---------------- */
+.entry-card {
+  background: var(--iron-panel);
+  border: var(--border-thin);
+  border-radius: var(--radius-md);
+  padding: var(--sp-3);
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 88px;
+}
+.entry-card:hover {
+  border-color: var(--guild-gold-dim);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+.entry-card__title {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  color: var(--guild-gold-br);
+}
+.entry-card__subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--parchment-faint);
+}
+.entry-card__excerpt {
+  font-size: 0.82rem;
+  color: var(--parchment-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.entry-card--new {
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  color: var(--parchment-faint);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+.entry-card--new:hover { color: var(--ember-bright); border-color: var(--ember-dim); }
+
+.empty-hint {
+  grid-column: 1 / -1;
+  color: var(--parchment-faint);
+  font-size: 0.85rem;
+  padding: var(--sp-2) 0;
+}
+
+/* ---------------- Save indicator ---------------- */
+.save-indicator {
+  position: fixed;
+  bottom: var(--sp-4);
+  right: var(--sp-4);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--parchment-faint);
+  background: var(--iron-panel);
+  border: var(--border-thin);
+  padding: 6px 12px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-panel);
+  opacity: 0.85;
+  transition: opacity 0.2s;
+}
+.save-indicator__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--moss-bright);
+}
+.save-indicator.saving .save-indicator__dot {
+  background: var(--ember-bright);
+  animation: pulse 0.9s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ---------------- Utility rows ---------------- */
+.top-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

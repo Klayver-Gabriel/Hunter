@@ -1,0 +1,162 @@
+/* ============================================================
+   HUNTER'S CODEX — LAYOUT
+   ============================================================ */
+
+#app {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--sp-5) var(--sp-4) var(--sp-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+/* ---------------- Guild Card banner ---------------- */
+.guild-card {
+  position: relative;
+  background: linear-gradient(155deg, var(--iron-panel) 0%, var(--iron-panel-lt) 100%);
+  border: var(--border-thin);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  padding: var(--sp-5) var(--sp-6);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-4);
+  align-items: center;
+}
+
+.guild-card .rivet {
+  position: absolute;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--rivet);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+.guild-card .rivet.tl { top: 10px; left: 10px; }
+.guild-card .rivet.tr { top: 10px; right: 10px; }
+.guild-card .rivet.bl { bottom: 10px; left: 10px; }
+.guild-card .rivet.br { bottom: 10px; right: 10px; }
+
+.guild-card__identity { min-width: 0; }
+
+.guild-card__name-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.guild-card__name {
+  font-size: 2.1rem;
+  line-height: 1.1;
+  outline: none;
+}
+
+.guild-card__byline {
+  margin-top: var(--sp-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+  color: var(--parchment-dim);
+  font-size: 0.92rem;
+  font-family: var(--font-mono);
+}
+
+.guild-card__byline .field {
+  display: inline-flex;
+  gap: 6px;
+  align-items: baseline;
+}
+.guild-card__byline .field label {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--guild-gold-dim);
+}
+
+.guild-card__meta-row {
+  margin-top: var(--sp-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+/* ---------------- Grid: attributes + resources ---------------- */
+.sheet-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 1.5fr;
+  gap: var(--sp-5);
+}
+
+@media (max-width: 860px) {
+  .sheet-grid { grid-template-columns: 1fr; }
+  .guild-card { grid-template-columns: 1fr; text-align: left; }
+  .guild-card__meta-row { justify-content: flex-start; }
+  #app { padding: var(--sp-4) var(--sp-3) var(--sp-7); }
+  .guild-card__name { font-size: 1.6rem; }
+}
+
+.panel {
+  background: var(--iron-panel);
+  border: var(--border-thin);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  padding: var(--sp-5);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: var(--border-thin);
+}
+
+.panel__title {
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ---------------- Attributes tile grid ---------------- */
+.attr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+}
+@media (max-width: 420px) {
+  .attr-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------------- Resources stack ---------------- */
+.resource-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+/* ---------------- Tab strip ---------------- */
+.tab-strip {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.tab-panels { margin-top: var(--sp-4); }
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sp-3);
+}
+
+footer.app-footer {
+  text-align: center;
+  color: var(--parchment-faint);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  padding-top: var(--sp-4);
+}

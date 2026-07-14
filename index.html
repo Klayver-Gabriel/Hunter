@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hunter's Codex</title>
+<meta name="description" content="Ficha de personagem oficial da Guilda de Caçadores.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/modal.css">
+<link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+<div id="app">
+
+  <div class="top-actions">
+    <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema">Pergaminho</button>
+    <button class="btn btn--ghost btn--sm" id="btn-export">Exportar JSON</button>
+    <button class="btn btn--ghost btn--sm" id="btn-import">Importar JSON</button>
+    <button class="btn btn--ghost btn--sm" id="btn-new" title="Novo personagem">Novo Caçador</button>
+    <input type="file" id="file-import" accept="application/json" class="visually-hidden">
+  </div>
+
+  <!-- ============ GUILD CARD ============ -->
+  <header class="guild-card" id="guild-card">
+    <span class="rivet tl"></span><span class="rivet tr"></span>
+    <span class="rivet bl"></span><span class="rivet br"></span>
+
+    <div class="guild-card__identity">
+      <div class="guild-card__name-row">
+        <h1 class="guild-card__name field-input" contenteditable="true" data-field="info.name"
+            data-placeholder="Nome do Caçador">Nome do Caçador</h1>
+      </div>
+
+      <div class="guild-card__byline">
+        <span class="field"><label>Classe</label><span class="field-input" contenteditable="true" data-field="info.class">—</span></span>
+        <span class="field"><label>Subclasse</label><span class="field-input" contenteditable="true" data-field="info.subclass">—</span></span>
+        <span class="field"><label>Raça</label><span class="field-input" contenteditable="true" data-field="info.race">—</span></span>
+        <span class="field"><label>Antecedente</label><span class="field-input" contenteditable="true" data-field="info.background">—</span></span>
+        <span class="field"><label>Alinhamento</label><span class="field-input" contenteditable="true" data-field="info.alignment">—</span></span>
+      </div>
+
+      <div class="guild-card__meta-row">
+        <span class="field"><label>XP</label><input class="field-input mono" type="number" min="0" data-field="info.xp" value="0" style="width:70px"></span>
+        <span class="field"><label>Nível</label><input class="field-input mono" type="number" min="1" max="20" data-field="info.level" value="1" style="width:50px"></span>
+        <span class="field"><label>Guilda</label><span class="field-input" contenteditable="true" data-field="info.guildName">Sem Guilda</span></span>
+        <span class="field">
+          <label>Rank</label>
+          <select class="field-input select-like mono" data-field="info.guildRank">
+            <option value="Low Rank">Low Rank</option>
+            <option value="High Rank">High Rank</option>
+            <option value="Master Rank">Master Rank</option>
+            <option value="Monster Hunter">Monster Hunter</option>
+          </select>
+        </span>
+      </div>
+    </div>
+
+    <div class="guild-seal" id="guild-seal">
+      <div class="guild-seal__ring"></div>
+      <div class="guild-seal__core">
+        <span class="guild-seal__level" id="seal-level">1</span>
+        <span class="guild-seal__level-label">Nível</span>
+        <span class="guild-seal__rank" id="seal-rank">Low Rank</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ATTRIBUTES + RESOURCES ============ -->
+  <div class="sheet-grid">
+    <section class="panel" aria-label="Atributos">
+      <div class="panel__header">
+        <h2 class="panel__title">Atributos</h2>
+      </div>
+      <div class="attr-grid" id="attr-grid"><!-- gerado via ui.js --></div>
+    </section>
+
+    <section class="panel" aria-label="Recursos">
+      <div class="panel__header">
+        <h2 class="panel__title">Recursos</h2>
+        <button class="btn btn--ghost btn--sm" id="btn-add-resource">+ Recurso</button>
+      </div>
+      <div class="resource-stack" id="resource-stack"><!-- gerado via ui.js --></div>
+    </section>
+  </div>
+
+  <!-- ============ TABS: PODERES / MAGIAS / DIÁRIO ============ -->
+  <section aria-label="Registros do Caçador">
+    <div class="tab-strip" role="tablist">
+      <button class="tab-btn" role="tab" id="tab-btn-powers" aria-controls="tab-powers" aria-selected="true">Poderes</button>
+      <button class="tab-btn" role="tab" id="tab-btn-spells" aria-controls="tab-spells" aria-selected="false">Magias</button>
+      <button class="tab-btn" role="tab" id="tab-btn-journal" aria-controls="tab-journal" aria-selected="false">Diário</button>
+    </div>
+
+    <div class="tab-panels">
+      <div class="tab-panel card-grid" id="tab-powers" role="tabpanel" aria-labelledby="tab-btn-powers"></div>
+      <div class="tab-panel card-grid" id="tab-spells" role="tabpanel" aria-labelledby="tab-btn-spells" hidden></div>
+      <div class="tab-panel card-grid" id="tab-journal" role="tabpanel" aria-labelledby="tab-btn-journal" hidden></div>
+    </div>
+  </section>
+
+  <footer class="app-footer">Hunter's Codex &mdash; Registro da Guilda &middot; salvo localmente no seu navegador</footer>
+</div>
+
+<!-- ============ MODAL (genérico, reaproveitado) ============ -->
+<div class="modal-backdrop" id="modal-backdrop" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-input">
+    <button class="modal__close" id="modal-close" aria-label="Fechar">&times;</button>
+    <div class="modal__header">
+      <div class="modal__eyebrow" id="modal-eyebrow">Poder</div>
+      <input class="modal__title-input" id="modal-title-input" placeholder="Nome">
+    </div>
+    <div id="modal-body"><!-- campos gerados dinamicamente --></div>
+    <div class="modal__footer">
+      <button class="btn btn--ghost" id="modal-delete">Excluir</button>
+      <div class="btn-row">
+        <button class="btn btn--ghost" id="modal-cancel">Cancelar</button>
+        <button class="btn btn--primary" id="modal-save">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="save-indicator" id="save-indicator">
+  <span class="save-indicator__dot"></span>
+  <span id="save-indicator-text">Salvo</span>
+</div>
+
+<script src="js/formulaEngine.js"></script>
+<script src="js/character.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

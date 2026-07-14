@@ -1,0 +1,105 @@
+/* ============================================================
+   HUNTER'S CODEX — MODAL
+   ============================================================ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,5,3,0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: var(--sp-4);
+}
+.modal-backdrop[hidden] { display: none; }
+
+.modal {
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+  background: linear-gradient(160deg, var(--iron-panel-lt), var(--iron-panel));
+  border: var(--border-gold);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lift);
+  padding: var(--sp-5);
+  position: relative;
+}
+
+.modal__close {
+  position: absolute;
+  top: var(--sp-3);
+  right: var(--sp-3);
+  background: none;
+  border: none;
+  color: var(--parchment-faint);
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+.modal__close:hover { color: var(--blood-bright); background: rgba(140,44,44,0.12); }
+
+.modal__header {
+  margin-bottom: var(--sp-4);
+  padding-right: var(--sp-6);
+}
+.modal__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--guild-gold-dim);
+}
+.modal__title-input {
+  width: 100%;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: var(--parchment);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--iron-line);
+  padding: 4px 0;
+  margin-top: 4px;
+}
+.modal__title-input:focus { outline: none; border-color: var(--ember); }
+
+.modal__field { margin-bottom: var(--sp-3); }
+.modal__field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--parchment-faint);
+  margin-bottom: 4px;
+}
+.modal__field textarea,
+.modal__field input,
+.modal__field select {
+  width: 100%;
+  background: var(--void-deep);
+  border: 1px solid var(--iron-line);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  color: var(--parchment);
+  font-size: 0.92rem;
+  resize: vertical;
+}
+.modal__field textarea:focus,
+.modal__field input:focus,
+.modal__field select:focus {
+  outline: none;
+  border-color: var(--ember-dim);
+  box-shadow: 0 0 0 2px rgba(201,98,47,0.15);
+}
+.modal__field--row { display: flex; gap: var(--sp-3); }
+.modal__field--row > div { flex: 1; }
+
+.modal__footer {
+  margin-top: var(--sp-4);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}

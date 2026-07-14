@@ -1,0 +1,91 @@
+/* ============================================================
+   HUNTER'S CODEX — BASE / RESET
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(ellipse at top, rgba(201,98,47,0.05), transparent 60%),
+    linear-gradient(180deg, var(--void) 0%, var(--void-deep) 100%);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* subtle leather-grain texture, CSS-only (no image assets needed) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0 2px, #000 2px 3px),
+    repeating-linear-gradient(90deg, transparent 0 2px, #000 2px 3px);
+  mix-blend-mode: overlay;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--guild-gold-br);
+  letter-spacing: 0.03em;
+  margin: 0;
+  font-weight: 600;
+}
+
+a { color: var(--ember-bright); }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input, textarea, select {
+  font-family: var(--font-body);
+  color: var(--parchment);
+  background: var(--void-deep);
+}
+
+::selection {
+  background: var(--ember-dim);
+  color: var(--parchment);
+}
+
+/* scrollbars — keep them in-theme */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--void-deep); }
+::-webkit-scrollbar-thumb {
+  background: var(--iron-line-lt);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--void-deep);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--guild-gold-dim); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mono { font-family: var(--font-mono); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
