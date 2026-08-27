@@ -15,6 +15,9 @@
 .sheet-grid > .panel:nth-child(1) { animation-delay: 0.05s; }
 .sheet-grid > .panel:nth-child(2) { animation-delay: 0.1s; }
 .tab-strip { animation-delay: 0.15s; }
+.codex-section { animation: rise-in 0.45s cubic-bezier(.2,.8,.3,1) both; }
+.codex-section:nth-of-type(2) { animation-delay: .08s; }
+.codex-section:nth-of-type(3) { animation-delay: .12s; }
 
 @keyframes modal-in {
   from { opacity: 0; transform: scale(0.96) translateY(6px); }

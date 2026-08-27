@@ -10,6 +10,8 @@ html, body {
   height: 100%;
 }
 
+html { scroll-behavior: smooth; }
+
 body {
   background:
     radial-gradient(ellipse at top, rgba(201,98,47,0.05), transparent 60%),
@@ -55,6 +57,11 @@ input, textarea, select {
   font-family: var(--font-body);
   color: var(--parchment);
   background: var(--void-deep);
+}
+
+input[readonly] {
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 ::selection {

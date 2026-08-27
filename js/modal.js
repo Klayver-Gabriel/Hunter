@@ -40,8 +40,11 @@ HC.modal = (function () {
         </div>`;
     }
     if (field.type === 'select') {
-      const opts = (field.options || []).map(o =>
-        `<option value="${o}" ${o === val ? 'selected' : ''}>${o}</option>`).join('');
+      const opts = (field.options || []).map(option => {
+        const optionValue = typeof option === 'object' ? option.value : option;
+        const optionLabel = typeof option === 'object' ? option.label : option;
+        return `<option value="${escapeAttr(optionValue)}" ${String(optionValue) === String(val) ? 'selected' : ''}>${escapeHTML(optionLabel)}</option>`;
+      }).join('');
       return `
         <div class="modal__field">
           <label for="mf-${field.key}">${field.label}</label>

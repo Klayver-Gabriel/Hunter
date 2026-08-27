@@ -23,9 +23,42 @@ HC.character = (function () {
     return (prefix || 'id') + '_' + Math.random().toString(36).slice(2, 10);
   }
 
-  function createDefault() {
+  function createSkillState() {
+    return HC.data.SKILLS.reduce((skills, skill) => {
+      skills[skill.key] = { proficient: false, expertise: false };
+      return skills;
+    }, {});
+  }
+
+  function createSaveState() {
+    return ATTRS.reduce((saves, ability) => {
+      saves[ability] = false;
+      return saves;
+    }, {});
+  }
+
+  function createStarterWeapon() {
     return {
-      schemaVersion: 1,
+      id: 'weapon_longsword_starter',
+      name: 'Long Sword da Guilda',
+      icon: '⚔',
+      damageDice: '2d6',
+      ability: 'for',
+      proficient: true,
+      critMin: 19,
+      dndElement: 'Fogo',
+      masteryUnlocks: [
+        '3|Postura do Duelista|pericia.acrobacia:2',
+        '5|Spirit Bonus|damage:5',
+        '8|Counter Master|attack:2'
+      ].join('\n')
+    };
+  }
+
+  function createDefault() {
+    const starterWeapon = createStarterWeapon();
+    return {
+      schemaVersion: 2,
       id: uid('char'),
       info: {
         name: '',
@@ -44,14 +77,115 @@ HC.character = (function () {
       powers: [],
       spells: [],
       journal: [],
-      // Fases futuras já têm um lugar reservado, para não quebrar o schema depois:
-      equipment: { weapon: null, armor: {}, jewels: [], talisman: null },
-      library: { weapons: [], armors: [] },
+      dnd: {
+        skills: createSkillState(),
+        saves: createSaveState(),
+        armor: { type: 'none', base: 10, armorBonus: 0, shield: 0, buffs: 0 },
+        initiative: { buffs: 0, feats: 0 },
+        vitality: {
+          hitDie: 'd10',
+          hitDiceRemaining: 1,
+          firstLevelFormula: '10 + CON',
+          laterLevelFormula: '6 + CON',
+          featBonus: 0,
+          buffs: 0
+        }
+      },
+      equipment: {
+        weaponId: starterWeapon.id,
+        armor: { helm: null, chest: null, gloves: null, waist: null, legs: null },
+        jewels: [],
+        talisman: null
+      },
+      buffs: [],
+      masteries: {
+        [starterWeapon.id]: { level: 1, xp: 0, xpToNext: 100 }
+      },
+      library: { weapons: [starterWeapon], armors: [] },
       meta: {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
     };
+  }
+
+  /**
+   * Atualiza fichas antigas sem descartar campos desconhecidos.
+   * O schema v1 não possuía os sistemas D&D e de maestria abaixo.
+   */
+  function migrate(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error('Formato de ficha inválido.');
+    }
+
+    const defaults = createDefault();
+    const sourceLibrary = raw.library && typeof raw.library === 'object' ? raw.library : {};
+    const weapons = Array.isArray(sourceLibrary.weapons) ? [...sourceLibrary.weapons] : [];
+    const armors = Array.isArray(sourceLibrary.armors) ? [...sourceLibrary.armors] : [];
+    const sourceEquipment = raw.equipment && typeof raw.equipment === 'object' ? raw.equipment : {};
+
+    // Compatibilidade com a reserva `equipment.weapon` do schema v1.
+    if (sourceEquipment.weapon && typeof sourceEquipment.weapon === 'object') {
+      const legacyWeapon = { id: sourceEquipment.weapon.id || uid('weapon'), ...sourceEquipment.weapon };
+      if (!weapons.some(weapon => weapon.id === legacyWeapon.id)) weapons.push(legacyWeapon);
+      sourceEquipment.weaponId = legacyWeapon.id;
+    }
+
+    const sourceDnd = raw.dnd && typeof raw.dnd === 'object' ? raw.dnd : {};
+    const sourceSkills = sourceDnd.skills && typeof sourceDnd.skills === 'object' ? sourceDnd.skills : {};
+    const skills = createSkillState();
+    HC.data.SKILLS.forEach(skill => {
+      const state = sourceSkills[skill.key] || {};
+      skills[skill.key] = {
+        proficient: Boolean(state.proficient || state.expertise),
+        expertise: Boolean(state.expertise)
+      };
+    });
+
+    const saves = createSaveState();
+    const sourceSaves = sourceDnd.saves && typeof sourceDnd.saves === 'object' ? sourceDnd.saves : {};
+    ATTRS.forEach(ability => { saves[ability] = Boolean(sourceSaves[ability]); });
+    const sourceVitality = sourceDnd.vitality && typeof sourceDnd.vitality === 'object' ? sourceDnd.vitality : {};
+    const legacyHitDie = Number(String(sourceVitality.hitDie || defaults.dnd.vitality.hitDie).replace(/\D/g, '')) || 10;
+    const vitality = {
+      ...defaults.dnd.vitality,
+      ...sourceVitality,
+      firstLevelFormula: sourceVitality.firstLevelFormula || `${legacyHitDie} + CON`,
+      laterLevelFormula: sourceVitality.laterLevelFormula || `${Math.floor(legacyHitDie / 2) + 1} + CON`
+    };
+
+    const migrated = {
+      ...defaults,
+      ...raw,
+      schemaVersion: 2,
+      info: { ...defaults.info, ...(raw.info || {}) },
+      attributes: { ...defaults.attributes, ...(raw.attributes || {}) },
+      resources: Array.isArray(raw.resources) ? raw.resources : defaults.resources,
+      powers: Array.isArray(raw.powers) ? raw.powers : [],
+      spells: Array.isArray(raw.spells) ? raw.spells : [],
+      journal: Array.isArray(raw.journal) ? raw.journal : [],
+      dnd: {
+        skills,
+        saves,
+        armor: { ...defaults.dnd.armor, ...(sourceDnd.armor || {}) },
+        initiative: { ...defaults.dnd.initiative, ...(sourceDnd.initiative || {}) },
+        vitality
+      },
+      equipment: {
+        ...defaults.equipment,
+        ...sourceEquipment,
+        weaponId: sourceEquipment.weaponId || null,
+        armor: { ...defaults.equipment.armor, ...(sourceEquipment.armor || {}) },
+        jewels: Array.isArray(sourceEquipment.jewels) ? sourceEquipment.jewels : [],
+        talisman: sourceEquipment.talisman || null
+      },
+      buffs: Array.isArray(raw.buffs) ? raw.buffs : [],
+      masteries: raw.masteries && typeof raw.masteries === 'object' ? raw.masteries : {},
+      library: { ...sourceLibrary, weapons, armors },
+      meta: { ...defaults.meta, ...(raw.meta || {}) }
+    };
+
+    return migrated;
   }
 
   /** Lê um valor em obj usando um caminho tipo "info.name" */
@@ -116,7 +250,7 @@ HC.character = (function () {
 
   return {
     ATTRS, ATTR_LABELS, DEFAULT_RESOURCES,
-    createDefault, get, set, uid,
+    createDefault, migrate, get, set, uid,
     addResource, removeResource,
     addEntry, updateEntry, removeEntry
   };

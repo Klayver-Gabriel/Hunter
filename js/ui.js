@@ -57,6 +57,7 @@ HC.ui = (function () {
   function init(initialCharacter, changeCallback) {
     character = initialCharacter;
     onChange = changeCallback;
+    HC.systemsUI.init(character, handleSystemChange);
 
     bindFieldInputs();
     bindResourceAdd();
@@ -69,19 +70,30 @@ HC.ui = (function () {
 
   function setCharacter(newCharacter) {
     character = newCharacter;
+    HC.systemsUI.setCharacter(character);
     renderAll();
   }
 
-  function notifyChange() {
+  function notifyChange(scope) {
+    HC.events.emit('character:changed', { character, scope: scope || 'general' });
     if (typeof onChange === 'function') onChange(character);
   }
 
+  function handleSystemChange(scope) {
+    HC.systemsUI.syncDerived();
+    renderResources();
+    HC.systemsUI.renderAll();
+    notifyChange(scope);
+  }
+
   function renderAll() {
+    HC.systemsUI.syncDerived();
     renderInfoFields();
     renderSeal();
     renderAttributes();
     renderResources();
     TAB_LIST.forEach(renderEntryList);
+    HC.systemsUI.renderAll();
   }
 
   /* ---------------- Guild Card info fields ---------------- */
@@ -109,7 +121,12 @@ HC.ui = (function () {
         if (isNumber) value = Number(value) || 0;
         C.set(character, path, value);
         if (path === 'info.level' || path === 'info.guildRank') renderSeal();
-        notifyChange();
+        if (path === 'info.level') {
+          HC.systemsUI.syncDerived();
+          renderResources();
+          HC.systemsUI.renderAll();
+        }
+        notifyChange(path);
       });
 
       // contenteditable: Enter confirma e tira o foco, em vez de quebrar linha
@@ -157,7 +174,10 @@ HC.ui = (function () {
         character.attributes[key] = Number(input.value) || 10;
         character.meta.updatedAt = new Date().toISOString();
         renderAttributes();
-        notifyChange();
+        HC.systemsUI.syncDerived();
+        renderResources();
+        HC.systemsUI.renderAll();
+        notifyChange(`attributes.${key}`);
       });
     });
   }
@@ -177,7 +197,7 @@ HC.ui = (function () {
             <span class="resource__values">
               <input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}">
               <span>/</span>
-              <input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}">
+              <input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}" ${r.type === 'hp' ? 'readonly title="Calculado automaticamente pelo D&D Rule Engine"' : ''}>
               ${r.removable ? `<button class="resource__remove" data-res-remove="${r.id}" title="Remover">&times;</button>` : ''}
             </span>
           </div>
@@ -315,7 +335,7 @@ HC.ui = (function () {
       if (!file) return;
       try {
         const data = await HC.storage.importJSON(file);
-        setCharacter(data);
+        setCharacter(C.migrate(data));
         notifyChange();
       } catch (err) {
         alert('Não foi possível ler esse arquivo. Verifique se é um JSON exportado pelo Hunter\'s Codex.');

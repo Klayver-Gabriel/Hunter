@@ -22,14 +22,21 @@
     HC.modal.init();
 
     const saved = HC.storage.load();
-    const character = saved || HC.character.createDefault();
+    let character;
+    try {
+      character = saved ? HC.character.migrate(saved) : HC.character.createDefault();
+    } catch (err) {
+      console.error('[HunterCodex] Save incompatível; uma ficha nova foi aberta.', err);
+      character = HC.character.createDefault();
+    }
 
     HC.ui.init(character, (updatedCharacter) => {
       HC.storage.autosave(updatedCharacter, setIndicator, 500);
     });
 
     // Garante que exista uma versão salva mesmo antes da primeira edição.
-    if (!saved) HC.storage.save(character);
+    // Persiste também migrações de schema feitas durante o boot.
+    HC.storage.save(character);
   }
 
   document.addEventListener('DOMContentLoaded', boot);

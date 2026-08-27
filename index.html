@@ -6,10 +6,6 @@
 <title>Hunter's Codex</title>
 <meta name="description" content="Ficha de personagem oficial da Guilda de Caçadores.">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/layout.css">
@@ -18,6 +14,16 @@
 <link rel="stylesheet" href="css/animations.css">
 </head>
 <body>
+
+<nav class="guild-nav" aria-label="Navegação da ficha">
+  <div class="guild-nav__brand">HC</div>
+  <a href="#guild-card" title="Identidade do Caçador"><span>◆</span> Caçador</a>
+  <a href="#dnd-rules" title="Regras automáticas de D&D 2024"><span>◈</span> D&amp;D 2024</a>
+  <a href="#armory" title="Ataques e arma equipada"><span>⚔</span> Arsenal</a>
+  <a href="#equipment" title="Armaduras e buffs"><span>⬡</span> Equipamento</a>
+  <a href="#library" title="Biblioteca reutilizável"><span>▤</span> Biblioteca</a>
+  <a href="#records" title="Poderes, magias e diário"><span>✎</span> Registros</a>
+</nav>
 
 <div id="app">
 
@@ -92,8 +98,71 @@
     </section>
   </div>
 
+  <!-- ============ D&D 2024 RULE ENGINE ============ -->
+  <section class="panel codex-section" id="dnd-rules" aria-label="Regras de D&D 2024">
+    <div class="panel__header">
+      <div><span class="section-kicker">Motor oficial</span><h2 class="panel__title">D&amp;D 2024</h2></div>
+      <div class="proficiency-badge" title="Calculado automaticamente pelo nível">Proficiência <strong id="proficiency-value">+2</strong></div>
+    </div>
+    <div class="metric-grid" id="rule-metrics"></div>
+    <div class="rules-layout">
+      <div>
+        <h3 class="subsection-title">Testes de Resistência</h3>
+        <div class="save-grid" id="saving-throws"></div>
+      </div>
+      <div class="skills-column">
+        <h3 class="subsection-title">Perícias</h3>
+        <div class="skill-legend"><span>○ Proficiência</span><span>◇ Expertise</span><span>Resultado</span></div>
+        <div class="skill-groups" id="skill-groups"></div>
+      </div>
+    </div>
+    <details class="config-panel">
+      <summary>Ajustar componentes de combate</summary>
+      <div class="form-grid" id="combat-config"></div>
+    </details>
+  </section>
+
+  <!-- ============ ATTACKS ============ -->
+  <section class="panel codex-section" id="armory" aria-label="Ataques">
+    <div class="panel__header">
+      <div><span class="section-kicker">Cálculo automático</span><h2 class="panel__title">Ataques</h2></div>
+    </div>
+    <div id="attack-panel"></div>
+    <div class="mastery-section">
+      <h3 class="subsection-title">Maestria da arma</h3>
+      <div id="mastery-panel"></div>
+    </div>
+  </section>
+
+  <!-- ============ EQUIPMENT + BUFFS ============ -->
+  <section class="panel codex-section" id="equipment" aria-label="Equipamentos e buffs">
+    <div class="panel__header">
+      <div><span class="section-kicker">Loadout do Caçador</span><h2 class="panel__title">Equipamento &amp; Buffs</h2></div>
+      <button class="btn btn--ghost btn--sm" id="btn-add-buff">+ Buff</button>
+    </div>
+    <div class="equipment-layout">
+      <div><h3 class="subsection-title">Armadura equipada</h3><div class="armor-slots" id="armor-slots"></div></div>
+      <div><h3 class="subsection-title">Buff Engine</h3><div class="buff-list" id="buff-list"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ LIBRARY ============ -->
+  <section class="panel codex-section" id="library" aria-label="Biblioteca de equipamentos">
+    <div class="panel__header">
+      <div><span class="section-kicker">Crie uma vez, equipe quando quiser</span><h2 class="panel__title">Biblioteca da Guilda</h2></div>
+    </div>
+    <div class="library-block">
+      <div class="library-heading"><h3 class="subsection-title">Armas</h3><button class="btn btn--ghost btn--sm" id="btn-add-weapon">+ Arma</button></div>
+      <div class="library-grid" id="weapon-library"></div>
+    </div>
+    <div class="library-block">
+      <div class="library-heading"><h3 class="subsection-title">Armaduras</h3><button class="btn btn--ghost btn--sm" id="btn-add-armor">+ Peça</button></div>
+      <div class="library-grid" id="armor-library"></div>
+    </div>
+  </section>
+
   <!-- ============ TABS: PODERES / MAGIAS / DIÁRIO ============ -->
-  <section aria-label="Registros do Caçador">
+  <section id="records" aria-label="Registros do Caçador">
     <div class="tab-strip" role="tablist">
       <button class="tab-btn" role="tab" id="tab-btn-powers" aria-controls="tab-powers" aria-selected="true">Poderes</button>
       <button class="tab-btn" role="tab" id="tab-btn-spells" aria-controls="tab-spells" aria-selected="false">Magias</button>
@@ -134,10 +203,15 @@
   <span id="save-indicator-text">Salvo</span>
 </div>
 
+<script src="js/eventBus.js"></script>
 <script src="js/formulaEngine.js"></script>
+<script src="js/gameData.js"></script>
 <script src="js/character.js"></script>
+<script src="js/ruleEngine.js"></script>
+<script src="js/masteryEngine.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/modal.js"></script>
+<script src="js/systemsUI.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
 </body>

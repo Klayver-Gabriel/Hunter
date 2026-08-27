@@ -41,9 +41,10 @@
   --rank-mhunter:   #b8433a;  /* Monster Hunter — brasa, o ápice da Guilda */
 
   /* ---- Typography ------------------------------------------ */
-  --font-display: 'Cinzel', 'Times New Roman', serif;
-  --font-body:    'Crimson Pro', Georgia, serif;
-  --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+  /* Fontes do próprio sistema mantêm o app 100% offline. */
+  --font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  --font-body:    Georgia, 'Times New Roman', serif;
+  --font-mono:    Consolas, 'Lucida Console', 'Courier New', monospace;
 
   /* ---- Elevation / texture --------------------------------- */
   --shadow-panel: 0 4px 18px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.03);
