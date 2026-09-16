@@ -1,3 +1,5 @@
+import { createEditor } from '../layout/customization/editor.js';
+import { createSurface } from '../layout/customization/surface.js';
 import { createSession } from '../application/session.js';
 import { createSheetRepository } from '../infrastructure/sheetRepository.js';
 import { migrateDocument } from '../infrastructure/migrations/document.js';
@@ -42,9 +44,11 @@ function boot() {
   const { store } = session;
   modal.init();
   const registry = createRegistry(document.getElementById('app'));
+  const surface = createSurface(document.getElementById('app'), registry);
+  const editor = createEditor({ root: document.getElementById('app'), registry, surface, session, refresh: () => ui.renderAll() });
   ui.init(store, {
-    beforeRender: () => registry.restore(),
-    afterRender: () => { registry.collect(); registry.applyAppearance(store.getAppearance()); },
+    beforeRender: () => editor.beforeRender(),
+    afterRender: () => editor.afterRender(),
     exportSheet: () => exportJSON(store.getDocument()),
     importSheet: async file => {
       try { session.replace(await importJSON(file)); } catch (error) { alert(`Não foi possível importar: ${error.message}`); }
@@ -54,6 +58,11 @@ function boot() {
       try { session.newSheet(); } catch (error) { alert(`Não foi possível criar a ficha: ${error.message}`); }
     }
   });
+  let lastWidth = document.getElementById('app').clientWidth;
+  new ResizeObserver(() => {
+    const width = document.getElementById('app').clientWidth;
+    if (Math.abs(width - lastWidth) > 1) { lastWidth = width; if (!editor.editing) ui.renderAll(); }
+  }).observe(document.getElementById('app'));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') session.flush(); });
 }
 boot();

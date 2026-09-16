@@ -1,3 +1,4 @@
+import { renderEntityFields } from './entityFields.js';
 import * as C from '../domain/character.js';
 import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
@@ -61,6 +62,7 @@ function renderAll() {
   renderResources();
   TAB_LIST.forEach(renderEntryList);
   systemsUI.renderAll();
+  renderEntityFields(document.getElementById('app'), store);
   actions.afterRender?.();
 }
 
@@ -213,7 +215,7 @@ function renderEntryList(listName) {
     ? `<div class="empty-hint">Nenhum registro ainda. Clique em "+ Novo" para começar.</div>` : '';
 
   panel.innerHTML = emptyHTML + cardsHTML + `
-    <div class="entry-card entry-card--new" data-add="${listName}" tabindex="0" role="button">+ Novo</div>`;
+    <div class="entry-card entry-card--new" data-add="${listName}" tabindex="0" role="button">+ ${config.eyebrow}</div>`;
 
   panel.querySelectorAll('[data-entry-id]').forEach(card => {
     card.addEventListener('click', () => openEntryModal(listName, card.dataset.entryId));

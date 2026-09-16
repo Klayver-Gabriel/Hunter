@@ -246,7 +246,7 @@ function renderLibrary() {
   const weaponContainer = document.getElementById('weapon-library');
   weaponContainer.innerHTML = (character.library.weapons || []).map(weapon => `<article class="library-card ${character.equipment.weaponId === weapon.id ? 'is-equipped' : ''}">
     <div class="library-card__icon">${escapeHTML(weapon.icon || '⚔')}</div>
-    <div class="library-card__body"><span>${character.equipment.weaponId === weapon.id ? 'Equipada' : 'Arma'}</span><strong>${escapeHTML(weapon.name)}</strong><small>${escapeHTML(weapon.damageDice || '—')} · ${String(weapon.ability || 'for').toUpperCase()} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
+    <div class="library-card__body"><span>${character.equipment.weaponId === weapon.id ? 'Equipada' : 'Arma'}</span><strong>${escapeHTML(weapon.name)}</strong><small>${escapeHTML(weapon.damageDice || '—')} · ${escapeHTML(String(weapon.ability || 'for').toUpperCase())} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
     <div class="library-card__actions"><button class="btn btn--ghost btn--sm" data-equip-weapon="${weapon.id}">${character.equipment.weaponId === weapon.id ? 'Remover' : 'Equipar'}</button><button class="btn btn--ghost btn--sm" data-edit-weapon="${weapon.id}">Editar</button></div>
   </article>`).join('') || '<div class="empty-hint">Nenhuma arma cadastrada.</div>';
 

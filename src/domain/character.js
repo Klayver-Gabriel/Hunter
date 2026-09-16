@@ -191,6 +191,23 @@ function migrate(raw) {
       seen.add(item.id);
     }
   }
+  for (const key of ATTRS) {
+    const value = Number(migrated.attributes[key]);
+    if (!Number.isFinite(value)) throw new Error('Atributo inválido.');
+    migrated.attributes[key] = value;
+  }
+  for (const resource of migrated.resources) {
+    for (const key of ['current', 'max']) {
+      const value = Number(resource[key] ?? 0);
+      if (!Number.isFinite(value)) throw new Error('Valor de recurso inválido.');
+      resource[key] = value;
+    }
+    resource.name = String(resource.name || 'Recurso');
+    resource.removable = resource.type === 'custom' && resource.removable !== false;
+  }
+  for (const [id, state] of Object.entries(migrated.masteries)) {
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !state || typeof state !== 'object' || Array.isArray(state)) throw new Error('Maestria inválida.');
+  }
   return migrated;
 }
 

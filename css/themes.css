@@ -1,39 +1,38 @@
 :root {
   color-scheme: dark;
-  --void:          #12100d;   /* fundo principal — couro na sombra */
-  --void-deep:      #0b0a08;  /* fundo mais profundo, gradientes */
-  --iron-panel:     #211c16;  /* painéis / cards — couro trabalhado */
-  --iron-panel-lt:  #2b241c;  /* painéis elevados / hover */
-  --iron-line:      #3c3226;  /* bordas, costuras */
-  --iron-line-lt:   #524432;  /* bordas em foco */
+  --void:          #12100d;
+  --void-deep:      #0b0a08;
+  --iron-panel:     #211c16;
+  --iron-panel-lt:  #2b241c;
+  --iron-line:      #3c3226;
+  --iron-line-lt:   #524432;
 
-  --parchment:      #e9dfc4;  /* texto principal — pergaminho */
-  --parchment-dim:  #b3a888;  /* texto secundário */
-  --parchment-faint: #8a806a; /* texto terciário / placeholders */
+  --parchment:      #e9dfc4;
+  --parchment-dim:  #b3a888;
+  --parchment-faint: #8a806a;
 
-  --ember:          #c9622f;  /* accent primário — brasa da forja */
-  --ember-bright:   #e37c42;  /* hover / ativo */
-  --ember-dim:      #7a3a1c;  /* variante escura */
+  --ember:          #c9622f;
+  --ember-bright:   #e37c42;
+  --ember-dim:      #7a3a1c;
 
-  --guild-gold:     #b8925a;  /* latão / ouro — selo da guilda */
-  --guild-gold-br:  #d6b378;  /* brilho do ouro */
+  --guild-gold:     #b8925a;
+  --guild-gold-br:  #d6b378;
   --guild-gold-dim: #7d6234;
 
-  --blood:          #8c2c2c;  /* perigo / HP crítico */
+  --blood:          #8c2c2c;
   --blood-bright:   #b8433a;
-  --moss:           #5c6b45;  /* mana / natureza / sucesso */
+  --moss:           #5c6b45;
   --moss-bright:    #7c8f5c;
-  --arcane:         #4a5a78;  /* estamina / azul acinzentado */
+  --arcane:         #4a5a78;
   --arcane-bright:  #647aa3;
-  --sanity:         #7a6a9c;  /* sanidade — violeta pálido */
-  --corruption:     #5e2a4a;  /* corrupção — vinho escuro */
+  --sanity:         #7a6a9c;
+  --corruption:     #5e2a4a;
 
-  --rank-low:       #a1652f;  /* Low Rank — cobre, início de jornada */
-  --rank-high:      #9aa3ab;  /* High Rank — prata, caçador experiente */
-  --rank-master:    #cfa347;  /* Master Rank — ouro, mestre reconhecido */
-  --rank-mhunter:   #b8433a;  /* Monster Hunter — brasa, o ápice da Guilda */
+  --rank-low:       #a1652f;
+  --rank-high:      #9aa3ab;
+  --rank-master:    #cfa347;
+  --rank-mhunter:   #b8433a;
 
-  /* Fontes do próprio sistema mantêm o app 100% offline. */
   --font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --font-body:    Georgia, 'Times New Roman', serif;
   --font-mono:    Consolas, 'Lucida Console', 'Courier New', monospace;

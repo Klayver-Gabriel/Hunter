@@ -20,7 +20,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* subtle leather-grain texture, CSS-only (no image assets needed) */
 body::before {
   content: "";
   position: fixed;
@@ -65,7 +64,6 @@ input[readonly] {
   color: var(--parchment);
 }
 
-/* scrollbars — keep them in-theme */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: var(--void-deep); }
 ::-webkit-scrollbar-thumb {

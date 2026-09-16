@@ -10,10 +10,18 @@ export function createRegistry(root) {
     for (const entry of [...components.values()].reverse()) {
       if (entry.anchor.parentNode) entry.anchor.after(entry.element);
       entry.anchor.remove();
+      entry.customLabelElement?.remove();
       if (entry.style === null) entry.element.removeAttribute('style'); else entry.element.setAttribute('style', entry.style);
       if (entry.labelElement) entry.labelElement.textContent = entry.label;
       entry.element.removeAttribute('data-component-id');
-      entry.element.classList.remove('appearance-component');
+      entry.element.classList.remove('appearance-component', 'is-selected', 'is-invalid');
+      for (const state of entry.controlStates) {
+        const { element, tabindex, disabled, editable } = state;
+        if (tabindex === null) element.removeAttribute('tabindex'); else element.setAttribute('tabindex', tabindex);
+        if ('disabled' in element) element.disabled = disabled;
+        if (editable === null) element.removeAttribute('contenteditable'); else element.setAttribute('contenteditable', editable);
+        element.removeAttribute('data-editor-tabindex');
+      }
     }
     components.clear();
   }
@@ -24,8 +32,10 @@ export function createRegistry(root) {
       const anchor = document.createComment(id); element.before(anchor);
       const label = labelElement?.textContent.trim() || fallback;
       components.set(id, { id, element, anchor, labelElement, label, minWidth, section,
-        parent: parentSection?.dataset.sectionId || 'root', style: element.getAttribute('style') });
-      element.dataset.componentId = id; element.classList.add('appearance-component');
+        parent: parentSection?.dataset.sectionId || 'root', style: element.getAttribute('style'),
+        controlStates: [element, ...element.querySelectorAll('input,select,textarea,button,[contenteditable],[tabindex]')].map(element => ({ element,
+          tabindex: element.getAttribute('tabindex'), disabled: element.disabled, editable: element.getAttribute('contenteditable') })) });
+      element.dataset.componentId = id; element.dataset.defaultLabel = label; element.classList.add('appearance-component');
     }
     for (const [id, title] of sectionSpecs) {
       const section = document.getElementById(id);
@@ -57,6 +67,8 @@ export function createRegistry(root) {
       const element = input.closest('.skill-row'); add(`skill:${input.dataset.skillProf}`, element, element.querySelector('.skill-row__name'), '', 280);
       input.setAttribute('aria-label', `${element.querySelector('.skill-row__name').textContent}: proficiência`);
       element.querySelector('[data-skill-expertise]').setAttribute('aria-label', `${element.querySelector('.skill-row__name').textContent}: expertise`);
+      add(`skill:${input.dataset.skillProf}:proficient`, input.closest('label'), null, `${element.querySelector('.skill-row__name').textContent}: proficiência`, 170);
+      add(`skill:${input.dataset.skillProf}:expertise`, element.querySelector('[data-skill-expertise]').closest('label'), null, `${element.querySelector('.skill-row__name').textContent}: expertise`, 170);
     });
     root.querySelectorAll('[data-config-path]').forEach(input => {
       const element = input.closest('label'); add(`config:${input.dataset.configPath}`, element, element.querySelector('span'), '', 170);
@@ -89,6 +101,14 @@ export function createRegistry(root) {
       const props = appearance.components[entry.id] || {};
       const label = props.label || entry.label;
       if (entry.labelElement) entry.labelElement.textContent = label;
+      if (props.label && entry.id.startsWith('resource:') && entry.labelElement) entry.labelElement.contentEditable = 'false';
+      if (!entry.labelElement && props.label && !entry.section) {
+        if (!entry.customLabelElement) {
+          entry.customLabelElement = document.createElement('span'); entry.customLabelElement.className = 'component-label';
+          entry.element.prepend(entry.customLabelElement);
+        }
+        entry.customLabelElement.textContent = label;
+      }
       if (entry.section) entry.element.setAttribute('aria-label', label);
       for (const theme of ['light', 'dark']) for (const key of ['text', 'background', 'accent']) {
         const color = props.colors?.[theme]?.[key];

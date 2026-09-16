@@ -9,10 +9,10 @@ export function createSession({ repository, migrate, onStatus = () => {} }) {
   if (!loaded.ok) return { ok: false, loaded, error: loaded.error };
   let initial;
   try {
-    initial = loaded.empty ? { formatVersion: 1, character: createDefault(), sheetAppearance: createAppearance() } : migrate(loaded.value);
-    if (!loaded.empty && JSON.stringify(initial) !== loaded.raw) {
+    if (!loaded.empty) {
       const backup = repository.backup(loaded.raw); if (!backup.ok) throw backup.error;
     }
+    initial = loaded.empty ? { formatVersion: 1, character: createDefault(), sheetAppearance: createAppearance() } : migrate(loaded.value);
   } catch (error) { return { ok: false, loaded, error }; }
   const store = createStore(initial);
   const autosave = createAutosave(value => repository.save(value).ok);
