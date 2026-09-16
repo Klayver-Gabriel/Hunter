@@ -28,4 +28,3 @@ export function saveBreakdown(character, ability) {
   const proficiencyPart = character.dnd.saves[ability] ? proficiency(character) : 0;
   return { ability: abilityPart, proficiency: proficiencyPart, total: abilityPart + proficiencyPart };
 }
-

@@ -31,4 +31,3 @@ export function maxHpBreakdown(character) {
     total: Math.max(1, firstLevel + laterLevels + feats + buffs)
   };
 }
-

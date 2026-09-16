@@ -113,4 +113,3 @@ export function migrateCharacter(raw) {
   }
   return migrated;
 }
-

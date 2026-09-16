@@ -7,7 +7,7 @@ import { preserveFocus } from './focus.js';
 
 let character = null;
 let store = null;
-let actions = null; 
+let actions = null;
 
 const RANK_COLOR_VAR = {
   'Low Rank': '--rank-low',

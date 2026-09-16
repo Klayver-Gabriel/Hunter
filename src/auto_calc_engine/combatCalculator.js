@@ -48,4 +48,3 @@ export function damageBreakdown(character, weapon) {
     expression: [baseExpression, ...additionalDice].join(' + ')
   };
 }
-

@@ -38,4 +38,3 @@ export function equippedArmor(character) {
 export function equippedWeapon(character) {
   return (character.library.weapons || []).find(weapon => weapon.id === character.equipment.weaponId) || null;
 }
-

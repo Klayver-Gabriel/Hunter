@@ -26,4 +26,3 @@ export function importJSON(file) {
       reader.readAsText(file);
     });
   }
-
