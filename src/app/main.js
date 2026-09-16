@@ -1,3 +1,4 @@
+import { createStore } from '../application/store.js';
 import storage from '../infrastructure/storage.js';
 import * as characterModel from '../domain/character.js';
 import * as ui from '../layout/ui.js';
@@ -43,8 +44,26 @@ import * as modal from '../layout/modal.js';
       const character = saved.empty ? characterModel.createDefault() : characterModel.migrate(saved.value);
       if (!saved.empty && !storage.backup(saved.raw)) throw new Error('Não foi possível preservar o original.');
       modal.init();
-      ui.init(character, updated => storage.autosave(updated, setIndicator, 500));
-      setIndicator(storage.save(character) ? 'saved' : 'error');
+      const store = createStore(character);
+      const replace = next => {
+        if (!storage.backup(JSON.stringify(store.getState()))) throw Error('Falha ao preservar a ficha atual.');
+        storage.cancelAutosave();
+        if (!storage.save(next)) throw Error('Falha ao salvar a nova ficha.');
+        store.replace(next);
+      };
+      ui.init(store, {
+        exportSheet: () => storage.exportJSON(store.getState()),
+        importSheet: async file => {
+          try { replace(characterModel.migrate(await storage.importJSON(file))); }
+          catch (error) { alert(error.message); }
+        },
+        newSheet: () => {
+          if (!confirm('Criar um novo Caçador? A ficha atual será preservada em backup.')) return;
+          try { replace(characterModel.createDefault()); } catch (error) { alert(error.message); }
+        }
+      });
+      store.subscribe(updated => storage.autosave(updated, setIndicator, 500));
+      setIndicator(storage.save(store.getState()) ? 'saved' : 'error');
     } catch (error) { recovery(saved, error); }
   }
   document.addEventListener('DOMContentLoaded', boot);

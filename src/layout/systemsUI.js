@@ -1,12 +1,10 @@
-import * as C from '../domain/character.js';
 import * as R from '../auto_calc_engine/index.js';
 import * as M from '../auto_calc_engine/masteryCalculator.js';
 import * as D from '../domain/catalog.js';
-import * as events from '../application/events.js';
 import * as modal from './modal.js';
 
 let character = null;
-let onChange = null;
+let store = null;
 let staticBound = false;
 
 function escapeHTML(value) {
@@ -15,33 +13,10 @@ function escapeHTML(value) {
   }[char]));
 }
 
-function touch(scope) {
-  character.meta.updatedAt = new Date().toISOString();
-  events.emit('system:changed', { character, scope });
-  if (typeof onChange === 'function') onChange(scope);
-}
-
-function init(initialCharacter, changeCallback) {
-  character = initialCharacter;
-  onChange = changeCallback;
+function init(applicationStore) {
+  store = applicationStore; character = store.getState();
+  store.subscribe(next => { character = next; });
   bindStaticActions();
-}
-
-function setCharacter(newCharacter) {
-  character = newCharacter;
-}
-
-function syncDerived() {
-  if (!character) return;
-  const hp = character.resources.find(resource => resource.id === 'hp' || resource.type === 'hp');
-  if (!hp) return;
-  const maximum = R.maxHpBreakdown(character).total;
-  hp.max = maximum;
-  hp.current = Math.min(Number(hp.current) || 0, maximum);
-  character.dnd.vitality.hitDiceRemaining = Math.min(
-    R.level(character),
-    Math.max(0, Number(character.dnd.vitality.hitDiceRemaining) || 0)
-  );
 }
 
 function renderAll() {
@@ -95,8 +70,7 @@ function renderSaves() {
 
   container.querySelectorAll('[data-save]').forEach(input => {
     input.addEventListener('change', () => {
-      character.dnd.saves[input.dataset.save] = input.checked;
-      touch('saves');
+      store.dispatch('setSave', { key: input.dataset.save, value: input.checked });
     });
   });
 }
@@ -124,18 +98,12 @@ function renderSkills() {
 
   container.querySelectorAll('[data-skill-prof]').forEach(input => {
     input.addEventListener('change', () => {
-      const state = character.dnd.skills[input.dataset.skillProf];
-      state.proficient = input.checked;
-      if (!input.checked) state.expertise = false;
-      touch('skills');
+      store.dispatch('setSkill', { key: input.dataset.skillProf, field: 'proficient', value: input.checked });
     });
   });
   container.querySelectorAll('[data-skill-expertise]').forEach(input => {
     input.addEventListener('change', () => {
-      const state = character.dnd.skills[input.dataset.skillExpertise];
-      state.expertise = input.checked;
-      if (input.checked) state.proficient = true;
-      touch('skills');
+      store.dispatch('setSkill', { key: input.dataset.skillExpertise, field: 'expertise', value: input.checked });
     });
   });
 }
@@ -179,8 +147,7 @@ function renderCombatConfig() {
   container.querySelectorAll('[data-config-path]').forEach(input => {
     input.addEventListener('change', () => {
       const value = input.dataset.configType === 'number' ? Number(input.value) || 0 : input.value.trim();
-      C.set(character, input.dataset.configPath, value);
-      touch('combat');
+      store.dispatch('setField', { path: input.dataset.configPath, value });
     });
   });
 }
@@ -204,8 +171,7 @@ function renderAttackPanel() {
       </article>`;
   }
   document.getElementById('equipped-weapon-select').addEventListener('change', event => {
-    character.equipment.weaponId = event.target.value || null;
-    touch('weapon');
+    store.dispatch('equipWeapon', { id: event.target.value });
   });
 }
 
@@ -232,10 +198,7 @@ function renderMasteryPanel() {
   </div>`;
   masteryContainer.querySelectorAll('[data-mastery]').forEach(input => {
     input.addEventListener('change', () => {
-      if (!character.masteries[weapon.id]) character.masteries[weapon.id] = { level: 1, xp: 0, xpToNext: 100 };
-      const key = input.dataset.mastery;
-      character.masteries[weapon.id][key] = Math.max(key === 'level' || key === 'xpToNext' ? 1 : 0, Number(input.value) || 0);
-      touch('mastery');
+      store.dispatch('setMastery', { id: weapon.id, key: input.dataset.mastery, value: input.value });
     });
   });
 }
@@ -256,8 +219,7 @@ function renderEquipment() {
   }).join('') + `<div class="armor-total"><span>Bônus de CA das peças</span><strong>${R.signed(R.equippedArmor(character).reduce((total, item) => total + (Number(item.acBonus) || 0), 0))}</strong></div>`;
   slots.querySelectorAll('[data-armor-slot]').forEach(select => {
     select.addEventListener('change', () => {
-      character.equipment.armor[select.dataset.armorSlot] = select.value || null;
-      touch('armor');
+      store.dispatch('equipArmor', { slot: select.dataset.armorSlot, id: select.value });
     });
   });
 
@@ -289,8 +251,7 @@ function renderLibrary() {
   </article>`).join('') || '<div class="empty-hint">Nenhuma arma cadastrada.</div>';
 
   weaponContainer.querySelectorAll('[data-equip-weapon]').forEach(button => button.addEventListener('click', () => {
-    character.equipment.weaponId = character.equipment.weaponId === button.dataset.equipWeapon ? null : button.dataset.equipWeapon;
-    touch('weapon');
+    store.dispatch('equipWeapon', { id: button.dataset.equipWeapon, toggle: true });
   }));
   weaponContainer.querySelectorAll('[data-edit-weapon]').forEach(button => button.addEventListener('click', () => openWeaponEditor(character.library.weapons.find(weapon => weapon.id === button.dataset.editWeapon))));
 
@@ -305,10 +266,7 @@ function renderLibrary() {
     </article>`;
   }).join('') || '<div class="empty-hint">Nenhuma peça cadastrada.</div>';
   armorContainer.querySelectorAll('[data-equip-armor]').forEach(button => button.addEventListener('click', () => {
-    const item = character.library.armors.find(candidate => candidate.id === button.dataset.equipArmor);
-    if (!item) return;
-    character.equipment.armor[item.slot] = character.equipment.armor[item.slot] === item.id ? null : item.id;
-    touch('armor');
+    store.dispatch('equipArmor', { id: button.dataset.equipArmor, toggle: true });
   }));
   armorContainer.querySelectorAll('[data-edit-armor]').forEach(button => button.addEventListener('click', () => openArmorEditor(character.library.armors.find(item => item.id === button.dataset.editArmor))));
 }
@@ -334,23 +292,8 @@ function openWeaponEditor(weapon) {
       { key: 'dndElement', label: 'Elemento D&D', type: 'text' },
       { key: 'masteryUnlocks', label: 'Desbloqueios — ex.: 3|Técnica|pericia.atletismo:2', type: 'textarea', rows: 5 }
     ],
-    onSave: data => {
-      const normalized = {
-        ...(weapon || {}), id: weapon ? weapon.id : C.uid('weapon'), name: data.title,
-        icon: data.icon || '⚔', damageDice: data.damageDice || '1d6', ability: data.ability || 'for',
-        proficient: data.proficient !== 'false', critMin: Number(data.critMin) || 20, dndElement: data.dndElement || '',
-        masteryUnlocks: data.masteryUnlocks || ''
-      };
-      if (weapon) Object.assign(weapon, normalized); else character.library.weapons.push(normalized);
-      if (!character.masteries[normalized.id]) character.masteries[normalized.id] = { level: 1, xp: 0, xpToNext: 100 };
-      touch('library');
-    },
-    onDelete: weapon ? () => {
-      character.library.weapons = character.library.weapons.filter(item => item.id !== weapon.id);
-      if (character.equipment.weaponId === weapon.id) character.equipment.weaponId = null;
-      delete character.masteries[weapon.id];
-      touch('library');
-    } : null
+    onSave: data => store.dispatch('saveWeapon', { id: weapon?.id, data }),
+    onDelete: weapon ? () => store.dispatch('deleteWeapon', { id: weapon.id }) : null
   });
 }
 
@@ -365,22 +308,8 @@ function openArmorEditor(item) {
       { key: 'skills', label: 'Skills', type: 'textarea', rows: 3 },
       { key: 'slots', label: 'Slots (ex.: 2-1-1)', type: 'text' }
     ],
-    onSave: data => {
-      const previousSlot = item && item.slot;
-      const normalized = {
-        ...(item || {}), id: item ? item.id : C.uid('armor'), name: data.title,
-        slot: data.slot || 'helm', acBonus: Number(data.acBonus) || 0, resistances: data.resistances || '',
-        skills: data.skills || '', slots: data.slots || ''
-      };
-      if (item) Object.assign(item, normalized); else character.library.armors.push(normalized);
-      if (item && previousSlot !== normalized.slot && character.equipment.armor[previousSlot] === item.id) character.equipment.armor[previousSlot] = null;
-      touch('library');
-    },
-    onDelete: item ? () => {
-      character.library.armors = character.library.armors.filter(candidate => candidate.id !== item.id);
-      D.ARMOR_SLOTS.forEach(slot => { if (character.equipment.armor[slot.key] === item.id) character.equipment.armor[slot.key] = null; });
-      touch('library');
-    } : null
+    onSave: data => store.dispatch('saveArmor', { id: item?.id, data }),
+    onDelete: item ? () => store.dispatch('deleteArmor', { id: item.id }) : null
   });
 }
 
@@ -398,24 +327,9 @@ function openBuffEditor(buff) {
   ];
   modal.open({
     eyebrow: buff ? 'Editar Buff' : 'Novo Buff', entry: buff ? { title: buff.name, ...buff } : null, fields,
-    onSave: data => {
-      const normalized = {
-        ...(buff || {}),
-        id: buff ? buff.id : C.uid('buff'),
-        name: data.title,
-        source: data.source || '',
-        skill: data.skill || '',
-        skillBonus: Number(data.skillBonus) || 0,
-        damageDice: String(data.damageDice || '').trim()
-      };
-      ['attack', 'damage', 'armorClass', 'initiative', 'hp'].forEach(key => {
-        normalized[key] = Number(data[key]) || 0;
-      });
-      if (buff) Object.assign(buff, normalized); else character.buffs.push(normalized);
-      touch('buffs');
-    },
-    onDelete: buff ? () => { character.buffs = character.buffs.filter(item => item.id !== buff.id); touch('buffs'); } : null
+    onSave: data => store.dispatch('saveBuff', { id: buff?.id, data }),
+    onDelete: buff ? () => store.dispatch('deleteBuff', { id: buff.id }) : null
   });
 }
 
-export { init, setCharacter, syncDerived, renderAll };
+export { init, renderAll };

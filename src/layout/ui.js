@@ -1,12 +1,12 @@
 import * as C from '../domain/character.js';
 import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
-import * as events from '../application/events.js';
 import * as modal from './modal.js';
-import storage from '../infrastructure/storage.js';
+import { preserveFocus } from './focus.js';
 
 let character = null;
-let onChange = null; 
+let store = null;
+let actions = null; 
 
 const RANK_COLOR_VAR = {
   'Low Rank': '--rank-low',
@@ -45,40 +45,15 @@ const ENTRY_CONFIG = {
 
 const TAB_LIST = ['powers', 'spells', 'journal'];
 
-function init(initialCharacter, changeCallback) {
-  character = initialCharacter;
-  onChange = changeCallback;
-  systemsUI.init(character, handleSystemChange);
-
-  bindFieldInputs();
-  bindResourceAdd();
-  bindTabs();
-  bindEntryAdders();
-  bindTopActions();
-
+function init(applicationStore, topActions) {
+  store = applicationStore; actions = topActions; character = store.getState();
+  systemsUI.init(store);
+  bindFieldInputs(); bindResourceAdd(); bindTabs(); bindTopActions();
+  store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();
-}
-
-function setCharacter(newCharacter) {
-  character = newCharacter;
-  systemsUI.setCharacter(character);
-  renderAll();
-}
-
-function notifyChange(scope) {
-  events.emit('character:changed', { character, scope: scope || 'general' });
-  if (typeof onChange === 'function') onChange(character);
-}
-
-function handleSystemChange(scope) {
-  systemsUI.syncDerived();
-  renderResources();
-  systemsUI.renderAll();
-  notifyChange(scope);
 }
 
 function renderAll() {
-  systemsUI.syncDerived();
   renderInfoFields();
   renderSeal();
   renderAttributes();
@@ -108,14 +83,7 @@ function bindFieldInputs() {
     el.addEventListener(eventName, () => {
       let value = (el.tagName === 'INPUT' || el.tagName === 'SELECT') ? el.value : el.textContent.trim();
       if (isNumber) value = Number(value) || 0;
-      C.set(character, path, value);
-      if (path === 'info.level' || path === 'info.guildRank') renderSeal();
-      if (path === 'info.level') {
-        systemsUI.syncDerived();
-        renderResources();
-        systemsUI.renderAll();
-      }
-      notifyChange(path);
+      store.dispatch('setField', { path, value });
     });
 
     // contenteditable: Enter confirma e tira o foco, em vez de quebrar linha
@@ -156,13 +124,7 @@ function renderAttributes() {
   grid.querySelectorAll('[data-attr]').forEach(input => {
     input.addEventListener('change', () => {
       const key = input.dataset.attr;
-      character.attributes[key] = Number(input.value) || 10;
-      character.meta.updatedAt = new Date().toISOString();
-      renderAttributes();
-      systemsUI.syncDerived();
-      renderResources();
-      systemsUI.renderAll();
-      notifyChange(`attributes.${key}`);
+      store.dispatch('setAttribute', { key, value: input.value });
     });
   });
 }
@@ -199,34 +161,22 @@ function renderResources() {
   stack.querySelectorAll('[data-res-name]').forEach(el => {
     el.addEventListener('blur', () => {
       const r = character.resources.find(x => x.id === el.dataset.resName);
-      if (r) { r.name = el.textContent.trim() || r.name; notifyChange(); }
+      if (r) store.dispatch('setResource', { id: r.id, key: 'name', value: el.textContent });
     });
   });
   stack.querySelectorAll('[data-res-remove]').forEach(btn => {
     btn.addEventListener('click', () => {
-      C.removeResource(character, btn.dataset.resRemove);
-      renderResources();
-      notifyChange();
+      store.dispatch('removeResource', { id: btn.dataset.resRemove });
     });
   });
 }
 
 function updateResource(id, key, rawValue) {
-  const r = character.resources.find(x => x.id === id);
-  if (!r) return;
-  r[key] = Math.max(0, Number(rawValue) || 0);
-  if (key === 'max') r.current = F.clamp(r.current, r.max);
-  character.meta.updatedAt = new Date().toISOString();
-  renderResources();
-  notifyChange();
+  store.dispatch('setResource', { id, key, value: rawValue });
 }
 
 function bindResourceAdd() {
-  document.getElementById('btn-add-resource').addEventListener('click', () => {
-    C.addResource(character, { name: 'Novo Recurso', current: 10, max: 10 });
-    renderResources();
-    notifyChange();
-  });
+  document.getElementById('btn-add-resource').addEventListener('click', () => store.dispatch('addResource'));
 }
 
 function bindTabs() {
@@ -269,10 +219,6 @@ function renderEntryList(listName) {
   panel.querySelector('[data-add]').addEventListener('click', () => openEntryModal(listName, null));
 }
 
-function bindEntryAdders() {
-
-}
-
 function openEntryModal(listName, entryId) {
   const config = ENTRY_CONFIG[listName];
   const entry = entryId ? character[listName].find(e => e.id === entryId) : null;
@@ -281,59 +227,24 @@ function openEntryModal(listName, entryId) {
     eyebrow: config.eyebrow,
     entry: entry,
     fields: config.fields,
-    onSave: (data) => {
-      if (entry) {
-        C.updateEntry(character, listName, entry.id, data);
-      } else {
-        C.addEntry(character, listName, data);
-      }
-      renderEntryList(listName);
-      notifyChange();
-    },
-    onDelete: entry ? () => {
-      C.removeEntry(character, listName, entry.id);
-      renderEntryList(listName);
-      notifyChange();
-    } : null
+    onSave: data => store.dispatch('saveEntry', { list: listName, id: entry?.id, data }),
+    onDelete: entry ? () => store.dispatch('deleteEntry', { list: listName, id: entry.id }) : null
   });
 }
 
 function bindTopActions() {
-  document.getElementById('btn-export').addEventListener('click', () => {
-    storage.exportJSON(character);
-  });
-
+  document.getElementById('btn-export').addEventListener('click', () => actions.exportSheet());
   const fileInput = document.getElementById('file-import');
   document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
-    if (!file) return;
-    try {
-      const data = await storage.importJSON(file);
-      const next = C.migrate(data);
-      if (!storage.backup(JSON.stringify(character))) throw new Error('Falha no backup.');
-      storage.cancelAutosave();
-      setCharacter(next);
-      notifyChange();
-    } catch (err) {
-      alert('Não foi possível ler esse arquivo. Verifique se é um JSON exportado pelo Hunter\'s Codex.');
-    }
+    if (fileInput.files[0]) await actions.importSheet(fileInput.files[0]);
     fileInput.value = '';
   });
-
-  document.getElementById('btn-new').addEventListener('click', () => {
-    if (!confirm('Criar um novo Caçador? A ficha atual continuará salva até você exportá-la, mas será substituída no autosave.')) return;
-    if (!storage.backup(JSON.stringify(character))) { alert('Não foi possível preservar a ficha atual.'); return; }
-    storage.cancelAutosave();
-    setCharacter(C.createDefault());
-    notifyChange();
-  });
-
-  const themeBtn = document.getElementById('btn-theme');
-  themeBtn.addEventListener('click', () => {
-    const isParchment = document.documentElement.dataset.theme === 'pergaminho';
-    document.documentElement.dataset.theme = isParchment ? '' : 'pergaminho';
-    themeBtn.textContent = isParchment ? 'Pergaminho' : 'Guilda';
+  document.getElementById('btn-new').addEventListener('click', () => actions.newSheet());
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const light = document.documentElement.dataset.theme !== 'pergaminho';
+    document.documentElement.dataset.theme = light ? 'pergaminho' : '';
+    document.getElementById('btn-theme').textContent = light ? 'Guilda' : 'Pergaminho';
   });
 }
 
@@ -343,4 +254,4 @@ function escapeHTML(str) {
   }[s]));
 }
 
-export { init, setCharacter, renderAll };
+export { init, renderAll };
