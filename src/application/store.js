@@ -1,3 +1,4 @@
+import { createAppearance, validateAppearance } from '../customization/appearance.js';
 import { applyCommand } from './commands.js';
 import { maxHpBreakdown, level } from '../auto_calc_engine/index.js';
 export function freeze(value) {
@@ -13,7 +14,8 @@ function synchronize(c) {
   return c;
 }
 export function createStore(initial) {
-  let state = freeze(synchronize(structuredClone(initial))), locked = false;
+  let state = freeze(synchronize(structuredClone(initial.character || initial))), locked = false;
+  let appearance = freeze(validateAppearance(initial.sheetAppearance || createAppearance()));
   const listeners = new Set();
   function publish(next, scope) {
     state = freeze(synchronize(next));
@@ -21,6 +23,14 @@ export function createStore(initial) {
   }
   return {
     getState: () => state,
+    getAppearance: () => appearance,
+    getDocument: () => ({ formatVersion: 1, character: state, sheetAppearance: appearance }),
+    setAppearance(next) { appearance = freeze(validateAppearance(next)); for (const listener of listeners) listener(state, 'appearance'); },
+    replaceDocument(next) {
+      if (locked) return false;
+      appearance = freeze(validateAppearance(next.sheetAppearance));
+      publish(structuredClone(next.character), 'replace'); return true;
+    },
     setLocked: value => { locked = value; },
     isLocked: () => locked,
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },

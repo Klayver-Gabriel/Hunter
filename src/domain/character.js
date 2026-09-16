@@ -108,6 +108,10 @@ function migrate(raw) {
   if (raw.schemaVersion != null && (![1, 2].includes(raw.schemaVersion))) {
     throw new Error('Versão de ficha incompatível.');
   }
+  for (const key of ['info', 'attributes', 'equipment', 'dnd', 'library', 'meta', 'masteries']) {
+    if (raw[key] != null && (typeof raw[key] !== 'object' || Array.isArray(raw[key]))) throw new Error(`Campo inválido: ${key}`);
+  }
+  if (!['info', 'attributes', 'equipment', 'resources'].some(key => Object.hasOwn(raw, key))) throw new Error('O arquivo não contém uma ficha.');
   raw = structuredClone(raw);
   const defaults = createDefault();
   const sourceLibrary = raw.library && typeof raw.library === 'object' ? raw.library : {};
@@ -176,6 +180,17 @@ function migrate(raw) {
     meta: { ...defaults.meta, ...(raw.meta || {}) }
   };
 
+  const collections = [migrated.resources, migrated.powers, migrated.spells, migrated.journal,
+    migrated.library.weapons, migrated.library.armors, migrated.buffs];
+  for (const list of collections) {
+    const seen = new Set();
+    for (const item of list) {
+      if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('Item inválido na ficha.');
+      item.id ||= uid('item');
+      if (typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(item.id) || ['__proto__', 'constructor', 'prototype'].includes(item.id) || seen.has(item.id)) throw new Error('Identificador inválido ou duplicado.');
+      seen.add(item.id);
+    }
+  }
   return migrated;
 }
 

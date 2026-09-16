@@ -560,3 +560,13 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
 #theme-status:empty { display: none; }
 .save-error { color: var(--hp-color, #c1483d); }
 [hidden] { display: none !important; }
+[data-theme="light"] .appearance-component[style*="--appearance-text-light"] { color: var(--appearance-text-light); }
+[data-theme="light"] .appearance-component[style*="--appearance-text-light"] :is(span, strong, h2, h3, h4, label, input, select, textarea) { color: inherit; }
+[data-theme="light"] .appearance-component[style*="--appearance-background-light"] { background-color: var(--appearance-background-light); }
+[data-theme="light"] .appearance-component[style*="--appearance-accent-light"] { border-color: var(--appearance-accent-light); }
+[data-theme="light"] .appearance-component[style*="--appearance-accent-light"] .resource__fill { background: var(--appearance-accent-light); }
+[data-theme="dark"] .appearance-component[style*="--appearance-text-dark"] { color: var(--appearance-text-dark); }
+[data-theme="dark"] .appearance-component[style*="--appearance-text-dark"] :is(span, strong, h2, h3, h4, label, input, select, textarea) { color: inherit; }
+[data-theme="dark"] .appearance-component[style*="--appearance-background-dark"] { background-color: var(--appearance-background-dark); }
+[data-theme="dark"] .appearance-component[style*="--appearance-accent-dark"] { border-color: var(--appearance-accent-dark); }
+[data-theme="dark"] .appearance-component[style*="--appearance-accent-dark"] .resource__fill { background: var(--appearance-accent-dark); }

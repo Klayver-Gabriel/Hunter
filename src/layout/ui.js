@@ -54,12 +54,14 @@ function init(applicationStore, topActions) {
 }
 
 function renderAll() {
+  actions.beforeRender?.();
   renderInfoFields();
   renderSeal();
   renderAttributes();
   renderResources();
   TAB_LIST.forEach(renderEntryList);
   systemsUI.renderAll();
+  actions.afterRender?.();
 }
 
 function renderInfoFields() {
