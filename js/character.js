@@ -118,6 +118,10 @@ HC.character = (function () {
       throw new Error('Formato de ficha inválido.');
     }
 
+    if (raw.schemaVersion != null && (![1, 2].includes(raw.schemaVersion))) {
+      throw new Error('Versão de ficha incompatível.');
+    }
+    raw = structuredClone(raw);
     const defaults = createDefault();
     const sourceLibrary = raw.library && typeof raw.library === 'object' ? raw.library : {};
     const weapons = Array.isArray(sourceLibrary.weapons) ? [...sourceLibrary.weapons] : [];

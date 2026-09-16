@@ -193,7 +193,7 @@ HC.ui = (function () {
       return `
         <div class="resource ${typeClass}" data-id="${r.id}">
           <div class="resource__head">
-            <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}">${r.name}</span>
+            <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}">${escapeHTML(r.name)}</span>
             <span class="resource__values">
               <input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}">
               <span>/</span>
@@ -335,7 +335,10 @@ HC.ui = (function () {
       if (!file) return;
       try {
         const data = await HC.storage.importJSON(file);
-        setCharacter(C.migrate(data));
+        const next = C.migrate(data);
+        if (!HC.storage.backup(JSON.stringify(character))) throw new Error('Falha no backup.');
+        HC.storage.cancelAutosave();
+        setCharacter(next);
         notifyChange();
       } catch (err) {
         alert('Não foi possível ler esse arquivo. Verifique se é um JSON exportado pelo Hunter\'s Codex.');
@@ -345,6 +348,8 @@ HC.ui = (function () {
 
     document.getElementById('btn-new').addEventListener('click', () => {
       if (!confirm('Criar um novo Caçador? A ficha atual continuará salva até você exportá-la, mas será substituída no autosave.')) return;
+      if (!HC.storage.backup(JSON.stringify(character))) { alert('Não foi possível preservar a ficha atual.'); return; }
+      HC.storage.cancelAutosave();
       setCharacter(C.createDefault());
       notifyChange();
     });

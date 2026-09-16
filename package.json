@@ -1,0 +1,11 @@
+{
+  "name": "hunters-codex",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/unit/*.test.js",
+    "dev": "node scripts/serve.js"
+  },
+  "engines": { "node": ">=22" }
+}

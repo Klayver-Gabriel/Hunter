@@ -9,6 +9,7 @@ window.HC = window.HC || {};
 HC.storage = (function () {
 
   const KEY = 'hunterscodex:character:v1';
+  const BACKUP_KEY = KEY + ':backup';
   let saveTimer = null;
 
   function save(character) {
@@ -22,15 +23,22 @@ HC.storage = (function () {
   }
 
   function load() {
+    let raw = null;
     try {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (err) {
-      console.error('[HunterCodex] Falha ao carregar ficha salva:', err);
-      return null;
+      raw = localStorage.getItem(KEY);
+      if (raw === null) return { ok: true, empty: true, raw, value: null };
+      return { ok: true, empty: false, raw, value: JSON.parse(raw) };
+    } catch (error) {
+      return { ok: false, raw, error };
     }
   }
+
+  function backup(raw) {
+    try { localStorage.setItem(BACKUP_KEY, raw); return true; }
+    catch (error) { console.error('[HunterCodex] Falha no backup:', error); return false; }
+  }
+
+  function cancelAutosave() { clearTimeout(saveTimer); saveTimer = null; }
 
   function clear() {
     localStorage.removeItem(KEY);
@@ -45,8 +53,8 @@ HC.storage = (function () {
     if (typeof onStatusChange === 'function') onStatusChange('saving');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
-      save(character);
-      if (typeof onStatusChange === 'function') onStatusChange('saved');
+      const ok = save(character);
+      if (typeof onStatusChange === 'function') onStatusChange(ok ? 'saved' : 'error');
     }, delay || 500);
   }
 
@@ -79,5 +87,5 @@ HC.storage = (function () {
     });
   }
 
-  return { KEY, save, load, clear, autosave, exportJSON, importJSON };
+  return { KEY, BACKUP_KEY, save, load, backup, clear, autosave, cancelAutosave, exportJSON, importJSON };
 })();
