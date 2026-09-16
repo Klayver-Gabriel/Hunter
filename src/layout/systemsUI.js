@@ -85,8 +85,8 @@ function renderSkills() {
       const result = R.skillBreakdown(character, skill);
       const totalBonus = result.external + result.mastery;
       return `<div class="skill-row" title="${skill.name}: ${ability.short} ${R.signed(result.ability)} + proficiência ${R.signed(result.proficiency)} + bônus externo ${R.signed(result.external)} + maestria ${R.signed(result.mastery)}">
-        <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" ${state.proficient ? 'checked' : ''}><span>○</span></label>
-        <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
+        <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" aria-label="${skill.name}: proficiência" ${state.proficient ? 'checked' : ''}><span>○</span></label>
+        <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${skill.name}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
         <span class="skill-row__name">${skill.name}</span>
         <span class="skill-row__ability">${ability.short}</span>
         ${totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}
@@ -212,7 +212,7 @@ function renderEquipment() {
     return `<article class="armor-slot ${item ? 'is-equipped' : ''}">
       <div class="armor-slot__icon">${item ? '⬢' : '◇'}</div>
       <div class="armor-slot__body"><span>${slot.label}</span>
-        <select data-armor-slot="${slot.key}"><option value="">Vazio</option>${compatible.map(candidate => `<option value="${candidate.id}" ${candidate.id === equippedId ? 'selected' : ''}>${escapeHTML(candidate.name)}</option>`).join('')}</select>
+        <select data-armor-slot="${slot.key}" aria-label="${slot.label}"><option value="">Vazio</option>${compatible.map(candidate => `<option value="${candidate.id}" ${candidate.id === equippedId ? 'selected' : ''}>${escapeHTML(candidate.name)}</option>`).join('')}</select>
         ${item ? `<small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small>` : '<small>Nenhuma peça equipada</small>'}
       </div>
     </article>`;

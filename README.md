@@ -1,6 +1,6 @@
 # Hunter's Codex
 
-Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON e editor de aparência. A aplicação é servida como arquivos estáticos; não requer backend, CDN ou build de produção.
+Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON, layout responsivo fixo e tema claro/escuro. A aplicação é servida como arquivos estáticos; não requer backend, CDN ou build de produção.
 
 ## Desenvolvimento
 
@@ -26,18 +26,11 @@ npm run test:e2e
 
 Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia o servidor estático automaticamente e guarda traces das falhas em `test-results/`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
 
-## Personalização
+## Uso da ficha
 
-O botão **Personalizar ficha** abre um rascunho isolado. A edição dos dados fica suspensa até Salvar ou Cancelar. Restaurar padrão altera somente o rascunho, inclusive os dois layouts, e pode ser cancelado. Uma falha de gravação mantém o editor e o rascunho abertos.
+Edite os dados de identidade, atributos, recursos e regras diretamente na ficha. Armas, armaduras, buffs, poderes, magias e anotações continuam usando os respectivos modais de edição. Alterações recalculam os valores derivados e são salvas automaticamente.
 
-Selecione um componente na ficha ou no seletor. É possível alterar rótulo, cores por tema, seção, posição e tamanho. Campos de identidade, atributos, recursos, perícias, resistências, combate, maestria e campos individuais de equipamentos/registros mantêm seus IDs ao serem movidos. Os campos completos de entidades também estão acessíveis em **Editar campos** na visualização padrão.
-
-- A alça superior move; a inferior redimensiona. Ambas aceitam mouse e toque.
-- Com uma alça focada, as setas movem 1 px; Shift usa passos de 10 px. Alt + setas redimensiona. A alça inferior também redimensiona diretamente com as setas.
-- Posição/tamanho podem ser informados numericamente. Movimentos que excedem limites, mínimos de conteúdo ou invadem um componente irmão são rejeitados.
-- Computador e celular têm geometrias independentes; rótulos e cores são compartilhados. O perfil móvel é usado quando a área da ficha tem até 900 px.
-- A ordem de leitura e foco segue as posições visuais. Crescimento de conteúdo desloca os componentes seguintes para baixo sem reescrever coordenadas salvas.
-- Campos novos são acrescentados em espaço disponível; IDs não presentes na ficha são ignorados na renderização e preservados no documento.
+A organização visual é fixa e responsiva. O editor de componentes e os painéis extras **Editar campos** foram removidos. Aparências provenientes de versões anteriores permanecem no documento para compatibilidade e exportação, mas seus rótulos, cores e posições não são aplicados à interface.
 
 O tema usa a preferência do sistema até a primeira escolha explícita. O botão mostra a ação disponível: sol para ativar o tema claro, lua para o escuro.
 
@@ -50,13 +43,12 @@ O tema usa a preferência do sistema até a primeira escolha explícita. O botã
 | `src/auto_calc_engine` | Fórmulas, combate, vitalidade, perícias e maestria; funções sem DOM ou persistência |
 | `src/application` | Comandos, snapshots imutáveis, sincronização de derivados, transações e autosave |
 | `src/application/ports` | Contratos dos repositórios |
-| `src/customization` | Aparência versionada, validação e geometria sem DOM |
-| `src/layout` | Renderização, acessibilidade, tema, registro de componentes e editor |
+| `src/layout` | Renderização da ficha, modais, acessibilidade e tema |
 | `src/infrastructure` | Armazenamento do navegador, arquivos JSON e migrações |
 
 O fluxo de alteração é `comando → draft privado → cálculos derivados → snapshot imutável → assinantes → autosave`. A interface recebe o snapshot e emite comandos; renderizar não altera o personagem. O autosave usa debounce de 500 ms e salva um snapshot capturado. Trocar de ficha cancela a gravação antiga somente após a nova gravação ter sido confirmada.
 
-Para adicionar um cálculo, exporte uma função pura do motor e acrescente testes dos resultados. Para adicionar uma operação, implemente um comando e emita-o na interface. Para campos de armas, armaduras, buffs ou registros, o catálogo `ENTITY_FIELDS` define editor, conversão e validação; para outros componentes, registre ID, elemento, rótulo, seção padrão e largura mínima no registro visual. IDs nunca devem depender do rótulo ou do índice de uma lista.
+Para adicionar um cálculo, exporte uma função pura do motor e acrescente testes dos resultados. Para adicionar uma operação, implemente um comando e emita-o na interface. Migrações ficam na infraestrutura; o domínio mantém os contratos dos dados, incluindo a aparência legada para compatibilidade.
 
 ## Formato e recuperação
 
@@ -79,7 +71,7 @@ O JSON exportado usa este envelope:
 }
 ```
 
-O exemplo omite os demais dados obrigatórios do personagem. Uma posição tem `{parent, x, y, w, h}`: `x`/`w` são percentuais da largura do contêiner; `y`/`h` usam pixels CSS. Seções ficam na raiz; campos podem ficar na raiz ou em uma seção. Mapas de layout vazios usam a disposição original.
+O exemplo omite os demais dados obrigatórios do personagem. Uma posição tem `{parent, x, y, w, h}`: `x`/`w` são percentuais da largura do contêiner; `y`/`h` usam pixels CSS. Seções ficam na raiz; campos podem ficar na raiz ou em uma seção. Esses metadados legados são preservados no JSON; a interface usa sempre a disposição padrão.
 
 Chaves de `localStorage`:
 

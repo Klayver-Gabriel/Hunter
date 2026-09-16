@@ -1,4 +1,3 @@
-import { ENTITY_FIELDS, entityList } from '../domain/entityFields.js';
 import * as C from '../domain/character.js';
 import * as D from '../domain/catalog.js';
 const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
@@ -15,15 +14,6 @@ function upsert(list, value) {
 /** Commands mutate only the store's private draft, never a renderer snapshot. */
 export function applyCommand(c, type, p = {}) {
   switch (type) {
-    case 'setEntityField': {
-      const field = ENTITY_FIELDS[p.kind]?.find(f => f.key === p.key);
-      const entity = lookup(entityList(c, p.kind), p.id);
-      if (!field || !entity) throw Error('Campo de entidade inválido.');
-      if (field.options && !field.options.some(option => String(option.value) === String(p.value))) throw Error('Opção inválida.');
-      const value = field.type === 'number' ? numeric(p.value) : p.key === 'proficient' ? p.value === 'true' : String(p.value);
-      if (p.kind === 'armor' && p.key === 'slot' && c.equipment.armor[entity.slot] === entity.id && entity.slot !== value) c.equipment.armor[entity.slot] = null;
-      entity[p.key] = value; break;
-    }
     case 'setField':
       if (!fields.has(p.path)) throw Error('Campo inválido.');
       C.set(c, p.path, p.value); break;

@@ -1,5 +1,5 @@
 import { migrateCharacter } from './character.js';
-import { validateAppearance } from '../../customization/appearance.js';
+import { validateAppearance } from '../../domain/sheetAppearance.js';
 export function migrateDocument(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('Documento de ficha inválido.');
   if ('formatVersion' in raw && raw.formatVersion !== 1) throw Error('Versão de documento incompatível.');

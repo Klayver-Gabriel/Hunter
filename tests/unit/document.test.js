@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createDefault } from '../../src/domain/character.js';
-import { createAppearance, validateAppearance } from '../../src/customization/appearance.js';
+import { createAppearance, validateAppearance } from '../../src/domain/sheetAppearance.js';
 import { migrateDocument } from '../../src/infrastructure/migrations/document.js';
 import { createSheetRepository, createMemoryBackend, SHEET_KEY, LEGACY_KEY, BACKUP_KEY } from '../../src/infrastructure/sheetRepository.js';
 import { createSession } from '../../src/application/session.js';
@@ -38,14 +38,14 @@ test('falhas de migração ou backup nunca substituem o documento', () => {
     assert.equal(session.ok, false); assert.equal(backend.getItem(SHEET_KEY), raw);
   }
 });
-test('importação inválida e save de aparência falho preservam estado ativo', () => {
+test('importação inválida ou gravação falha preserva o documento ativo', () => {
   const backend = createMemoryBackend(), repository = createSheetRepository(() => backend);
   const session = createSession({ repository, migrate: migrateDocument }); const before = session.store.getDocument();
   assert.throws(() => session.replace({ formatVersion: 999 }));
   repository.save = () => ({ ok: false, error: Error('quota') });
-  const appearance = createAppearance(); appearance.components['resource:hp'] = { label: 'Vida' };
-  assert.equal(session.saveAppearance(appearance).ok, false);
-  assert.equal(session.store.getAppearance(), before.sheetAppearance);
+  const candidate = migrateDocument(createDefault()); candidate.character.info.name = 'Outra ficha';
+  assert.throws(() => session.replace(candidate), /quota/);
+  assert.deepEqual(session.store.getDocument(), before);
 });
 test('backup ocorre antes da migração e não há migração se o backup falhar', () => {
   const backend = createMemoryBackend(); backend.setItem(SHEET_KEY, JSON.stringify(createDefault()));
@@ -80,4 +80,17 @@ test('aba sem alterações pendentes não grava ao perder visibilidade', () => {
   session.store.dispatch('setField', { path: 'info.name', value: 'edição local' });
   session.flush();
   assert.equal(JSON.parse(backend.getItem(SHEET_KEY)).character.info.name, 'edição local');
+});
+
+test('atualizações de personagem preservam aparência legada sem expor operações do editor', () => {
+  const backend = createMemoryBackend(), repository = createSheetRepository(() => backend);
+  const document = migrateDocument(createDefault());
+  document.sheetAppearance.components['resource:hp'] = { label: 'Vitalidade' };
+  document.sheetAppearance.layouts.mobile['resource:hp'] = { parent: 'root', x: 0, y: 10, w: 100, h: 80 };
+  backend.setItem(SHEET_KEY, JSON.stringify(document));
+  const session = createSession({ repository, migrate: migrateDocument });
+  session.store.dispatch('setAttribute', { key: 'con', value: 14 }); session.flush();
+  assert.deepEqual(JSON.parse(backend.getItem(SHEET_KEY)).sheetAppearance, document.sheetAppearance);
+  assert.equal(session.saveAppearance, undefined);
+  assert.equal(session.store.setAppearance, undefined);
 });

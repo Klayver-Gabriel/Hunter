@@ -21,12 +21,9 @@ test('expertise implica proficiência; comandos inválidos não publicam estado'
   assert.throws(() => store.dispatch('setField', { path: '__proto__.polluted', value: true }));
   assert.equal(store.getState(), before);
 });
-test('remoção de equipamento limpa referências e bloqueio suspende alterações', () => {
+test('remoção de equipamento limpa referências', () => {
   const store = createStore(createDefault()), id = store.getState().equipment.weaponId;
   store.dispatch('deleteWeapon', { id });
   assert.equal(store.getState().equipment.weaponId, null);
   assert.equal(store.getState().masteries[id], undefined);
-  store.setLocked(true);
-  assert.equal(store.dispatch('setAttribute', { key: 'for', value: 20 }), false);
-  assert.equal(store.getState().attributes.for, 10);
 });

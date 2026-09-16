@@ -1,4 +1,3 @@
-import { renderEntityFields } from './entityFields.js';
 import * as C from '../domain/character.js';
 import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
@@ -55,15 +54,12 @@ function init(applicationStore, topActions) {
 }
 
 function renderAll() {
-  actions.beforeRender?.();
   renderInfoFields();
   renderSeal();
   renderAttributes();
   renderResources();
   TAB_LIST.forEach(renderEntryList);
   systemsUI.renderAll();
-  renderEntityFields(document.getElementById('app'), store);
-  actions.afterRender?.();
 }
 
 function renderInfoFields() {
@@ -81,6 +77,7 @@ function renderInfoFields() {
 function bindFieldInputs() {
   document.querySelectorAll('[data-field^="info."]').forEach(el => {
     const path = el.dataset.field;
+    el.setAttribute('aria-label', el.closest('.field')?.querySelector('label')?.textContent || 'Nome do Caçador');
     const isNumber = el.type === 'number';
     const eventName = (el.tagName === 'SELECT' || el.type === 'number') ? 'change' : 'blur';
 
@@ -120,7 +117,7 @@ function renderAttributes() {
       <div class="attr-tile">
         <div class="attr-tile__label">${C.ATTR_LABELS[key]}</div>
         <input class="attr-tile__score field-input mono" type="number"
-               data-attr="${key}" value="${score}" min="1" max="30">
+               data-attr="${key}" aria-label="${C.ATTR_LABELS[key]}" value="${score}" min="1" max="30">
         <span class="attr-tile__mod" data-neg="${modVal < 0}">${F.modStr(score)}</span>
       </div>`;
   }).join('');
@@ -144,9 +141,9 @@ function renderResources() {
         <div class="resource__head">
           <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}">${escapeHTML(r.name)}</span>
           <span class="resource__values">
-            <label class="resource-value" data-resource-field="current"><span class="resource-value__label">${escapeHTML(r.name)} atual</span><input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}"></label>
+            <label class="resource-value"><span class="resource-value__label">${escapeHTML(r.name)} atual</span><input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}"></label>
             <span>/</span>
-            <label class="resource-value" data-resource-field="max"><span class="resource-value__label">${escapeHTML(r.name)} máximo</span><input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}" ${r.type === 'hp' ? 'readonly title="Calculado automaticamente"' : ''}></label>
+            <label class="resource-value"><span class="resource-value__label">${escapeHTML(r.name)} máximo</span><input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}" ${r.type === 'hp' ? 'readonly title="Calculado automaticamente"' : ''}></label>
             ${r.removable ? `<button class="resource__remove" data-res-remove="${r.id}" title="Remover">&times;</button>` : ''}
           </span>
         </div>
