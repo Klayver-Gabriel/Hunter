@@ -5,7 +5,17 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
-    "dev": "node scripts/serve.js"
+    "dev": "node scripts/serve.js",
+    "test:e2e": "playwright test",
+    "lint": "eslint ."
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0"
+  }
 }
