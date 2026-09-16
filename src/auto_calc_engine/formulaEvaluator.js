@@ -28,6 +28,7 @@ function percent(current, max) {
   return Math.max(0, Math.min(100, (Number(current) / m) * 100));
 }
 
+/** Arithmetic grammar only: unknown variables, member access and non-finite results are rejected. */
 function evaluate(expression, variables) {
   const source = String(expression || '').replace(/\s+/g, '');
   if (!source) throw new Error('A fórmula está vazia.');

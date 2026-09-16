@@ -2,7 +2,7 @@ export function exportJSON(sheet) {
     const blob = new Blob([JSON.stringify(sheet, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const safeName = (sheet.character.info.name || 'cacador').trim().replace(/[^a-z0-9\-_]+/gi, '_').toLowerCase();
+    const safeName = String(sheet.character.info.name || 'cacador').trim().replace(/[^a-z0-9\-_]+/gi, '_').toLowerCase();
     a.href = url;
     a.download = `hunterscodex_${safeName || 'ficha'}.json`;
     document.body.appendChild(a);

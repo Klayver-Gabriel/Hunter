@@ -47,3 +47,37 @@ test('importação inválida e save de aparência falho preservam estado ativo',
   assert.equal(session.saveAppearance(appearance).ok, false);
   assert.equal(session.store.getAppearance(), before.sheetAppearance);
 });
+test('backup ocorre antes da migração e não há migração se o backup falhar', () => {
+  const backend = createMemoryBackend(); backend.setItem(SHEET_KEY, JSON.stringify(createDefault()));
+  const repository = createSheetRepository(() => backend); const order = [];
+  const backup = repository.backup; repository.backup = raw => { order.push('backup'); return backup(raw); };
+  const migrate = raw => { order.push('migrate'); return migrateDocument(raw); };
+  assert.equal(createSession({ repository, migrate }).ok, true);
+  assert.deepEqual(order, ['backup', 'migrate']);
+  backend.setItem(SHEET_KEY, JSON.stringify(createDefault()));
+  order.length = 0; repository.backup = () => ({ ok: false, error: Error('quota') });
+  assert.equal(createSession({ repository, migrate }).ok, false); assert.deepEqual(order, []);
+});
+test('troca bem-sucedida cancela autosave da ficha anterior', async () => {
+  const backend = createMemoryBackend();
+  const session = createSession({ repository: createSheetRepository(() => backend), migrate: migrateDocument });
+  session.store.dispatch('setField', { path: 'info.name', value: 'antiga' });
+  const next = createDefault(); next.info.name = 'nova'; session.replace(next);
+  await new Promise(resolve => setTimeout(resolve, 550));
+  assert.equal(JSON.parse(backend.getItem(SHEET_KEY)).character.info.name, 'nova');
+});
+test('reabrir documento atual não substitui o backup anterior', () => {
+  const backend = createMemoryBackend(); backend.setItem(SHEET_KEY, JSON.stringify(migrateDocument(createDefault())));
+  backend.setItem(BACKUP_KEY, 'original anterior');
+  assert.equal(createSession({ repository: createSheetRepository(() => backend), migrate: migrateDocument }).ok, true);
+  assert.equal(backend.getItem(BACKUP_KEY), 'original anterior');
+});
+test('aba sem alterações pendentes não grava ao perder visibilidade', () => {
+  const backend = createMemoryBackend(), repository = createSheetRepository(() => backend);
+  const session = createSession({ repository, migrate: migrateDocument });
+  backend.setItem(SHEET_KEY, 'alteração externa'); session.flush();
+  assert.equal(backend.getItem(SHEET_KEY), 'alteração externa');
+  session.store.dispatch('setField', { path: 'info.name', value: 'edição local' });
+  session.flush();
+  assert.equal(JSON.parse(backend.getItem(SHEET_KEY)).character.info.name, 'edição local');
+});
