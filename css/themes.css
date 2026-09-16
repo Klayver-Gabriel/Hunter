@@ -1,11 +1,4 @@
-/* ============================================================
-   HUNTER'S CODEX — THEME TOKENS
-   "Software oficial da Guilda" — não é uma skin de fantasia,
-   é a interface de trabalho de um Caçador registrado.
-   ============================================================ */
-
 :root {
-  /* ---- Core palette -------------------------------------- */
   --void:          #12100d;   /* fundo principal — couro na sombra */
   --void-deep:      #0b0a08;  /* fundo mais profundo, gradientes */
   --iron-panel:     #211c16;  /* painéis / cards — couro trabalhado */
@@ -34,25 +27,21 @@
   --sanity:         #7a6a9c;  /* sanidade — violeta pálido */
   --corruption:     #5e2a4a;  /* corrupção — vinho escuro */
 
-  /* ---- Rank colors (Guild Seal) --------------------------- */
   --rank-low:       #a1652f;  /* Low Rank — cobre, início de jornada */
   --rank-high:      #9aa3ab;  /* High Rank — prata, caçador experiente */
   --rank-master:    #cfa347;  /* Master Rank — ouro, mestre reconhecido */
   --rank-mhunter:   #b8433a;  /* Monster Hunter — brasa, o ápice da Guilda */
 
-  /* ---- Typography ------------------------------------------ */
   /* Fontes do próprio sistema mantêm o app 100% offline. */
   --font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --font-body:    Georgia, 'Times New Roman', serif;
   --font-mono:    Consolas, 'Lucida Console', 'Courier New', monospace;
 
-  /* ---- Elevation / texture --------------------------------- */
   --shadow-panel: 0 4px 18px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.03);
   --shadow-inset: inset 0 2px 6px rgba(0,0,0,0.5);
   --shadow-lift:  0 10px 30px rgba(0,0,0,0.6);
   --rivet: radial-gradient(circle at 35% 30%, var(--guild-gold-br), var(--guild-gold) 45%, var(--guild-gold-dim) 100%);
 
-  /* ---- Spacing scale ---------------------------------------- */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -70,7 +59,6 @@
   --border-gold: 1px solid var(--guild-gold-dim);
 }
 
-/* Light "Pergaminho" theme override (Fase 5 hook — mantido leve aqui) */
 [data-theme="pergaminho"] {
   --void:         #d9cba4;
   --void-deep:    #cabb92;

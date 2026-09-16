@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { legacy } from '../legacy.js';
+import { createStorage } from '../../src/infrastructure/storage.js';
 function setup() {
   const values = new Map();
   const localStorage = { getItem: k => values.get(k) ?? null, setItem: (k,v) => values.set(k,v), removeItem: k => values.delete(k) };
-  return { storage: legacy({ localStorage }).storage, localStorage, values };
+  return { storage: createStorage(() => localStorage), localStorage, values };
 }
 test('distingue vazio, corrupção e acesso negado sem sobrescrever', () => {
   const { storage: s, localStorage: ls, values } = setup();

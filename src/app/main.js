@@ -1,3 +1,7 @@
+import storage from '../infrastructure/storage.js';
+import * as characterModel from '../domain/character.js';
+import * as ui from '../layout/ui.js';
+import * as modal from '../layout/modal.js';
 /* Inicialização com recuperação explícita: nunca substitui dados ilegíveis. */
 (function () {
   function setIndicator(status) {
@@ -33,14 +37,14 @@
   }
 
   function boot() {
-    const saved = HC.storage.load();
+    const saved = storage.load();
     try {
       if (!saved.ok) throw saved.error;
-      const character = saved.empty ? HC.character.createDefault() : HC.character.migrate(saved.value);
-      if (!saved.empty && !HC.storage.backup(saved.raw)) throw new Error('Não foi possível preservar o original.');
-      HC.modal.init();
-      HC.ui.init(character, updated => HC.storage.autosave(updated, setIndicator, 500));
-      setIndicator(HC.storage.save(character) ? 'saved' : 'error');
+      const character = saved.empty ? characterModel.createDefault() : characterModel.migrate(saved.value);
+      if (!saved.empty && !storage.backup(saved.raw)) throw new Error('Não foi possível preservar o original.');
+      modal.init();
+      ui.init(character, updated => storage.autosave(updated, setIndicator, 500));
+      setIndicator(storage.save(character) ? 'saved' : 'error');
     } catch (error) { recovery(saved, error); }
   }
   document.addEventListener('DOMContentLoaded', boot);

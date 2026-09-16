@@ -1,7 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { legacy } from '../legacy.js';
-const { character: C, rules: R, formula: F, mastery: M, data: D } = legacy();
+import * as C from '../../src/domain/character.js';
+import * as R from '../../src/auto_calc_engine/index.js';
+import * as F from '../../src/auto_calc_engine/formulaEvaluator.js';
+import * as M from '../../src/auto_calc_engine/masteryCalculator.js';
+import * as D from '../../src/domain/catalog.js';
 test('ficha padrão mantém os resultados conhecidos', () => {
   const c = C.createDefault(), w = R.equippedWeapon(c);
   assert.equal(R.maxHpBreakdown(c).total, 10);
