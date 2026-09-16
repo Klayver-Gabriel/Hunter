@@ -144,9 +144,9 @@ function renderResources() {
         <div class="resource__head">
           <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}">${escapeHTML(r.name)}</span>
           <span class="resource__values">
-            <input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}">
+            <label class="resource-value" data-resource-field="current"><span class="resource-value__label">${escapeHTML(r.name)} atual</span><input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}"></label>
             <span>/</span>
-            <input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}" ${r.type === 'hp' ? 'readonly title="Calculado automaticamente pelo D&D Rule Engine"' : ''}>
+            <label class="resource-value" data-resource-field="max"><span class="resource-value__label">${escapeHTML(r.name)} máximo</span><input type="number" class="field-input mono" data-res-max="${r.id}" value="${r.max}" ${r.type === 'hp' ? 'readonly title="Calculado automaticamente"' : ''}></label>
             ${r.removable ? `<button class="resource__remove" data-res-remove="${r.id}" title="Remover">&times;</button>` : ''}
           </span>
         </div>

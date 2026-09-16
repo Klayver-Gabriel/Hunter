@@ -57,6 +57,11 @@ export function createRegistry(root) {
       add(`resource:${element.dataset.id}`, element, element.querySelector('.resource__name'), '', 230);
       element.querySelector('[data-res-current]')?.setAttribute('aria-label', `${element.querySelector('.resource__name').textContent} atual`);
       element.querySelector('[data-res-max]')?.setAttribute('aria-label', `${element.querySelector('.resource__name').textContent} máximo`);
+      for (const field of element.querySelectorAll('[data-resource-field]')) {
+        add(`resource:${element.dataset.id}:${field.dataset.resourceField}`, field, field.querySelector('.resource-value__label'), '', 110);
+      }
+      const remove = element.querySelector('.resource__remove');
+      if (remove) add(`action:resource:${element.dataset.id}:remove`, remove, null, `Remover ${element.querySelector('.resource__name').textContent}`, 40);
     });
     const metrics = ['armor', 'initiative', 'hp', 'hitdie', 'passive'];
     root.querySelectorAll('.metric-card').forEach((element, index) => add(`metric:${metrics[index]}`, element, element.querySelector('.metric-card__label'), '', 160));
@@ -99,9 +104,11 @@ export function createRegistry(root) {
   function applyAppearance(appearance) {
     for (const entry of components.values()) {
       const props = appearance.components[entry.id] || {};
-      const label = props.label || entry.label;
+      const resourceField = entry.id.match(/^resource:([^:]+):(current|max)$/);
+      const inheritedLabel = resourceField && appearance.components[`resource:${resourceField[1]}`]?.label;
+      const label = props.label || (inheritedLabel ? `${inheritedLabel} ${resourceField[2] === 'current' ? 'atual' : 'máximo'}` : entry.label);
       if (entry.labelElement) entry.labelElement.textContent = label;
-      if (props.label && entry.id.startsWith('resource:') && entry.labelElement) entry.labelElement.contentEditable = 'false';
+      if (props.label && entry.id.startsWith('resource:') && !resourceField && entry.labelElement) entry.labelElement.contentEditable = 'false';
       if (!entry.labelElement && props.label && !entry.section) {
         if (!entry.customLabelElement) {
           entry.customLabelElement = document.createElement('span'); entry.customLabelElement.className = 'component-label';
@@ -115,8 +122,8 @@ export function createRegistry(root) {
         const variable = `--appearance-${key}-${theme}`;
         if (color) entry.element.style.setProperty(variable, color); else entry.element.style.removeProperty(variable);
       }
-      if (props.label) entry.element.querySelectorAll('input,select,textarea').forEach((input, index) => {
-        input.setAttribute('aria-label', entry.id.startsWith('resource:') ? `${label} ${index ? 'máximo' : 'atual'}` : label);
+      if (!entry.section && (props.label || inheritedLabel)) entry.element.querySelectorAll('input,select,textarea').forEach(input => {
+        if (input.closest('[data-component-id]') === entry.element) input.setAttribute('aria-label', label);
       });
     }
     const nav = document.querySelector('.guild-nav');

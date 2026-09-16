@@ -5,7 +5,7 @@ export function preserveFocus(render) {
   const selector = key ? `[${key}="${CSS.escape(current.getAttribute(key))}"]` : current?.id ? `#${CSS.escape(current.id)}` : null;
   const start = current?.selectionStart, end = current?.selectionEnd;
   render();
-  if (!current?.isConnected && selector) {
+  if ((!current?.isConnected || document.activeElement !== current) && selector) {
     const next = document.querySelector(selector);
     next?.focus({ preventScroll: true });
     if (typeof start === 'number' && next?.setSelectionRange && ['text', 'search', 'url', 'tel', 'password'].includes(next.type)) next.setSelectionRange(start, end);

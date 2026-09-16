@@ -362,8 +362,11 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
   50% { opacity: 0.4; transform: scale(0.7); }
 }
 
+.top-actions .btn { flex-shrink: 0; }
+
 .top-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--sp-2);
 }
@@ -570,3 +573,6 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
 [data-theme="dark"] .appearance-component[style*="--appearance-background-dark"] { background-color: var(--appearance-background-dark); }
 [data-theme="dark"] .appearance-component[style*="--appearance-accent-dark"] { border-color: var(--appearance-accent-dark); }
 [data-theme="dark"] .appearance-component[style*="--appearance-accent-dark"] .resource__fill { background: var(--appearance-accent-dark); }
+
+.resource-value { display: inline-flex; }
+.resource-value__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
