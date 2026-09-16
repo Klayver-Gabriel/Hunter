@@ -1,6 +1,6 @@
 # Hunter's Codex
 
-Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON, layout responsivo fixo e tema claro/escuro. A aplicação é servida como arquivos estáticos; não requer backend, CDN ou build de produção.
+Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON, nomes de componentes personalizáveis, layout responsivo fixo e tema claro/escuro. A aplicação é servida como arquivos estáticos; não requer backend, CDN ou build de produção.
 
 ## Desenvolvimento
 
@@ -30,7 +30,9 @@ Em Linux sem dependências gráficas, use `npx playwright install --with-deps ch
 
 Edite os dados de identidade, atributos, recursos e regras diretamente na ficha. Armas, armaduras, buffs, poderes, magias e anotações continuam usando os respectivos modais de edição. Alterações recalculam os valores derivados e são salvas automaticamente.
 
-A organização visual é fixa e responsiva. O editor de componentes e os painéis extras **Editar campos** foram removidos. Aparências provenientes de versões anteriores permanecem no documento para compatibilidade e exportação, mas seus rótulos, cores e posições não são aplicados à interface.
+Use **Editar nomes** para selecionar um componente existente e alterar seu nome exibido (de 1 a 120 caracteres). **Restaurar nome padrão** prepara o nome original; confirme em **Salvar nome**. Cancelar ou pressionar Escape descarta a edição. Os nomes são salvos automaticamente e incluídos na importação/exportação, sem modificar os dados ou cálculos do personagem.
+
+A organização visual permanece fixa e responsiva. Essa edição oferece apenas nomes: não cria componentes nem altera posição, tamanho, cores ou conteúdo dos campos. Cores e posições de versões anteriores são preservadas no JSON por compatibilidade, mas não são aplicadas à interface.
 
 O tema usa a preferência do sistema até a primeira escolha explícita. O botão mostra a ação disponível: sol para ativar o tema claro, lua para o escuro.
 
@@ -39,7 +41,7 @@ O tema usa a preferência do sistema até a primeira escolha explícita. O botã
 | Camada | Responsabilidade |
 | --- | --- |
 | `src/app` | Composição das dependências e inicialização |
-| `src/domain` | Personagem, catálogos, campos de entidades e validação |
+| `src/domain` | Personagem, catálogos e validação dos nomes e da aparência legada |
 | `src/auto_calc_engine` | Fórmulas, combate, vitalidade, perícias e maestria; funções sem DOM ou persistência |
 | `src/application` | Comandos, snapshots imutáveis, sincronização de derivados, transações e autosave |
 | `src/application/ports` | Contratos dos repositórios |
@@ -48,7 +50,7 @@ O tema usa a preferência do sistema até a primeira escolha explícita. O botã
 
 O fluxo de alteração é `comando → draft privado → cálculos derivados → snapshot imutável → assinantes → autosave`. A interface recebe o snapshot e emite comandos; renderizar não altera o personagem. O autosave usa debounce de 500 ms e salva um snapshot capturado. Trocar de ficha cancela a gravação antiga somente após a nova gravação ter sido confirmada.
 
-Para adicionar um cálculo, exporte uma função pura do motor e acrescente testes dos resultados. Para adicionar uma operação, implemente um comando e emita-o na interface. Migrações ficam na infraestrutura; o domínio mantém os contratos dos dados, incluindo a aparência legada para compatibilidade.
+Para adicionar um cálculo, exporte uma função pura do motor e acrescente testes dos resultados. Para adicionar uma operação, implemente um comando e emita-o na interface. Migrações ficam na infraestrutura; o domínio mantém os contratos dos dados, incluindo nomes personalizados e aparência legada para compatibilidade.
 
 ## Formato e recuperação
 
@@ -71,7 +73,7 @@ O JSON exportado usa este envelope:
 }
 ```
 
-O exemplo omite os demais dados obrigatórios do personagem. Uma posição tem `{parent, x, y, w, h}`: `x`/`w` são percentuais da largura do contêiner; `y`/`h` usam pixels CSS. Seções ficam na raiz; campos podem ficar na raiz ou em uma seção. Esses metadados legados são preservados no JSON; a interface usa sempre a disposição padrão.
+O exemplo omite os demais dados obrigatórios do personagem. Uma posição tem `{parent, x, y, w, h}`: `x`/`w` são percentuais da largura do contêiner; `y`/`h` usam pixels CSS. Seções ficam na raiz; campos podem ficar na raiz ou em uma seção. Esses metadados de posição e as cores são preservados no JSON; a interface aplica apenas os rótulos dos componentes existentes e usa sempre a disposição padrão.
 
 Chaves de `localStorage`:
 

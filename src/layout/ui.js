@@ -3,10 +3,12 @@ import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
 import * as modal from './modal.js';
 import { preserveFocus } from './focus.js';
+import { createNameEditor } from './componentNames.js';
 
 let character = null;
 let store = null;
 let actions = null;
+let nameEditor = null;
 
 const RANK_COLOR_VAR = {
   'Low Rank': '--rank-low',
@@ -48,6 +50,7 @@ const TAB_LIST = ['powers', 'spells', 'journal'];
 function init(applicationStore, topActions) {
   store = applicationStore; actions = topActions; character = store.getState();
   systemsUI.init(store);
+  nameEditor = createNameEditor(store, document.getElementById('app'));
   bindFieldInputs(); bindResourceAdd(); bindTabs(); bindTopActions();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();
@@ -60,6 +63,7 @@ function renderAll() {
   renderResources();
   TAB_LIST.forEach(renderEntryList);
   systemsUI.renderAll();
+  nameEditor.render();
 }
 
 function renderInfoFields() {
@@ -115,7 +119,7 @@ function renderAttributes() {
     const modVal = F.mod(score);
     return `
       <div class="attr-tile">
-        <div class="attr-tile__label">${C.ATTR_LABELS[key]}</div>
+        <div class="attr-tile__label" data-component-label="attribute:${key}">${C.ATTR_LABELS[key]}</div>
         <input class="attr-tile__score field-input mono" type="number"
                data-attr="${key}" aria-label="${C.ATTR_LABELS[key]}" value="${score}" min="1" max="30">
         <span class="attr-tile__mod" data-neg="${modVal < 0}">${F.modStr(score)}</span>
@@ -139,7 +143,7 @@ function renderResources() {
     return `
       <div class="resource ${typeClass}" data-id="${r.id}">
         <div class="resource__head">
-          <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}">${escapeHTML(r.name)}</span>
+          <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}" data-component-label="resource:${r.id}">${escapeHTML(r.name)}</span>
           <span class="resource__values">
             <label class="resource-value"><span class="resource-value__label">${escapeHTML(r.name)} atual</span><input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}"></label>
             <span>/</span>
@@ -162,7 +166,12 @@ function renderResources() {
   stack.querySelectorAll('[data-res-name]').forEach(el => {
     el.addEventListener('blur', () => {
       const r = character.resources.find(x => x.id === el.dataset.resName);
-      if (r) store.dispatch('setResource', { id: r.id, key: 'name', value: el.textContent });
+      if (!r) return;
+      if (store.getDocument().sheetAppearance.components[`resource:${r.id}`]?.label) {
+        const label = el.textContent.trim().slice(0, 120);
+        if (label) store.renameComponent(`resource:${r.id}`, label);
+        else nameEditor.render();
+      } else store.dispatch('setResource', { id: r.id, key: 'name', value: el.textContent });
     });
   });
   stack.querySelectorAll('[data-res-remove]').forEach(btn => {

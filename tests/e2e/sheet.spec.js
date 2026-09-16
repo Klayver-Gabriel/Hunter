@@ -16,11 +16,12 @@ async function exportSheet(page) {
   return JSON.parse(Buffer.concat(chunks).toString());
 }
 
-test('ficha usa layout padrão sem controles de edição dos componentes', async ({ page }) => {
+test('ficha permite editar nomes e mantém layout fixo', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('#btn-theme')).toBeVisible();
   await expect(page.locator('#guild-card')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Editar nomes', exact: true })).toBeVisible();
   await expect(page.locator('#btn-customize, #customization-editor, #sheet-surface, .component-handle, .component-resize, .entity-fields')).toHaveCount(0);
   await expect(page.locator('#weapon-library [data-edit-weapon]')).toBeVisible();
   expect(errors).toEqual([]);
@@ -39,13 +40,15 @@ test('tema, edição de dados e recálculo sobrevivem a recarga', async ({ page 
   await expect(page.locator('[data-attr="con"]')).toHaveValue('14');
 });
 
-test('aparência legada não altera a interface e permanece no JSON após editar e exportar', async ({ page }) => {
+test('rótulos legados são aplicados sem restaurar cores ou posições', async ({ page }) => {
   await page.goto('/'); const document = await savedDocument(page);
+  const originalStyle = await page.locator('.resource--hp').evaluate(el => ({ position: getComputedStyle(el).position, color: getComputedStyle(el).color, css: el.getAttribute('style') }));
   document.sheetAppearance.components['resource:hp'] = { label: 'Vitalidade', colors: { light: { accent: '#123456' } } };
   document.sheetAppearance.layouts.desktop['resource:hp'] = { parent: 'section:attributes', x: 0, y: 100, w: 50, h: 80 };
   document.sheetAppearance.layouts.mobile['resource:hp'] = { parent: 'root', x: 0, y: 200, w: 100, h: 80 };
   await importSheet(page, document);
-  await expect(page.locator('#resource-stack [data-res-name="hp"]')).toHaveText('HP');
+  await expect(page.locator('#resource-stack [data-res-name="hp"]')).toHaveText('Vitalidade');
+  expect(await page.locator('.resource--hp').evaluate(el => ({ position: getComputedStyle(el).position, color: getComputedStyle(el).color, css: el.getAttribute('style') }))).toEqual(originalStyle);
   await expect(page.locator('#sheet-surface, [data-component-id]')).toHaveCount(0);
   await page.locator('[data-res-current="hp"]').fill('7'); await page.locator('[data-res-current="hp"]').press('Tab');
   await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
@@ -56,6 +59,76 @@ test('aparência legada não altera a interface e permanece no JSON após editar
   await page.reload();
   await expect(page.locator('[data-res-current="hp"]')).toHaveValue('7');
   expect((await savedDocument(page)).sheetAppearance).toEqual(document.sheetAppearance);
+});
+
+async function renameComponent(page, id, label) {
+  await page.getByRole('button', { name: 'Editar nomes', exact: true }).click();
+  await page.locator('#name-component').selectOption(id);
+  await page.getByLabel('Nome exibido', { exact: true }).fill(label);
+  await page.getByRole('button', { name: 'Salvar nome', exact: true }).click();
+}
+
+test('nomes de seções e campos persistem sem alterar personagem ou cálculos', async ({ page }) => {
+  await page.goto('/');
+  const original = await savedDocument(page);
+  await renameComponent(page, 'section:attributes', 'Características');
+  await renameComponent(page, 'attribute:con', 'Vigor');
+  await renameComponent(page, 'resource:hp', 'Vitalidade');
+  await renameComponent(page, 'skill:acrobatics', 'Equilíbrio');
+  await expect(page.getByRole('heading', { name: 'Características', exact: true })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Vigor', exact: true })).toHaveValue('10');
+  await expect(page.getByRole('checkbox', { name: 'Equilíbrio: expertise', exact: true })).toBeVisible();
+  await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
+  const exported = await exportSheet(page);
+  expect(exported.character).toEqual(original.character);
+  expect(exported.sheetAppearance.layouts).toEqual(original.sheetAppearance.layouts);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Características', exact: true })).toBeVisible();
+  await expect(page.getByRole('spinbutton', { name: 'Vitalidade máximo', exact: true })).toHaveValue('10');
+  await page.getByRole('spinbutton', { name: 'Vigor', exact: true }).fill('14');
+  await page.getByRole('spinbutton', { name: 'Vigor', exact: true }).press('Tab');
+  await expect(page.getByRole('spinbutton', { name: 'Vitalidade máximo', exact: true })).toHaveValue('12');
+  await importSheet(page, original);
+  await expect(page.locator('#attributes h2')).toHaveText('Atributos');
+  await importSheet(page, exported);
+  await expect(page.locator('#attributes h2')).toHaveText('Características');
+});
+
+test('editor limita alterações a nomes existentes, valida entrada e permite cancelar ou restaurar', async ({ page }) => {
+  await page.goto('/');
+  const original = await savedDocument(page);
+  await page.locator('#btn-edit-names').click();
+  await expect(page.locator('#name-editor input')).toHaveCount(1);
+  await expect(page.locator('#name-editor input')).toHaveAttribute('type', 'text');
+  await expect(page.locator('#name-editor [type="color"], #name-editor [type="number"]')).toHaveCount(0);
+  const registered = await page.locator('[data-component-label]').evaluateAll(elements => elements.map(el => el.dataset.componentLabel));
+  const options = await page.locator('#name-component option').evaluateAll(elements => elements.map(el => el.value));
+  expect(options.sort()).toEqual(registered.sort());
+  await expect(page.locator('#name-component optgroup[label="D&D 2024"] option[value="skill:acrobatics"]')).toHaveText('Acrobacia');
+  await page.locator('#name-component').selectOption('section:attributes');
+  await page.locator('#component-name').fill('   ');
+  await page.getByRole('button', { name: 'Salvar nome', exact: true }).click();
+  await expect(page.locator('#name-editor')).toBeVisible();
+  expect(await savedDocument(page)).toEqual(original);
+  await page.locator('#component-name').fill('Não salvar');
+  await page.locator('#name-cancel').click();
+  await expect(page.locator('#attributes h2')).toHaveText('Atributos');
+  await expect(page.locator('#btn-edit-names')).toBeFocused();
+  await renameComponent(page, 'section:attributes', '<img src=x onerror=alert(1)>');
+  await expect(page.locator('#attributes h2')).toHaveText('<img src=x onerror=alert(1)>');
+  await expect(page.locator('#attributes h2 img')).toHaveCount(0);
+  await page.locator('#btn-edit-names').click();
+  await page.locator('#name-component').selectOption('section:attributes');
+  await page.locator('#name-default').click();
+  await page.locator('#component-name').press('Escape');
+  await expect(page.locator('#attributes h2')).toHaveText('<img src=x onerror=alert(1)>');
+  await page.locator('#btn-edit-names').click();
+  await page.locator('#name-component').selectOption('section:attributes');
+  await page.locator('#name-default').click();
+  await page.getByRole('button', { name: 'Salvar nome', exact: true }).click();
+  await expect(page.locator('#attributes h2')).toHaveText('Atributos');
+  await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
+  expect((await savedDocument(page)).sheetAppearance.components['section:attributes']).toBeUndefined();
 });
 
 test('edição normal de arma pelo modal atualiza ataque e dano', async ({ page }) => {
@@ -127,13 +200,18 @@ test('recuperação aceita cópia válida e mantém backup do original', async (
 
 test.describe('celular', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-  test('tema e ficha padrão funcionam por toque sem editor', async ({ page }) => {
+  test('tema e edição de nomes funcionam por toque com layout fixo', async ({ page }) => {
     await page.goto('/');
     const button = await page.locator('#btn-theme').boundingBox(); expect(button.x).toBeGreaterThanOrEqual(0);
     const previousTheme = await page.locator('html').getAttribute('data-theme'); await page.locator('#btn-theme').tap();
     await expect(page.locator('html')).not.toHaveAttribute('data-theme', previousTheme);
     await page.locator('#btn-add-resource').tap(); await expect(page.locator('.resource')).toHaveCount(5);
     await expect(page.locator('#btn-customize, #customization-editor')).toHaveCount(0);
+    await page.locator('#btn-edit-names').tap();
+    await page.locator('#name-component').selectOption('resource:hp');
+    await page.getByLabel('Nome exibido', { exact: true }).fill('Vitalidade');
+    await page.getByRole('button', { name: 'Salvar nome', exact: true }).tap();
+    await expect(page.getByRole('spinbutton', { name: 'Vitalidade máximo', exact: true })).toHaveValue('10');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 });

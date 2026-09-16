@@ -1,4 +1,4 @@
-// Retained to validate and round-trip documents exported by versions with the visual editor.
+// Labels are editable; colors and layouts are retained only for document compatibility.
 export const PROFILES = ['desktop', 'mobile'];
 export const THEMES = ['light', 'dark'];
 export function createAppearance() {

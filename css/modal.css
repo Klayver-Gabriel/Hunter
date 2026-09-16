@@ -99,3 +99,11 @@
   justify-content: space-between;
   gap: var(--sp-2);
 }
+
+.name-editor { margin: auto; color: var(--parchment); }
+.name-editor::backdrop { background: rgba(6,5,3,0.72); backdrop-filter: blur(2px); }
+.name-editor .modal__header { padding-right: 0; }
+.name-editor .modal__footer { flex-wrap: wrap; }
+.name-editor .btn-row { margin-left: auto; }
+#name-editor-description { margin-top: var(--sp-2); color: var(--parchment-dim); }
+[data-component-label] { overflow-wrap: anywhere; }

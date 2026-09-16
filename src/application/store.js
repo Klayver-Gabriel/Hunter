@@ -1,4 +1,4 @@
-import { createAppearance, validateAppearance } from '../domain/sheetAppearance.js';
+import { createAppearance, validateAppearance, validId } from '../domain/sheetAppearance.js';
 import { applyCommand } from './commands.js';
 import { maxHpBreakdown, level } from '../auto_calc_engine/index.js';
 export function freeze(value) {
@@ -29,6 +29,23 @@ export function createStore(initial) {
       publish(structuredClone(next.character), 'replace'); return true;
     },
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    renameComponent(id, label) {
+      if (!validId(id)) throw Error('Componente inválido.');
+      if (label !== null && (typeof label !== 'string' || !label.trim() || label.length > 120)) {
+        throw Error('Nome deve conter de 1 a 120 caracteres.');
+      }
+      const next = structuredClone(appearance);
+      const component = next.components[id] || {};
+      if (label === null) delete component.label;
+      else component.label = label;
+      if (Object.keys(component).length) next.components[id] = component;
+      else delete next.components[id];
+      const validated = validateAppearance(next);
+      if (JSON.stringify(validated) === JSON.stringify(appearance)) return false;
+      appearance = freeze(validated);
+      for (const listener of listeners) listener(state, 'renameComponent');
+      return true;
+    },
     dispatch(type, payload) {
       const draft = structuredClone(state);
       applyCommand(draft, type, payload);
