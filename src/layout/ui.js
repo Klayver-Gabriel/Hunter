@@ -241,11 +241,7 @@ function bindTopActions() {
     fileInput.value = '';
   });
   document.getElementById('btn-new').addEventListener('click', () => actions.newSheet());
-  document.getElementById('btn-theme').addEventListener('click', () => {
-    const light = document.documentElement.dataset.theme !== 'pergaminho';
-    document.documentElement.dataset.theme = light ? 'pergaminho' : '';
-    document.getElementById('btn-theme').textContent = light ? 'Guilda' : 'Pergaminho';
-  });
+
 }
 
 function escapeHTML(str) {

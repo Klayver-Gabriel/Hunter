@@ -554,3 +554,9 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
   .toolbar-row { justify-content: stretch; }
   .toolbar-row label { width: 100%; flex-direction: column; align-items: stretch; }
 }
+
+#btn-theme { display: inline-flex; align-items: center; justify-content: center; min-width: 40px; min-height: 36px; }
+:focus-visible { outline: 2px solid var(--guild-gold-br); outline-offset: 3px; }
+#theme-status:empty { display: none; }
+.save-error { color: var(--hp-color, #c1483d); }
+[hidden] { display: none !important; }

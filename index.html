@@ -6,6 +6,7 @@
 <title>Hunter's Codex</title>
 <meta name="description" content="Ficha de personagem oficial da Guilda de Caçadores.">
 
+<script src="src/layout/theme/bootstrap.js"></script>
 <link rel="stylesheet" href="css/themes.css">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/layout.css">
@@ -28,14 +29,15 @@
 <div id="app">
 
   <div class="top-actions">
-    <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema">Pergaminho</button>
+    <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema" aria-label="Alternar tema"><span aria-hidden="true">◐</span></button>
     <button class="btn btn--ghost btn--sm" id="btn-export">Exportar JSON</button>
     <button class="btn btn--ghost btn--sm" id="btn-import">Importar JSON</button>
     <button class="btn btn--ghost btn--sm" id="btn-new" title="Novo personagem">Novo Caçador</button>
     <input type="file" id="file-import" accept="application/json" class="visually-hidden">
   </div>
 
-  <!-- ============ GUILD CARD ============ -->
+  <p id="theme-status" role="status"></p>
+
   <header class="guild-card" id="guild-card">
     <span class="rivet tl"></span><span class="rivet tr"></span>
     <span class="rivet bl"></span><span class="rivet br"></span>
@@ -80,13 +82,12 @@
     </div>
   </header>
 
-  <!-- ============ ATTRIBUTES + RESOURCES ============ -->
   <div class="sheet-grid">
     <section class="panel" aria-label="Atributos">
       <div class="panel__header">
         <h2 class="panel__title">Atributos</h2>
       </div>
-      <div class="attr-grid" id="attr-grid"><!-- gerado via ui.js --></div>
+      <div class="attr-grid" id="attr-grid"></div>
     </section>
 
     <section class="panel" aria-label="Recursos">
@@ -94,11 +95,10 @@
         <h2 class="panel__title">Recursos</h2>
         <button class="btn btn--ghost btn--sm" id="btn-add-resource">+ Recurso</button>
       </div>
-      <div class="resource-stack" id="resource-stack"><!-- gerado via ui.js --></div>
+      <div class="resource-stack" id="resource-stack"></div>
     </section>
   </div>
 
-  <!-- ============ D&D 2024 RULE ENGINE ============ -->
   <section class="panel codex-section" id="dnd-rules" aria-label="Regras de D&D 2024">
     <div class="panel__header">
       <div><span class="section-kicker">Motor oficial</span><h2 class="panel__title">D&amp;D 2024</h2></div>
@@ -122,7 +122,6 @@
     </details>
   </section>
 
-  <!-- ============ ATTACKS ============ -->
   <section class="panel codex-section" id="armory" aria-label="Ataques">
     <div class="panel__header">
       <div><span class="section-kicker">Cálculo automático</span><h2 class="panel__title">Ataques</h2></div>
@@ -134,7 +133,6 @@
     </div>
   </section>
 
-  <!-- ============ EQUIPMENT + BUFFS ============ -->
   <section class="panel codex-section" id="equipment" aria-label="Equipamentos e buffs">
     <div class="panel__header">
       <div><span class="section-kicker">Loadout do Caçador</span><h2 class="panel__title">Equipamento &amp; Buffs</h2></div>
@@ -146,7 +144,6 @@
     </div>
   </section>
 
-  <!-- ============ LIBRARY ============ -->
   <section class="panel codex-section" id="library" aria-label="Biblioteca de equipamentos">
     <div class="panel__header">
       <div><span class="section-kicker">Crie uma vez, equipe quando quiser</span><h2 class="panel__title">Biblioteca da Guilda</h2></div>
@@ -161,7 +158,6 @@
     </div>
   </section>
 
-  <!-- ============ TABS: PODERES / MAGIAS / DIÁRIO ============ -->
   <section id="records" aria-label="Registros do Caçador">
     <div class="tab-strip" role="tablist">
       <button class="tab-btn" role="tab" id="tab-btn-powers" aria-controls="tab-powers" aria-selected="true">Poderes</button>
@@ -179,7 +175,6 @@
   <footer class="app-footer">Hunter's Codex &mdash; Registro da Guilda &middot; salvo localmente no seu navegador</footer>
 </div>
 
-<!-- ============ MODAL (genérico, reaproveitado) ============ -->
 <div class="modal-backdrop" id="modal-backdrop" hidden>
   <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title-input">
     <button class="modal__close" id="modal-close" aria-label="Fechar">&times;</button>

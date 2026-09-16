@@ -1,3 +1,5 @@
+import { initTheme } from '../layout/theme/theme.js';
+import { createPreferences } from '../infrastructure/preferences.js';
 import { createStore } from '../application/store.js';
 import storage from '../infrastructure/storage.js';
 import * as characterModel from '../domain/character.js';
@@ -38,6 +40,7 @@ import * as modal from '../layout/modal.js';
   }
 
   function boot() {
+    initTheme(createPreferences(() => localStorage));
     const saved = storage.load();
     try {
       if (!saved.ok) throw saved.error;

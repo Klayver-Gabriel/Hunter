@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   --void:          #12100d;   /* fundo principal — couro na sombra */
   --void-deep:      #0b0a08;  /* fundo mais profundo, gradientes */
   --iron-panel:     #211c16;  /* painéis / cards — couro trabalhado */
@@ -59,7 +60,11 @@
   --border-gold: 1px solid var(--guild-gold-dim);
 }
 
-[data-theme="pergaminho"] {
+[data-theme="light"] {
+  color-scheme: light;
+  --guild-gold: #80591e;
+  --guild-gold-br: #62400d;
+  --guild-gold-dim: #715121;
   --void:         #d9cba4;
   --void-deep:    #cabb92;
   --iron-panel:   #ece0bd;
