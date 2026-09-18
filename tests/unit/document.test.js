@@ -20,6 +20,16 @@ test('rótulos e layouts não alteram identidade nem cálculo e sobrevivem ao JS
   assert.equal(restored.sheetAppearance.components['resource:hp'].label, 'Vitalidade');
   assert.equal(restored.userPreferences, undefined);
 });
+
+test('remoções sobrevivem à importação e rejeitam visibilidade malformada', () => {
+  const original = migrateDocument(createDefault());
+  original.sheetAppearance.components['resource:hp'] = { label: 'Vida', hidden: true };
+  assert.deepEqual(migrateDocument(JSON.parse(JSON.stringify(original))), original);
+  for (const hidden of ['true', 1, {}, null]) {
+    const candidate = structuredClone(original); candidate.sheetAppearance.components['resource:hp'].hidden = hidden;
+    assert.throws(() => migrateDocument(candidate), /Visibilidade/);
+  }
+});
 test('aparência rejeita CSS, ciclos e versões futuras', () => {
   const appearance = createAppearance();
   appearance.components['resource:hp'] = { colors: { dark: { text: 'url(evil)' } } };

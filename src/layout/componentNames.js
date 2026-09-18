@@ -1,3 +1,5 @@
+import { applyComponentVisibility } from './componentVisibility.js';
+
 const defaults = new WeakMap();
 
 function defaultText(element) {
@@ -32,8 +34,12 @@ export function createNameEditor(store, root) {
   const input = document.getElementById('component-name');
   const error = document.getElementById('name-editor-error');
   const trigger = document.getElementById('btn-edit-names');
+  const removalToggle = document.getElementById('btn-remove-components');
+  const removeButton = document.getElementById('component-remove');
+  const restoreButton = document.getElementById('component-restore');
   let entries = new Map();
   let restoreDefault = false;
+  let removing = false;
 
   function selectComponent() {
     const entry = entries.get(select.value);
@@ -42,6 +48,9 @@ export function createNameEditor(store, root) {
     input.setCustomValidity('');
     error.hidden = true;
     restoreDefault = false;
+    const hidden = !!store.getDocument().sheetAppearance.components[select.value]?.hidden;
+    removeButton.hidden = hidden;
+    restoreButton.hidden = !hidden;
   }
 
   function render() {
@@ -62,7 +71,36 @@ export function createNameEditor(store, root) {
       const original = defaultText(text);
       text.textContent = ` ${appearance.components[`section:${link.hash.slice(1)}`]?.label || original}`;
     });
+    applyComponentVisibility(root, entries, appearance, removing);
   }
+
+  function removeComponent(id) {
+    const entry = entries.get(id);
+    if (!entry || !confirm(`Remover “${entry.element.textContent}” da tela? Você poderá restaurar no editor de componentes.`)) return false;
+    store.setComponentHidden(id, true);
+    return true;
+  }
+
+  removalToggle.addEventListener('click', () => {
+    removing = !removing;
+    removalToggle.setAttribute('aria-pressed', String(removing));
+    removalToggle.textContent = removing ? 'Concluir remoção' : 'Remover componentes';
+    root.classList.toggle('is-removing-components', removing);
+    document.getElementById('component-removal-hint').hidden = !removing;
+    render();
+  });
+  root.addEventListener('click', event => {
+    const button = event.target.closest('[data-remove-component]');
+    if (!button) return;
+    event.preventDefault(); event.stopPropagation();
+    if (removeComponent(button.dataset.removeComponent)) removalToggle.focus();
+  });
+  removeButton.addEventListener('click', () => {
+    if (removeComponent(select.value)) dialog.close();
+  });
+  restoreButton.addEventListener('click', () => {
+    store.setComponentHidden(select.value, false); dialog.close();
+  });
 
   trigger.addEventListener('click', () => {
     render();
@@ -75,6 +113,7 @@ export function createNameEditor(store, root) {
       }
       const option = document.createElement('option');
       option.value = id; option.textContent = entry.defaultLabel;
+      if (store.getDocument().sheetAppearance.components[id]?.hidden) option.textContent += ' (removido)';
       groups.get(entry.group).append(option);
     }
     selectComponent();

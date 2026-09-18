@@ -263,3 +263,44 @@ footer.app-footer {
   font-family: var(--font-mono);
   padding-top: var(--sp-4);
 }
+
+[data-component-hidden], [data-component-empty] { display: none !important; }
+
+:is(.sheet-grid, .rules-layout, .equipment-layout, .skill-groups, .attr-grid)[data-component-count="1"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.attr-grid[data-component-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.component-tab { display: inline-flex; }
+.library-block[data-component-hidden] + .library-block { margin-top: 0; }
+
+@media (min-width: 761px) {
+  .weapon-summary[data-attack-count="1"] { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); }
+  .weapon-summary[data-attack-count="0"] { grid-template-columns: auto minmax(0, 1fr); }
+}
+
+.is-removing-components .removable-component { position: relative; }
+.is-removing-components .component-removal-leaf { padding-top: 40px; }
+.is-removing-components .removable-component > .panel__header,
+.is-removing-components [data-component-label^="subsection:"] { padding-right: 40px; }
+.component-delete {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--iron-line);
+  border-radius: var(--radius-sm);
+  background: var(--iron-panel);
+  color: var(--parchment-dim);
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.component-delete:hover, .component-delete:focus-visible { color: var(--blood-bright); border-color: currentColor; }
+.is-removing-components [data-res-remove] { display: none; }
+#component-removal-hint { color: var(--parchment-dim); }
+.component-visibility-actions { margin-top: var(--sp-3); }
+#component-remove { color: var(--blood-bright); }

@@ -62,3 +62,26 @@ test('restaurar o nome preserva cores e posições legadas', () => {
   store.renameComponent('attribute:con', null);
   assert.equal(store.getDocument().sheetAppearance.components['attribute:con'], undefined);
 });
+
+test('remoção visual é reversível, imutável e preserva dados e rótulos', () => {
+  const store = createStore(createDefault());
+  store.renameComponent('resource:hp', 'Vitalidade');
+  const original = store.getDocument();
+  let notifications = 0;
+  store.subscribe((state, scope) => {
+    assert.equal(state, original.character); assert.equal(scope, 'setComponentHidden'); notifications++;
+  });
+  store.setComponentHidden('resource:hp', true);
+  assert.deepEqual(store.getDocument().sheetAppearance.components['resource:hp'], { label: 'Vitalidade', hidden: true });
+  assert.deepEqual(original.sheetAppearance.components['resource:hp'], { label: 'Vitalidade' });
+  assert.equal(store.setComponentHidden('resource:hp', true), false);
+  assert.throws(() => store.setComponentHidden('resource:hp', 'true'));
+  assert.throws(() => store.setComponentHidden('__proto__', true));
+  assert.equal(notifications, 1);
+  store.setComponentHidden('resource:hp', false);
+  assert.deepEqual(store.getDocument(), original);
+  store.setComponentHidden('section:attributes', true);
+  store.setComponentHidden('attribute:con', true);
+  store.setComponentHidden('section:attributes', false);
+  assert.equal(store.getDocument().sheetAppearance.components['attribute:con'].hidden, true);
+});
