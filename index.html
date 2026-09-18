@@ -30,7 +30,8 @@
 
   <div class="top-actions">
     <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema" aria-label="Alternar tema"><span aria-hidden="true">◐</span></button>
-    <button class="btn btn--ghost btn--sm" id="btn-edit-names">Editar nomes</button>
+    <button class="btn btn--ghost btn--sm" id="btn-edit-names">Editar componentes</button>
+    <button class="btn btn--ghost btn--sm" id="btn-remove-components" aria-pressed="false">Remover componentes</button>
     <button class="btn btn--ghost btn--sm" id="btn-export">Exportar JSON</button>
     <button class="btn btn--ghost btn--sm" id="btn-import">Importar JSON</button>
     <button class="btn btn--ghost btn--sm" id="btn-new" title="Novo personagem">Novo Caçador</button>
@@ -38,6 +39,7 @@
   </div>
 
   <p id="theme-status" role="status"></p>
+  <p id="component-removal-hint" role="status" hidden>Use × para remover um componente da tela. Você pode restaurá-lo em Editar componentes.</p>
 
   <header class="guild-card" id="guild-card">
     <span class="rivet tl"></span><span class="rivet tr"></span>
@@ -179,8 +181,8 @@
 <dialog class="modal name-editor" id="name-editor" aria-labelledby="name-editor-title" aria-describedby="name-editor-description">
   <form id="name-editor-form">
     <div class="modal__header">
-      <h2 id="name-editor-title">Editar nomes</h2>
-      <p id="name-editor-description">Escolha um componente da ficha e altere o nome exibido.</p>
+      <h2 id="name-editor-title">Editar componentes</h2>
+      <p id="name-editor-description">Altere o nome ou remova um componente da tela. Os dados são preservados e os itens removidos podem ser restaurados aqui.</p>
     </div>
     <div class="modal__field">
       <label for="name-component">Componente</label>
@@ -191,6 +193,10 @@
       <input id="component-name" type="text" required maxlength="120" autocomplete="off">
     </div>
     <p id="name-editor-error" role="alert" hidden></p>
+    <div class="component-visibility-actions">
+      <button class="btn btn--ghost" id="component-remove" type="button">Remover da tela</button>
+      <button class="btn btn--ghost" id="component-restore" type="button" hidden>Restaurar componente</button>
+    </div>
     <div class="modal__footer">
       <button class="btn btn--ghost" id="name-default" type="button">Restaurar nome padrão</button>
       <div class="btn-row">

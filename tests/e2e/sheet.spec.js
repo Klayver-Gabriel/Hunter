@@ -21,7 +21,7 @@ test('ficha permite editar nomes e mantém layout fixo', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('#btn-theme')).toBeVisible();
   await expect(page.locator('#guild-card')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Editar nomes', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Editar componentes', exact: true })).toBeVisible();
   await expect(page.locator('#btn-customize, #customization-editor, #sheet-surface, .component-handle, .component-resize, .entity-fields')).toHaveCount(0);
   await expect(page.locator('#weapon-library [data-edit-weapon]')).toBeVisible();
   expect(errors).toEqual([]);
@@ -62,7 +62,7 @@ test('rótulos legados são aplicados sem restaurar cores ou posições', async 
 });
 
 async function renameComponent(page, id, label) {
-  await page.getByRole('button', { name: 'Editar nomes', exact: true }).click();
+  await page.getByRole('button', { name: 'Editar componentes', exact: true }).click();
   await page.locator('#name-component').selectOption(id);
   await page.getByLabel('Nome exibido', { exact: true }).fill(label);
   await page.getByRole('button', { name: 'Salvar nome', exact: true }).click();

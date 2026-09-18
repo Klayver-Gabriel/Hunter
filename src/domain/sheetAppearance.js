@@ -1,4 +1,4 @@
-// Labels are editable; colors and layouts are retained only for document compatibility.
+// Labels and visibility are editable; colors and layouts are retained for compatibility.
 export const PROFILES = ['desktop', 'mobile'];
 export const THEMES = ['light', 'dark'];
 export function createAppearance() {
@@ -14,6 +14,10 @@ export function validateAppearance(input) {
   for (const [id, value] of Object.entries(input.components)) {
     if (!validId(id) || !object(value)) throw Error('Componente inválido.');
     const target = {};
+    if ('hidden' in value) {
+      if (typeof value.hidden !== 'boolean') throw Error('Visibilidade inválida.');
+      if (value.hidden) target.hidden = true;
+    }
     if (value.label != null) {
       if (typeof value.label !== 'string' || value.label.length > 120 || !value.label.trim()) throw Error('Rótulo deve conter de 1 a 120 caracteres.');
       target.label = value.label.trim();
