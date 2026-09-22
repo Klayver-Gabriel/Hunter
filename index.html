@@ -13,20 +13,30 @@
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/modal.css">
 <link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/customization.css">
+<link rel="stylesheet" href="css/navigation.css">
 </head>
 <body>
 
-<nav class="guild-nav" aria-label="Navegação da ficha">
-  <div class="guild-nav__brand">HC</div>
-  <a href="#guild-card" title="Identidade do Caçador"><span>◆</span> Caçador</a>
-  <a href="#dnd-rules" title="Regras automáticas de D&D 2024"><span>◈</span> D&amp;D 2024</a>
-  <a href="#armory" title="Ataques e arma equipada"><span>⚔</span> Arsenal</a>
-  <a href="#equipment" title="Armaduras e buffs"><span>⬡</span> Equipamento</a>
-  <a href="#library" title="Biblioteca reutilizável"><span>▤</span> Biblioteca</a>
-  <a href="#records" title="Poderes, magias e diário"><span>✎</span> Registros</a>
+<a class="skip-link" href="#page-title">Ir para o conteúdo</a>
+<nav class="guild-nav" aria-label="Páginas da ficha">
+  <a class="guild-nav__brand" href="#guild-card" aria-label="Hunter’s Codex — visão geral"><span class="guild-nav__monogram" aria-hidden="true">H</span><span class="guild-nav__wordmark">Hunter’s Codex<small>Seu registro de caçador</small></span></a>
+  <div class="guild-nav__links">
+    <a class="guild-nav__link" data-page-link href="#guild-card" aria-controls="page-guild-card" title="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-nav-label>Visão geral</span></a>
+    <a class="guild-nav__link" data-page-link href="#dnd-rules" aria-controls="page-dnd-rules" title="Combate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="M12 7v10M8 12h8"/></svg><span data-nav-label>Combate</span></a>
+    <a class="guild-nav__link" data-page-link href="#equipment" aria-controls="page-equipment" title="Equipamento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5 4 4v9h10v-9l4-4-5-5-4 3z"/><path d="M9 3a3 3 0 0 0 6 0"/></svg><span data-nav-label>Equipamento</span></a>
+    <a class="guild-nav__link" data-page-link href="#records" aria-controls="page-records" title="Registros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h12v16H4zM8 8h4M8 12h4M8 16h3M19 4v11l2 3 2-3V4z"/></svg><span data-nav-label>Registros</span></a>
+    <a class="guild-nav__link" data-page-link href="#temporal" aria-controls="page-temporal" title="Efeitos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7z"/></svg><span data-nav-label>Efeitos</span></a>
+  </div>
+  <div class="guild-nav__settings">
+    <button class="guild-nav__link" data-page-link data-page-key="calculations" aria-controls="page-calculations" title="Configurações">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-1 3-3 1-2 4 2 3v4l4 2 3-1 3 1 4-2v-4l2-3-2-4-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg><span data-nav-label>Configurações</span>
+    </button>
+  </div>
 </nav>
 
-<div id="app">
+<main id="app">
+  <header class="workspace-heading"><div><span class="workspace-heading__eyebrow">Hunter’s Codex / Ficha</span><h2 id="page-title" tabindex="-1">Visão geral</h2><p id="page-description">Identidade, atributos e recursos do seu caçador.</p></div></header>
 
   <div class="top-actions">
     <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema" aria-label="Alternar tema"><span aria-hidden="true">◐</span></button>
@@ -38,171 +48,200 @@
     <input type="file" id="file-import" accept="application/json" class="visually-hidden">
   </div>
 
+  <nav class="equipment-navigation" aria-label="Áreas de equipamento" hidden>
+    <a class="equipment-navigation__link" data-page-link href="#equipment" aria-controls="page-equipment" title="Equipamento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5 4 4v9h10v-9l4-4-5-5-4 3z"/><path d="M9 3a3 3 0 0 0 6 0"/></svg><span data-nav-label>Equipamento</span></a>
+    <a class="equipment-navigation__link" data-page-link href="#armory" aria-controls="page-armory" title="Arsenal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 19 12-12M14 3h7v7L8 20l-4-4L14 3Z"/><path d="m3 14 7 7M3 21l3-3"/></svg><span data-nav-label>Arsenal</span></a>
+    <a class="equipment-navigation__link" data-page-link href="#library" aria-controls="page-library" title="Biblioteca"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h4v16H4zM10 4h4v16h-4zM16 5l3-1 4 15-3 1z"/></svg><span data-nav-label>Biblioteca</span></a>
+  </nav>
+
   <p id="theme-status" role="status"></p>
   <p id="component-removal-hint" role="status" hidden>Use × para remover um componente da tela. Você pode restaurá-lo em Editar componentes.</p>
 
-  <header class="guild-card" id="guild-card">
-    <span class="rivet tl"></span><span class="rivet tr"></span>
-    <span class="rivet bl"></span><span class="rivet br"></span>
+  <div class="sheet-page" id="page-guild-card" data-sheet-page="guild-card" aria-label="Visão geral">
+    <header class="guild-card" id="guild-card">
+      <span class="rivet tl"></span><span class="rivet tr"></span>
+      <span class="rivet bl"></span><span class="rivet br"></span>
 
-    <div class="guild-card__identity">
-      <div class="guild-card__name-row">
-        <h1 class="guild-card__name field-input" contenteditable="true" data-field="info.name"
-            data-placeholder="Nome do Caçador">Nome do Caçador</h1>
+      <div class="guild-card__identity">
+        <div class="guild-card__name-row">
+          <h1 class="guild-card__name field-input" contenteditable="true" data-field="info.name"
+              data-placeholder="Nome do Caçador">Nome do Caçador</h1>
+        </div>
+
+        <div class="guild-card__byline">
+          <span class="field"><label data-component-label="field:info.class">Classe</label><span class="field-input" contenteditable="true" data-field="info.class">—</span></span>
+          <span class="field"><label data-component-label="field:info.subclass">Subclasse</label><span class="field-input" contenteditable="true" data-field="info.subclass">—</span></span>
+          <span class="field"><label data-component-label="field:info.race">Raça</label><span class="field-input" contenteditable="true" data-field="info.race">—</span></span>
+          <span class="field"><label data-component-label="field:info.background">Antecedente</label><span class="field-input" contenteditable="true" data-field="info.background">—</span></span>
+          <span class="field"><label data-component-label="field:info.alignment">Alinhamento</label><span class="field-input" contenteditable="true" data-field="info.alignment">—</span></span>
+        </div>
+
+        <div class="guild-card__meta-row">
+          <span class="field"><label data-component-label="field:info.xp">XP</label><input class="field-input mono" type="number" min="0" data-field="info.xp" value="0" style="width:70px"></span>
+          <span class="field"><label data-component-label="field:info.level">Nível</label><input class="field-input mono" type="number" min="1" max="20" data-field="info.level" value="1" style="width:50px"></span>
+          <span class="field"><label data-component-label="field:info.guildName">Guilda</label><span class="field-input" contenteditable="true" data-field="info.guildName">Sem Guilda</span></span>
+          <span class="field">
+            <label data-component-label="field:info.guildRank">Rank</label>
+            <select class="field-input select-like mono" data-field="info.guildRank">
+              <option value="Low Rank">Low Rank</option>
+              <option value="High Rank">High Rank</option>
+              <option value="Master Rank">Master Rank</option>
+              <option value="Monster Hunter">Monster Hunter</option>
+            </select>
+          </span>
+        </div>
       </div>
 
-      <div class="guild-card__byline">
-        <span class="field"><label data-component-label="field:info.class">Classe</label><span class="field-input" contenteditable="true" data-field="info.class">—</span></span>
-        <span class="field"><label data-component-label="field:info.subclass">Subclasse</label><span class="field-input" contenteditable="true" data-field="info.subclass">—</span></span>
-        <span class="field"><label data-component-label="field:info.race">Raça</label><span class="field-input" contenteditable="true" data-field="info.race">—</span></span>
-        <span class="field"><label data-component-label="field:info.background">Antecedente</label><span class="field-input" contenteditable="true" data-field="info.background">—</span></span>
-        <span class="field"><label data-component-label="field:info.alignment">Alinhamento</label><span class="field-input" contenteditable="true" data-field="info.alignment">—</span></span>
+      <div class="guild-seal" id="guild-seal">
+        <div class="guild-seal__ring"></div>
+        <div class="guild-seal__core">
+          <span class="guild-seal__level" id="seal-level">1</span>
+          <span class="guild-seal__level-label">Nível</span>
+          <span class="guild-seal__rank" id="seal-rank">Low Rank</span>
+        </div>
       </div>
+    </header>
 
-      <div class="guild-card__meta-row">
-        <span class="field"><label data-component-label="field:info.xp">XP</label><input class="field-input mono" type="number" min="0" data-field="info.xp" value="0" style="width:70px"></span>
-        <span class="field"><label data-component-label="field:info.level">Nível</label><input class="field-input mono" type="number" min="1" max="20" data-field="info.level" value="1" style="width:50px"></span>
-        <span class="field"><label data-component-label="field:info.guildName">Guilda</label><span class="field-input" contenteditable="true" data-field="info.guildName">Sem Guilda</span></span>
-        <span class="field">
-          <label data-component-label="field:info.guildRank">Rank</label>
-          <select class="field-input select-like mono" data-field="info.guildRank">
-            <option value="Low Rank">Low Rank</option>
-            <option value="High Rank">High Rank</option>
-            <option value="Master Rank">Master Rank</option>
-            <option value="Monster Hunter">Monster Hunter</option>
-          </select>
-        </span>
-      </div>
+    <div class="sheet-grid">
+      <section class="panel" id="attributes" aria-label="Atributos">
+        <div class="panel__header">
+          <h2 class="panel__title" data-component-label="section:attributes">Atributos</h2>
+        </div>
+        <div class="attr-grid" id="attr-grid"></div>
+      </section>
+
+      <section class="panel" id="resources" aria-label="Recursos">
+        <div class="panel__header">
+          <h2 class="panel__title" data-component-label="section:resources">Recursos</h2>
+          <button class="btn btn--ghost btn--sm" id="btn-add-resource">+ Recurso</button>
+        </div>
+        <div class="resource-stack" id="resource-stack"></div>
+      </section>
     </div>
 
-    <div class="guild-seal" id="guild-seal">
-      <div class="guild-seal__ring"></div>
-      <div class="guild-seal__core">
-        <span class="guild-seal__level" id="seal-level">1</span>
-        <span class="guild-seal__level-label">Nível</span>
-        <span class="guild-seal__rank" id="seal-rank">Low Rank</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="sheet-grid">
-    <section class="panel" id="attributes" aria-label="Atributos">
+  </div>
+  <div class="sheet-page" id="page-dnd-rules" data-sheet-page="dnd-rules" hidden>
+    <section class="panel codex-section" id="dnd-rules" aria-label="Regras de D&D 2024">
       <div class="panel__header">
-        <h2 class="panel__title" data-component-label="section:attributes">Atributos</h2>
+        <div><span class="section-kicker">Motor oficial</span><h2 class="panel__title" data-component-label="section:dnd-rules">D&amp;D 2024</h2></div>
+        <div class="proficiency-badge" title="Calculado automaticamente pelo nível"><span data-component-label="indicator:proficiency">Proficiência</span> <strong id="proficiency-value">+2</strong></div>
       </div>
-      <div class="attr-grid" id="attr-grid"></div>
+      <div class="metric-grid" id="rule-metrics"></div>
+      <div class="rules-layout">
+        <div>
+          <h3 class="subsection-title" data-component-label="subsection:saves">Testes de Resistência</h3>
+          <div class="save-grid" id="saving-throws"></div>
+        </div>
+        <div class="skills-column">
+          <h3 class="subsection-title" data-component-label="subsection:skills">Perícias</h3>
+          <div class="skill-legend"><span>○ Proficiência</span><span>◇ Expertise</span><span>Resultado</span></div>
+          <div class="skill-groups" id="skill-groups"></div>
+        </div>
+      </div>
     </section>
 
-    <section class="panel" id="resources" aria-label="Recursos">
+  </div>
+  <div class="sheet-page" id="page-armory" data-sheet-page="armory" hidden>
+    <section class="panel codex-section" id="armory" aria-label="Ataques">
       <div class="panel__header">
-        <h2 class="panel__title" data-component-label="section:resources">Recursos</h2>
-        <button class="btn btn--ghost btn--sm" id="btn-add-resource">+ Recurso</button>
+        <div><span class="section-kicker">Cálculo automático</span><h2 class="panel__title" data-component-label="section:armory">Ataques</h2></div>
       </div>
-      <div class="resource-stack" id="resource-stack"></div>
+      <div id="attack-panel"></div>
+      <div class="mastery-section">
+        <h3 class="subsection-title" data-component-label="subsection:mastery">Maestria da arma</h3>
+        <div id="mastery-panel"></div>
+      </div>
+    </section>
+
+  </div>
+  <div class="sheet-page" id="page-equipment" data-sheet-page="equipment" hidden>
+    <section class="panel codex-section" id="equipment" aria-label="Equipamentos e buffs">
+      <div class="panel__header">
+        <div><span class="section-kicker">Loadout do Caçador</span><h2 class="panel__title" data-component-label="section:equipment">Equipamento &amp; Buffs</h2></div>
+        <button class="btn btn--ghost btn--sm" id="btn-add-buff">+ Buff</button>
+      </div>
+      <div class="equipment-layout">
+        <div><h3 class="subsection-title" data-component-label="subsection:equipped-armor">Armadura equipada</h3><div class="armor-slots" id="armor-slots"></div></div>
+        <div><h3 class="subsection-title" data-component-label="subsection:buffs">Buff Engine</h3><div class="buff-list" id="buff-list"></div></div>
+      </div>
+    </section>
+
+  </div>
+  <div class="sheet-page" id="page-library" data-sheet-page="library" hidden>
+    <section class="panel codex-section" id="library" aria-label="Biblioteca de equipamentos">
+      <div class="panel__header">
+        <div><span class="section-kicker">Crie uma vez, equipe quando quiser</span><h2 class="panel__title" data-component-label="section:library">Biblioteca da Guilda</h2></div>
+      </div>
+      <div class="library-block">
+        <div class="library-heading"><h3 class="subsection-title" data-component-label="subsection:weapons">Armas</h3><button class="btn btn--ghost btn--sm" id="btn-add-weapon">+ Arma</button></div>
+        <div class="library-grid" id="weapon-library"></div>
+      </div>
+      <div class="library-block">
+        <div class="library-heading"><h3 class="subsection-title" data-component-label="subsection:armors">Armaduras</h3><button class="btn btn--ghost btn--sm" id="btn-add-armor">+ Peça</button></div>
+        <div class="library-grid" id="armor-library"></div>
+      </div>
+    </section>
+
+  </div>
+  <div class="sheet-page" id="page-records" data-sheet-page="records" hidden>
+    <section id="records" aria-label="Registros do Caçador">
+      <div class="tab-strip" role="tablist">
+        <button class="tab-btn" role="tab" id="tab-btn-powers" data-component-label="tab:powers" aria-controls="tab-powers" aria-selected="true">Poderes</button>
+        <button class="tab-btn" role="tab" id="tab-btn-spells" data-component-label="tab:spells" aria-controls="tab-spells" aria-selected="false">Magias</button>
+        <button class="tab-btn" role="tab" id="tab-btn-journal" data-component-label="tab:journal" aria-controls="tab-journal" aria-selected="false">Diário</button>
+      </div>
+
+      <div class="tab-panels">
+        <div class="tab-panel card-grid" id="tab-powers" role="tabpanel" aria-labelledby="tab-btn-powers"></div>
+        <div class="tab-panel card-grid" id="tab-spells" role="tabpanel" aria-labelledby="tab-btn-spells" hidden></div>
+        <div class="tab-panel card-grid" id="tab-journal" role="tabpanel" aria-labelledby="tab-btn-journal" hidden></div>
+      </div>
+    </section>
+
+  </div>
+  <div class="sheet-page" id="page-calculations" data-sheet-page="calculations" hidden>
+    <section class="panel codex-section" id="calculations" aria-label="Características e fórmulas">
+      <div class="panel__header"><h2 class="panel__title" data-component-label="section:calculations">Características e fórmulas</h2><button class="btn btn--ghost btn--sm" id="btn-calculation-add">+ Característica</button></div>
+      <p>Atributos começam em modo manual. Configure máximos e progressões sem recuperar automaticamente os recursos atuais.</p>
+      <details class="config-panel">
+        <summary>Ajustar componentes de combate</summary>
+        <div class="form-grid" id="combat-config"></div>
+      </details>
+      <div class="calculation-actions"><button class="btn btn--ghost" id="btn-spellcasting">Configurar conjuração global</button></div>
+      <p class="rule-preview" id="spellcasting-summary"></p><p class="rule-errors" id="calculation-error" role="alert"></p>
+      <div class="calculation-list" id="calculation-list"></div>
     </section>
   </div>
-
-  <section class="panel codex-section" id="dnd-rules" aria-label="Regras de D&D 2024">
-    <div class="panel__header">
-      <div><span class="section-kicker">Motor oficial</span><h2 class="panel__title" data-component-label="section:dnd-rules">D&amp;D 2024</h2></div>
-      <div class="proficiency-badge" title="Calculado automaticamente pelo nível"><span data-component-label="indicator:proficiency">Proficiência</span> <strong id="proficiency-value">+2</strong></div>
-    </div>
-    <div class="metric-grid" id="rule-metrics"></div>
-    <div class="rules-layout">
-      <div>
-        <h3 class="subsection-title" data-component-label="subsection:saves">Testes de Resistência</h3>
-        <div class="save-grid" id="saving-throws"></div>
-      </div>
-      <div class="skills-column">
-        <h3 class="subsection-title" data-component-label="subsection:skills">Perícias</h3>
-        <div class="skill-legend"><span>○ Proficiência</span><span>◇ Expertise</span><span>Resultado</span></div>
-        <div class="skill-groups" id="skill-groups"></div>
-      </div>
-    </div>
-    <details class="config-panel">
-      <summary>Ajustar componentes de combate</summary>
-      <div class="form-grid" id="combat-config"></div>
-    </details>
-  </section>
-
-  <section class="panel codex-section" id="armory" aria-label="Ataques">
-    <div class="panel__header">
-      <div><span class="section-kicker">Cálculo automático</span><h2 class="panel__title" data-component-label="section:armory">Ataques</h2></div>
-    </div>
-    <div id="attack-panel"></div>
-    <div class="mastery-section">
-      <h3 class="subsection-title" data-component-label="subsection:mastery">Maestria da arma</h3>
-      <div id="mastery-panel"></div>
-    </div>
-  </section>
-
-  <section class="panel codex-section" id="equipment" aria-label="Equipamentos e buffs">
-    <div class="panel__header">
-      <div><span class="section-kicker">Loadout do Caçador</span><h2 class="panel__title" data-component-label="section:equipment">Equipamento &amp; Buffs</h2></div>
-      <button class="btn btn--ghost btn--sm" id="btn-add-buff">+ Buff</button>
-    </div>
-    <div class="equipment-layout">
-      <div><h3 class="subsection-title" data-component-label="subsection:equipped-armor">Armadura equipada</h3><div class="armor-slots" id="armor-slots"></div></div>
-      <div><h3 class="subsection-title" data-component-label="subsection:buffs">Buff Engine</h3><div class="buff-list" id="buff-list"></div></div>
-    </div>
-  </section>
-
-  <section class="panel codex-section" id="library" aria-label="Biblioteca de equipamentos">
-    <div class="panel__header">
-      <div><span class="section-kicker">Crie uma vez, equipe quando quiser</span><h2 class="panel__title" data-component-label="section:library">Biblioteca da Guilda</h2></div>
-    </div>
-    <div class="library-block">
-      <div class="library-heading"><h3 class="subsection-title" data-component-label="subsection:weapons">Armas</h3><button class="btn btn--ghost btn--sm" id="btn-add-weapon">+ Arma</button></div>
-      <div class="library-grid" id="weapon-library"></div>
-    </div>
-    <div class="library-block">
-      <div class="library-heading"><h3 class="subsection-title" data-component-label="subsection:armors">Armaduras</h3><button class="btn btn--ghost btn--sm" id="btn-add-armor">+ Peça</button></div>
-      <div class="library-grid" id="armor-library"></div>
-    </div>
-  </section>
-
-  <section id="records" aria-label="Registros do Caçador">
-    <div class="tab-strip" role="tablist">
-      <button class="tab-btn" role="tab" id="tab-btn-powers" data-component-label="tab:powers" aria-controls="tab-powers" aria-selected="true">Poderes</button>
-      <button class="tab-btn" role="tab" id="tab-btn-spells" data-component-label="tab:spells" aria-controls="tab-spells" aria-selected="false">Magias</button>
-      <button class="tab-btn" role="tab" id="tab-btn-journal" data-component-label="tab:journal" aria-controls="tab-journal" aria-selected="false">Diário</button>
-    </div>
-
-    <div class="tab-panels">
-      <div class="tab-panel card-grid" id="tab-powers" role="tabpanel" aria-labelledby="tab-btn-powers"></div>
-      <div class="tab-panel card-grid" id="tab-spells" role="tabpanel" aria-labelledby="tab-btn-spells" hidden></div>
-      <div class="tab-panel card-grid" id="tab-journal" role="tabpanel" aria-labelledby="tab-btn-journal" hidden></div>
-    </div>
-  </section>
-
+  <div class="sheet-page" id="page-temporal" data-sheet-page="temporal" hidden>
+    <section class="panel codex-section" id="temporal" aria-label="Efeitos temporais">
+      <div class="panel__header"><h2 class="panel__title" data-component-label="section:temporal">Efeitos temporais</h2><button class="btn btn--ghost btn--sm" id="btn-effect-add">+ Efeito temporal</button></div>
+      <p>Cada ação aplica a recuperação ou o consumo e depois reduz a duração nessa unidade. Turnos e rodadas são independentes. Descanso dispara recursos, sem avançar turnos ou rodadas. Reabrir a ficha não dispara eventos.</p>
+      <p id="event-counts" role="status"></p><p id="temporal-error" class="rule-errors" role="alert"></p>
+      <div class="event-actions"><button class="btn btn--ghost" data-event="turn">Avançar turno</button><button class="btn btn--ghost" data-event="round">Avançar rodada</button><button class="btn btn--ghost" data-event="rest">Aplicar descanso</button></div>
+      <div class="temporal-list" id="temporal-list"></div>
+    </section>
+  </div>
   <footer class="app-footer">Hunter's Codex &mdash; Registro da Guilda &middot; salvo localmente no seu navegador</footer>
-</div>
+</main>
 
 <dialog class="modal name-editor" id="name-editor" aria-labelledby="name-editor-title" aria-describedby="name-editor-description">
   <form id="name-editor-form">
     <div class="modal__header">
       <h2 id="name-editor-title">Editar componentes</h2>
-      <p id="name-editor-description">Altere o nome ou remova um componente da tela. Os dados são preservados e os itens removidos podem ser restaurados aqui.</p>
+      <p id="name-editor-description">Edite vários nomes e componentes ocultos. Rótulos alteram a apresentação; nomes de registros alteram o cadastro. Nada é salvo até aplicar as alterações.</p>
     </div>
-    <div class="modal__field">
-      <label for="name-component">Componente</label>
-      <select id="name-component"></select>
+    <nav id="name-categories" class="category-nav" aria-label="Categorias de personalização"></nav>
+    <div class="customization-filters">
+      <label>Buscar nome original ou personalizado<input id="name-search" type="search" autocomplete="off"></label>
+      <label>Mostrar<select id="name-filter"><option value="all">Todos</option><option value="changed">Alterados</option><option value="hidden">Ocultos</option></select></label>
+      <button class="btn btn--ghost" id="name-category-restore" type="button">Restaurar categoria</button>
     </div>
-    <div class="modal__field">
-      <label for="component-name">Nome exibido</label>
-      <input id="component-name" type="text" required maxlength="120" autocomplete="off">
-    </div>
+    <p id="name-editor-count" role="status"></p>
+    <div id="name-rows"></div>
     <p id="name-editor-error" role="alert" hidden></p>
-    <div class="component-visibility-actions">
-      <button class="btn btn--ghost" id="component-remove" type="button">Remover da tela</button>
-      <button class="btn btn--ghost" id="component-restore" type="button" hidden>Restaurar componente</button>
-    </div>
     <div class="modal__footer">
-      <button class="btn btn--ghost" id="name-default" type="button">Restaurar nome padrão</button>
-      <div class="btn-row">
-        <button class="btn btn--ghost" id="name-cancel" type="button">Cancelar</button>
-        <button class="btn btn--primary" type="submit">Salvar nome</button>
-      </div>
+      <button class="btn btn--ghost" id="name-cancel" type="button">Cancelar</button>
+      <button class="btn btn--primary" type="submit">Aplicar alterações</button>
     </div>
   </form>
 </dialog>

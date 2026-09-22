@@ -99,6 +99,12 @@ function collect() {
   return data;
 }
 
+function showError(error) {
+  let output = document.getElementById('modal-error');
+  if (!output) { output = document.createElement('p'); output.id = 'modal-error'; output.setAttribute('role', 'alert'); els.body.append(output); }
+  output.textContent = error.message;
+}
+
 function init() {
   cacheEls();
   els.closeBtn.addEventListener('click', close);
@@ -112,13 +118,11 @@ function init() {
   els.saveBtn.addEventListener('click', () => {
     if (!currentConfig) return;
     const data = collect();
-    currentConfig.onSave(data);
-    close();
+    try { currentConfig.onSave(data); close(); } catch (error) { showError(error); }
   });
   els.deleteBtn.addEventListener('click', () => {
     if (!currentConfig || !currentConfig.onDelete) return;
-    currentConfig.onDelete();
-    close();
+    try { currentConfig.onDelete(); close(); } catch (error) { showError(error); }
   });
 }
 

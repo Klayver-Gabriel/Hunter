@@ -1,8 +1,10 @@
+import { calculateCharacter } from './characterCalculator.js';
 import * as F from './formulaEvaluator.js';
 import * as D from '../domain/catalog.js';
 
 export function signed(value) {
-  const n = Number(value) || 0;
+  if (!Number.isFinite(Number(value))) return 'Erro';
+  const n = Number(value);
   return `${n >= 0 ? '+' : ''}${n}`;
 }
 
@@ -15,7 +17,7 @@ export function proficiency(character) {
 }
 
 export function abilityModifier(character, ability) {
-  return F.mod(character.attributes[ability]);
+  return F.mod(calculateCharacter(character).values[`attribute:${ability}`] ?? NaN);
 }
 
 export function buffTotals(character) {

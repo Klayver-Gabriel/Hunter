@@ -2,7 +2,7 @@
 
 function mod(score) {
   const n = Number(score);
-  if (Number.isNaN(n)) return 0;
+  if (!Number.isFinite(n)) return NaN;
   return Math.floor((n - 10) / 2);
 }
 
@@ -30,14 +30,15 @@ function percent(current, max) {
 
 /** Arithmetic grammar only: unknown variables, member access and non-finite results are rejected. */
 function evaluate(expression, variables) {
-  const source = String(expression || '').replace(/\s+/g, '');
+  const source = String(expression ?? '').replace(/\s+/g, '');
+  if (source.length > 2000) throw new Error('A fórmula é muito longa.');
   if (!source) throw new Error('A fórmula está vazia.');
 
   const tokens = source.match(/[A-Za-z_][A-Za-z0-9_]*|\d+(?:\.\d+)?|[()+\-*/,]/g) || [];
   if (tokens.join('') !== source) throw new Error('A fórmula contém caracteres inválidos.');
 
   const context = Object.keys(variables || {}).reduce((result, key) => {
-    result[key.toUpperCase()] = Number(variables[key]) || 0;
+    result[key.toUpperCase()] = Number(variables[key]);
     return result;
   }, {});
   const functions = {
@@ -74,6 +75,7 @@ function evaluate(expression, variables) {
       const name = token.toUpperCase();
       if (tokens[index] !== '(') {
         if (!Object.prototype.hasOwnProperty.call(context, name)) throw new Error(`Variável desconhecida: ${token}.`);
+        if (!Number.isFinite(context[name])) throw new Error(`Variável sem valor numérico válido: ${token}.`);
         return context[name];
       }
       const fn = functions[token.toLowerCase()];
@@ -82,6 +84,7 @@ function evaluate(expression, variables) {
       const args = [addition()];
       while (tokens[index] === ',') { consume(','); args.push(addition()); }
       consume(')');
+      if (!['min', 'max'].includes(token.toLowerCase()) && args.length !== 1) throw new Error(`A função ${token} exige um argumento.`);
       return fn(...args);
     }
     throw new Error('Valor esperado na fórmula.');
@@ -121,3 +124,7 @@ function evaluate(expression, variables) {
 }
 
 export { mod, modStr, proficiencyBonus, clamp, percent, evaluate };
+
+export function formulaReferences(expression) {
+  return [...new Set((String(expression).match(/[A-Za-z_][A-Za-z0-9_]*(?![A-Za-z0-9_])/g) || []).filter(name => !['floor', 'ceil', 'round', 'abs', 'min', 'max'].includes(name.toLowerCase())).map(name => name.toUpperCase()))];
+}

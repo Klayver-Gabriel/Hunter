@@ -31,7 +31,7 @@ test('fórmulas têm precedência, funções e falhas explícitas', () => {
   assert.equal(F.evaluate('-(2 + 3) / 2', {}), -2.5);
   for (const expression of ['1/0', 'window.alert(1)', 'UNKNOWN', '1 +']) assert.throws(() => F.evaluate(expression, {}));
   const c = C.createDefault(); c.dnd.vitality.firstLevelFormula = '1/0';
-  assert.equal(R.maxHpBreakdown(c).total, 10);
+  assert.equal(R.maxHpBreakdown(c).total, null);
   assert.equal(R.maxHpBreakdown(c).errors.length, 1);
 });
 test('migração é pura e rejeita versões futuras', () => {
