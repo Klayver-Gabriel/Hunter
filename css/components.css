@@ -178,10 +178,15 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
+
+#resources { min-width: 0; }
 
 .resource__head {
   display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
   justify-content: space-between;
   align-items: baseline;
   font-family: var(--font-mono);
@@ -190,6 +195,9 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
 }
 
 .resource__name {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
@@ -197,8 +205,22 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
   text-transform: uppercase;
 }
 
-.resource__values { display: flex; align-items: baseline; gap: 3px; }
-.resource__values input { width: 42px; text-align: right; }
+.resource__values {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline-start: auto;
+}
+.resource__values > :not(.resource-value) { flex-shrink: 0; }
+.resource__values input {
+  /* Leave room for padding and the native number controls. */
+  width: max(42px, calc(var(--resource-value-width, 2ch) + 6px + 1.5em));
+  min-width: 0;
+  max-width: 100%;
+  text-align: right;
+}
 
 .resource__track {
   position: relative;
@@ -564,5 +586,5 @@ select.field-input option { background: var(--void-deep); color: var(--parchment
 .save-error { color: var(--hp-color, #c1483d); }
 [hidden] { display: none !important; }
 
-.resource-value { display: inline-flex; }
+.resource-value { display: inline-flex; flex: 0 1 auto; min-width: 42px; }
 .resource-value__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

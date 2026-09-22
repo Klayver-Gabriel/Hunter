@@ -172,6 +172,15 @@ function renderResources() {
       </div>`;
   }).join('');
 
+  stack.querySelectorAll('[data-res-current], [data-res-max]').forEach(input => {
+    const resize = () => {
+      input.style.setProperty('--resource-value-width', `${Math.max(1, input.value.length)}ch`);
+      input.title = input.readOnly ? `Calculado automaticamente: ${input.value}` : input.value;
+    };
+    resize();
+    input.addEventListener('input', resize);
+  });
+
   stack.querySelectorAll('[data-res-current]').forEach(input => {
     input.addEventListener('change', () => updateResource(input.dataset.resCurrent, 'current', input.value));
   });
