@@ -93,8 +93,8 @@ function renderSkills() {
         <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: proficiência" ${state.proficient ? 'checked' : ''}><span>○</span></label>
         <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
         <span class="skill-row__name" data-component-label="skill:${skill.key}">${label(`skill:${skill.key}`, skill.name)}</span>
-        <span class="skill-row__ability">${label(`attribute:${ability.key}`, ability.short)}</span>
-        ${totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}
+        <span class="skill-row__details"><span class="skill-row__ability">${label(`attribute:${ability.key}`, ability.short)}</span>
+        ${totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}</span>
         <strong>${R.signed(result.total)}</strong>
       </div>`;
     }).join('');

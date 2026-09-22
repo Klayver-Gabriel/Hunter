@@ -62,7 +62,7 @@ function editor(title, body, build, preview, spell = false) {
     focusedFormula.setRangeText(value, focusedFormula.selectionStart, focusedFormula.selectionEnd, 'end'); focusedFormula.focus(); update();
   };
   document.getElementById('rule-cancel').onclick = () => dialog.close();
-  dialog.onclose = () => previousFocus?.isConnected ? previousFocus.focus() : document.getElementById('btn-calculation-add').focus();
+  dialog.onclose = () => previousFocus?.isConnected ? previousFocus.focus() : document.getElementById('page-title').focus();
   form.onsubmit = event => {
     event.preventDefault(); update(); if (!current) return;
     try { store.dispatch(current.type, current.payload); dialog.close(); }

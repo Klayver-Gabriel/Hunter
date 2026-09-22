@@ -73,8 +73,12 @@ export function applyComponentVisibility(root, entries, appearance, removing) {
   }
   const summary = root.querySelector('.weapon-summary');
   if (summary) summary.dataset.attackCount = [...summary.querySelectorAll('.attack-result')].filter(el => !el.matches(excluded)).length;
-  document.querySelectorAll('.guild-nav a').forEach(link => {
-    const section = document.getElementById(link.hash.slice(1));
-    link.toggleAttribute('data-component-hidden', !!section?.matches(excluded));
+  document.querySelectorAll('[data-page-link]').forEach(link => {
+    const section = document.getElementById(link.dataset.pageKey || link.hash.slice(1));
+    const isEquipmentGroup = link.matches('.guild-nav__link[href="#equipment"]');
+    const hidden = isEquipmentGroup
+      ? ['equipment', 'armory', 'library'].every(id => document.getElementById(id).matches(excluded))
+      : !!section?.matches(excluded);
+    link.toggleAttribute('data-component-hidden', hidden);
   });
 }

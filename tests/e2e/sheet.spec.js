@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openPage } from './helpers/navigation.js';
 
 async function importSheet(page, document, name = 'sheet.json') {
   await page.locator('#file-import').setInputFiles({
@@ -23,7 +24,8 @@ test('ficha permite editar nomes e mantém layout fixo', async ({ page }) => {
   await expect(page.locator('#guild-card')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Editar componentes', exact: true })).toBeVisible();
   await expect(page.locator('#btn-customize, #customization-editor, #sheet-surface, .component-handle, .component-resize, .entity-fields')).toHaveCount(0);
-
+  await expect(page.locator('#weapon-library [data-edit-weapon]')).toBeHidden();
+  await openPage(page, 'library');
   await expect(page.locator('#weapon-library [data-edit-weapon]')).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -77,9 +79,9 @@ test('nomes de seções e campos persistem sem alterar personagem ou cálculos',
   await renameComponent(page, 'skill:acrobatics', 'Equilíbrio');
   await expect(page.getByRole('heading', { name: 'Características', exact: true })).toBeVisible();
   await expect(page.getByRole('spinbutton', { name: 'Vigor', exact: true })).toHaveValue('10');
-
+  await openPage(page, 'dnd-rules');
   await expect(page.getByRole('checkbox', { name: 'Equilíbrio: expertise', exact: true })).toBeVisible();
-
+  await openPage(page, 'guild-card');
   await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
   const exported = await exportSheet(page);
   expect(exported.character).toEqual(original.character);
@@ -127,11 +129,11 @@ test('editor limita alterações a nomes existentes, valida entrada e permite ca
 });
 
 test('edição normal de arma pelo modal atualiza ataque e dano', async ({ page }) => {
-  await page.goto('/'); await page.locator('[data-edit-weapon="weapon_longsword_starter"]').click();
+  await page.goto('/'); await openPage(page, 'library'); await page.locator('[data-edit-weapon="weapon_longsword_starter"]').click();
   await expect(page.locator('#modal')).toBeVisible();
   await page.locator('#mf-damageDice').fill('3d8'); await page.locator('#modal-save').click();
   await expect(page.locator('#attack-panel .attack-result').nth(1).locator('strong')).toHaveText('3d8');
-
+  await openPage(page, 'guild-card');
   await page.locator('[data-attr="for"]').fill('18'); await page.locator('[data-attr="for"]').press('Tab');
   await expect(page.locator('#attack-panel .attack-result').first().locator('strong')).toHaveText('+6');
 });
@@ -142,7 +144,7 @@ test('recursos e registros continuam editáveis e persistidos', async ({ page })
   const resource = page.locator('.resource--custom');
   await resource.locator('[data-res-name]').fill('Foco'); await resource.locator('[data-res-name]').press('Tab');
   await resource.locator('[data-res-current]').fill('6'); await resource.locator('[data-res-current]').press('Tab');
-
+  await openPage(page, 'records');
   await page.locator('[data-add="powers"]').click();
   await page.locator('#modal-title-input').fill('Postura defensiva');
   await page.locator('#mf-description').fill('Reduz o dano recebido.');

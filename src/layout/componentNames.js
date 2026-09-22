@@ -32,10 +32,10 @@ export function createNameEditor(store, root) {
       entries.set(id, { element });
       applyLabel(element, displayName(character, sheetAppearance, id, defaultText(element)));
     });
-    document.querySelectorAll('.guild-nav a').forEach(link => {
-      const text = link.lastChild;
-      if (text?.nodeType !== Node.TEXT_NODE) return;
-      text.textContent = ` ${displayName(character, sheetAppearance, `section:${link.hash.slice(1)}`, defaultText(text))}`;
+    document.querySelectorAll('[data-page-link]:not([data-page-key="calculations"])').forEach(link => {
+      const text = link.querySelector('[data-nav-label]');
+      text.textContent = `${displayName(character, sheetAppearance, `section:${link.hash.slice(1)}`, defaultText(text))}`;
+      link.title = text.textContent.trim();
     });
     applyComponentVisibility(root, entries, sheetAppearance, removing);
   }

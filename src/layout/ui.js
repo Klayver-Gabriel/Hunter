@@ -6,12 +6,14 @@ import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
 import * as modal from './modal.js';
 import { preserveFocus } from './focus.js';
+import { createPageNavigation } from './pageNavigation.js';
 import { createNameEditor } from './componentNames.js';
 
 let character = null;
 let store = null;
 let actions = null;
 let nameEditor = null;
+let navigation = null;
 
 const RANK_COLOR_VAR = {
   'Low Rank': '--rank-low',
@@ -54,6 +56,7 @@ function init(applicationStore, topActions) {
   store = applicationStore; actions = topActions; character = store.getState();
   systemsUI.init(store); calculationsUI.init(store);
   nameEditor = createNameEditor(store, document.getElementById('app'));
+  navigation = createPageNavigation();
   bindFieldInputs(); bindResourceAdd(); bindTabs(); bindTopActions();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();
@@ -68,6 +71,7 @@ function renderAll() {
   systemsUI.renderAll();
   calculationsUI.render();
   nameEditor.render();
+  navigation.render();
 }
 
 function renderInfoFields() {
@@ -201,7 +205,7 @@ function renderResources() {
   stack.querySelectorAll('[data-res-remove]').forEach(btn => {
     btn.addEventListener('click', () => {
       try { store.dispatch('removeResource', { id: btn.dataset.resRemove }); }
-      catch (error) { document.getElementById('calculation-error').textContent = error.message; document.getElementById('calculation-error').scrollIntoView({ block: 'center' }); }
+      catch (error) { document.getElementById('calculation-error').textContent = error.message; navigation.select('calculations', { focus: true, push: true }); }
     });
   });
 }
