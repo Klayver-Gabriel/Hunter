@@ -1,3 +1,4 @@
+import { displayName } from '../domain/componentCatalog.js';
 import * as C from '../domain/character.js';
 import * as F from '../auto_calc_engine/formulaEvaluator.js';
 import * as systemsUI from './systemsUI.js';
@@ -88,6 +89,7 @@ function bindFieldInputs() {
     el.addEventListener(eventName, () => {
       let value = (el.tagName === 'INPUT' || el.tagName === 'SELECT') ? el.value : el.textContent.trim();
       if (isNumber) value = Number(value) || 0;
+      if (C.get(character, path) === value) return;
       store.dispatch('setField', { path, value });
     });
 
@@ -166,7 +168,7 @@ function renderResources() {
   stack.querySelectorAll('[data-res-name]').forEach(el => {
     el.addEventListener('blur', () => {
       const r = character.resources.find(x => x.id === el.dataset.resName);
-      if (!r) return;
+      if (!r || el.textContent.trim() === displayName(character, store.getDocument().sheetAppearance, `resource:${r.id}`, r.name)) return;
       if (store.getDocument().sheetAppearance.components[`resource:${r.id}`]?.label) {
         const label = el.textContent.trim().slice(0, 120);
         if (label) store.renameComponent(`resource:${r.id}`, label);
@@ -212,7 +214,7 @@ function renderEntryList(listName) {
 
   const cardsHTML = entries.map(entry => `
     <div class="entry-card" data-entry-id="${entry.id}" data-list="${listName}" tabindex="0" role="button">
-      <div class="entry-card__title">${escapeHTML(entry.title)}</div>
+      <div class="entry-card__title" data-component-label="record:${listName}:${entry.id}">${escapeHTML(entry.title)}</div>
       <div class="entry-card__subtitle">${escapeHTML(config.subtitle(entry))}</div>
       <div class="entry-card__excerpt">${escapeHTML(entry.description || '')}</div>
     </div>`).join('');
@@ -234,7 +236,7 @@ function openEntryModal(listName, entryId) {
   const entry = entryId ? character[listName].find(e => e.id === entryId) : null;
 
   modal.open({
-    eyebrow: config.eyebrow,
+    eyebrow: displayName(character, store.getDocument().sheetAppearance, `tab:${listName}`, config.eyebrow),
     entry: entry,
     fields: config.fields,
     onSave: data => store.dispatch('saveEntry', { list: listName, id: entry?.id, data }),

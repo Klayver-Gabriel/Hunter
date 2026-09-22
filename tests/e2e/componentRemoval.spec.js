@@ -13,8 +13,8 @@ async function remove(page, id, accept = true) {
 }
 async function restore(page, id) {
   await page.locator('#btn-edit-names').click();
-  await page.locator('#name-component').selectOption(id);
-  await page.getByRole('button', { name: 'Restaurar componente', exact: true }).click();
+  await page.locator(`[data-name-hidden="${id}"]`).uncheck();
+  await page.getByRole('button', { name: 'Aplicar alterações', exact: true }).click();
 }
 
 test('remove recursos padrão com confirmação, persiste e restaura sem perder valores', async ({ page }) => {
@@ -75,6 +75,7 @@ test('importação e exportação mantêm remoções e eliminam grupos vazios', 
   expect(exported).toEqual(document);
   await importDocument(page, original);
   await expect(page.locator('#attributes')).toBeVisible();
+
   await expect(page.locator('.rules-layout')).toBeVisible();
   await expect(page.locator('.guild-nav a[href="#armory"]')).not.toHaveAttribute('data-component-hidden', '');
 });
@@ -82,8 +83,10 @@ test('importação e exportação mantêm remoções e eliminam grupos vazios', 
 test('excluir abas seleciona a próxima e remover resistência não marca proficiência', async ({ page }) => {
   await page.goto('/'); const original = await saved(page);
   await page.locator('#btn-remove-components').click();
+
   await remove(page, 'save:con');
   expect((await saved(page)).character.dnd.saves).toEqual(original.character.dnd.saves);
+
   await remove(page, 'tab:powers');
   await expect(page.locator('#tab-btn-spells')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#tab-spells')).toBeVisible();
@@ -91,6 +94,7 @@ test('excluir abas seleciona a próxima e remover resistência não marca profic
   await remove(page, 'tab:journal');
   await expect(page.locator('#records')).toBeHidden();
   await restore(page, 'tab:powers');
+
   await expect(page.locator('#tab-btn-powers')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#tab-powers')).toBeVisible();
 });
@@ -101,16 +105,18 @@ test.describe('remoção no celular', () => {
     await page.goto('/');
     await page.locator('#btn-remove-components').tap();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
     const skillName = await page.locator('[data-component-label="skill:acrobatics"]').boundingBox();
     expect(skillName.width).toBeGreaterThan(55);
+
     page.once('dialog', dialog => dialog.accept());
     await page.locator('[data-remove-component="resource:hp"]').tap();
     await expect(page.locator('.resource--hp')).toBeHidden();
     await page.locator('#btn-remove-components').tap();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.locator('#btn-edit-names').tap();
-    await page.locator('#name-component').selectOption('resource:hp');
-    await page.locator('#component-restore').tap();
+    await page.locator('[data-name-hidden="resource:hp"]').uncheck();
+    await page.getByRole('button', { name: 'Aplicar alterações', exact: true }).tap();
     await expect(page.locator('.resource--hp')).toBeVisible();
   });
 });

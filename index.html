@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/modal.css">
 <link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/customization.css">
 </head>
 <body>
 
@@ -182,27 +183,20 @@
   <form id="name-editor-form">
     <div class="modal__header">
       <h2 id="name-editor-title">Editar componentes</h2>
-      <p id="name-editor-description">Altere o nome ou remova um componente da tela. Os dados são preservados e os itens removidos podem ser restaurados aqui.</p>
+      <p id="name-editor-description">Edite vários nomes e componentes ocultos. Rótulos alteram a apresentação; nomes de registros alteram o cadastro. Nada é salvo até aplicar as alterações.</p>
     </div>
-    <div class="modal__field">
-      <label for="name-component">Componente</label>
-      <select id="name-component"></select>
+    <nav id="name-categories" class="category-nav" aria-label="Categorias de personalização"></nav>
+    <div class="customization-filters">
+      <label>Buscar nome original ou personalizado<input id="name-search" type="search" autocomplete="off"></label>
+      <label>Mostrar<select id="name-filter"><option value="all">Todos</option><option value="changed">Alterados</option><option value="hidden">Ocultos</option></select></label>
+      <button class="btn btn--ghost" id="name-category-restore" type="button">Restaurar categoria</button>
     </div>
-    <div class="modal__field">
-      <label for="component-name">Nome exibido</label>
-      <input id="component-name" type="text" required maxlength="120" autocomplete="off">
-    </div>
+    <p id="name-editor-count" role="status"></p>
+    <div id="name-rows"></div>
     <p id="name-editor-error" role="alert" hidden></p>
-    <div class="component-visibility-actions">
-      <button class="btn btn--ghost" id="component-remove" type="button">Remover da tela</button>
-      <button class="btn btn--ghost" id="component-restore" type="button" hidden>Restaurar componente</button>
-    </div>
     <div class="modal__footer">
-      <button class="btn btn--ghost" id="name-default" type="button">Restaurar nome padrão</button>
-      <div class="btn-row">
-        <button class="btn btn--ghost" id="name-cancel" type="button">Cancelar</button>
-        <button class="btn btn--primary" type="submit">Salvar nome</button>
-      </div>
+      <button class="btn btn--ghost" id="name-cancel" type="button">Cancelar</button>
+      <button class="btn btn--primary" type="submit">Aplicar alterações</button>
     </div>
   </form>
 </dialog>

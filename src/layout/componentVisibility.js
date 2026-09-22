@@ -1,8 +1,8 @@
 const targets = {
   section: 'section', field: '.field', attribute: '.attr-tile', resource: '.resource',
-  metric: '.metric-card', save: '.save-row', skill: '.skill-row', config: '.config-field',
+  metric: '.metric-card, .calculation-card', save: '.save-row', skill: '.skill-row', config: '.config-field',
   weapon: 'label', attack: '.attack-result', mastery: 'label', armor: '.armor-slot, .armor-total',
-  indicator: '.proficiency-badge', tab: '.component-tab'
+  indicator: '.proficiency-badge', tab: '.component-tab', record: '.entry-card, .library-card, .buff-card, .calculation-card'
 };
 const subsections = {
   saves: '.rules-layout > div', skills: '.skills-column', mastery: '.mastery-section',

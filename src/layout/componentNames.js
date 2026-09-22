@@ -1,148 +1,116 @@
 import { applyComponentVisibility } from './componentVisibility.js';
+import { CATEGORIES, componentCatalog, displayName } from '../domain/componentCatalog.js';
+import { escapeHTML as h } from './html.js';
 
 const defaults = new WeakMap();
-
 function defaultText(element) {
   if (!defaults.has(element)) defaults.set(element, element.textContent.trim());
   return defaults.get(element);
 }
-
 function applyLabel(element, label) {
   element.textContent = label;
   const id = element.dataset.componentLabel;
-  if (id.startsWith('section:')) {
-    element.closest('section').setAttribute('aria-label', label);
-  } else if (id.startsWith('resource:')) {
-    const resource = element.closest('.resource');
-    resource.querySelectorAll('.resource-value__label').forEach((valueLabel, index) => {
-      valueLabel.textContent = `${label} ${index ? 'máximo' : 'atual'}`;
-    });
+  if (id.startsWith('section:')) element.closest('section')?.setAttribute('aria-label', label);
+  else if (id.startsWith('resource:')) {
+    element.closest('.resource')?.querySelectorAll('.resource-value__label').forEach((el, index) => { el.textContent = `${label} ${index ? 'máximo' : 'atual'}`; });
   } else if (id.startsWith('skill:')) {
     const row = element.closest('.skill-row');
     row.querySelector('[data-skill-prof]').setAttribute('aria-label', `${label}: proficiência`);
     row.querySelector('[data-skill-expertise]').setAttribute('aria-label', `${label}: expertise`);
-  } else {
-    const control = element.parentElement.querySelector('[data-field], [data-attr], [data-armor-slot], [data-save]');
-    control?.setAttribute('aria-label', label);
-  }
+  } else element.parentElement.querySelector('[data-field], [data-attr], [data-armor-slot], [data-save], [data-config-path]')?.setAttribute('aria-label', label);
 }
-
 export function createNameEditor(store, root) {
-  const dialog = document.getElementById('name-editor');
-  const form = document.getElementById('name-editor-form');
-  const select = document.getElementById('name-component');
-  const input = document.getElementById('component-name');
-  const error = document.getElementById('name-editor-error');
-  const trigger = document.getElementById('btn-edit-names');
-  const removalToggle = document.getElementById('btn-remove-components');
-  const removeButton = document.getElementById('component-remove');
-  const restoreButton = document.getElementById('component-restore');
-  let entries = new Map();
-  let restoreDefault = false;
-  let removing = false;
-
-  function selectComponent() {
-    const entry = entries.get(select.value);
-    input.value = entry?.element.textContent || '';
-    input.placeholder = entry?.defaultLabel || '';
-    input.setCustomValidity('');
-    error.hidden = true;
-    restoreDefault = false;
-    const hidden = !!store.getDocument().sheetAppearance.components[select.value]?.hidden;
-    removeButton.hidden = hidden;
-    restoreButton.hidden = !hidden;
-  }
-
+  const dialog = document.getElementById('name-editor'), form = document.getElementById('name-editor-form');
+  const error = document.getElementById('name-editor-error'), trigger = document.getElementById('btn-edit-names');
+  const removalToggle = document.getElementById('btn-remove-components'), rows = document.getElementById('name-rows');
+  const search = document.getElementById('name-search'), filter = document.getElementById('name-filter');
+  let entries = new Map(), removing = false, category = 'identity', catalog = [], draft = new Map();
   function render() {
-    const appearance = store.getDocument().sheetAppearance;
-    entries = new Map();
+    const { character, sheetAppearance } = store.getDocument(); entries = new Map();
     root.querySelectorAll('[data-component-label]').forEach(element => {
       const id = element.dataset.componentLabel;
-      const defaultLabel = defaultText(element);
-      const section = element.closest('section[id], header[id]');
-      const sectionLabel = section?.querySelector('[data-component-label^="section:"]');
-      const group = sectionLabel ? defaultText(sectionLabel) : section?.id === 'guild-card' ? 'Identidade' : 'Registros';
-      entries.set(id, { element, defaultLabel, group });
-      applyLabel(element, appearance.components[id]?.label || defaultLabel);
+      entries.set(id, { element });
+      applyLabel(element, displayName(character, sheetAppearance, id, defaultText(element)));
     });
     document.querySelectorAll('.guild-nav a').forEach(link => {
       const text = link.lastChild;
       if (text?.nodeType !== Node.TEXT_NODE) return;
-      const original = defaultText(text);
-      text.textContent = ` ${appearance.components[`section:${link.hash.slice(1)}`]?.label || original}`;
+      text.textContent = ` ${displayName(character, sheetAppearance, `section:${link.hash.slice(1)}`, defaultText(text))}`;
     });
-    applyComponentVisibility(root, entries, appearance, removing);
+    applyComponentVisibility(root, entries, sheetAppearance, removing);
   }
-
-  function removeComponent(id) {
-    const entry = entries.get(id);
-    if (!entry || !confirm(`Remover “${entry.element.textContent}” da tela? Você poderá restaurar no editor de componentes.`)) return false;
-    store.setComponentHidden(id, true);
-    return true;
+  function drawRows() {
+    const query = search.value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+    const visible = catalog.filter(entry => {
+      const item = draft.get(entry.id);
+      const text = `${entry.original} ${item.label} ${entry.id}`.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+      return (!category || entry.category === category) && text.includes(query) && (filter.value === 'all' || (filter.value === 'hidden' ? item.hidden : item.label !== entry.original));
+    });
+    document.getElementById('name-editor-count').textContent = `${visible.length} componentes. Alterações pendentes só serão salvas ao aplicar.`;
+    rows.innerHTML = visible.map((entry, index) => {
+      const item = draft.get(entry.id);
+      return `<div class="name-row" data-name-row="${h(entry.id)}">
+        <div><strong>${h(entry.original)}</strong><small>${entry.kind === 'record' ? 'Nome de registro' : 'Rótulo estrutural'}${item.hidden ? ' · Oculto' : ''}</small></div>
+        <label for="rename-${index}">Nome personalizado<input id="rename-${index}" data-name-input="${h(entry.id)}" aria-label="Nome de ${h(entry.original)}" value="${h(item.label)}" maxlength="120" required></label>
+        <label class="visibility-check"><input type="checkbox" data-name-hidden="${h(entry.id)}" ${item.hidden ? 'checked' : ''}> Oculto</label>
+        <button type="button" class="btn btn--ghost btn--sm" data-name-restore="${h(entry.id)}" aria-label="Restaurar ${h(entry.original)}">Restaurar</button>
+      </div>`;
+    }).join('') || '<p>Nenhum componente neste filtro.</p>';
   }
-
-  removalToggle.addEventListener('click', () => {
-    removing = !removing;
-    removalToggle.setAttribute('aria-pressed', String(removing));
-    removalToggle.textContent = removing ? 'Concluir remoção' : 'Remover componentes';
-    root.classList.toggle('is-removing-components', removing);
-    document.getElementById('component-removal-hint').hidden = !removing;
-    render();
-  });
-  root.addEventListener('click', event => {
-    const button = event.target.closest('[data-remove-component]');
-    if (!button) return;
-    event.preventDefault(); event.stopPropagation();
-    if (removeComponent(button.dataset.removeComponent)) removalToggle.focus();
-  });
-  removeButton.addEventListener('click', () => {
-    if (removeComponent(select.value)) dialog.close();
-  });
-  restoreButton.addEventListener('click', () => {
-    store.setComponentHidden(select.value, false); dialog.close();
-  });
-
+  function resetEntry(id) {
+    const entry = catalog.find(e => e.id === id);
+    draft.set(id, { label: entry.original, hidden: false, restored: true, labelDirty: true, hiddenDirty: true, dirty: true });
+  }
   trigger.addEventListener('click', () => {
-    render();
-    select.replaceChildren();
-    const groups = new Map();
-    for (const [id, entry] of entries) {
-      if (!groups.has(entry.group)) {
-        const group = document.createElement('optgroup'); group.label = entry.group;
-        groups.set(entry.group, group); select.append(group);
-      }
-      const option = document.createElement('option');
-      option.value = id; option.textContent = entry.defaultLabel;
-      if (store.getDocument().sheetAppearance.components[id]?.hidden) option.textContent += ' (removido)';
-      groups.get(entry.group).append(option);
-    }
-    selectComponent();
-    dialog.showModal();
-    select.focus();
+    const { character, sheetAppearance } = store.getDocument();
+    catalog = componentCatalog(character, sheetAppearance);
+    draft = new Map(catalog.map(e => [e.id, { label: displayName(character, sheetAppearance, e.id, e.original), hidden: !!sheetAppearance.components[e.id]?.hidden, dirty: false }]));
+    category = ''; search.value = ''; filter.value = 'all'; error.hidden = true;
+    const nav = document.getElementById('name-categories');
+    nav.innerHTML = [['', 'Todas'], ...CATEGORIES].map(([key, label]) => `<button type="button" class="btn btn--ghost btn--sm" data-name-category="${key}" aria-pressed="${key === category}">${label}</button>`).join('');
+    nav.onclick = event => {
+      const button = event.target.closest('[data-name-category]'); if (!button) return;
+      category = button.dataset.nameCategory;
+      nav.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button))); drawRows();
+    };
+    drawRows(); dialog.showModal(); search.focus();
   });
-  select.addEventListener('change', selectComponent);
-  input.addEventListener('input', () => {
-    input.setCustomValidity(''); error.hidden = true; restoreDefault = false;
+  rows.addEventListener('input', event => {
+    const id = event.target.dataset.nameInput || event.target.dataset.nameHidden; if (!id) return;
+    const item = draft.get(id); item.dirty = true;
+    if (event.target.dataset.nameInput) { item.label = event.target.value; item.restored = false; item.labelDirty = true; }
+    else { item.hidden = event.target.checked; item.hiddenDirty = true; }
   });
-  document.getElementById('name-default').addEventListener('click', () => {
-    input.value = entries.get(select.value)?.defaultLabel || '';
-    input.setCustomValidity(''); error.hidden = true; restoreDefault = true;
+  rows.addEventListener('click', event => {
+    const button = event.target.closest('[data-name-restore]'); if (!button) return;
+    const id = button.dataset.nameRestore; resetEntry(id); drawRows();
+    rows.querySelector(`[data-name-input="${id}"]`)?.focus();
+  });
+  search.addEventListener('input', drawRows); filter.addEventListener('change', drawRows);
+  document.getElementById('name-category-restore').addEventListener('click', () => {
+    catalog.filter(e => !category || e.category === category).forEach(e => resetEntry(e.id)); drawRows();
   });
   document.getElementById('name-cancel').addEventListener('click', () => dialog.close());
-  dialog.addEventListener('close', () => trigger.focus());
+  dialog.addEventListener('close', () => { draft.clear(); trigger.focus(); });
   form.addEventListener('submit', event => {
     event.preventDefault();
-    const entry = entries.get(select.value);
-    if (!entry?.element.isConnected) return;
-    const label = input.value.trim();
-    if (!label) {
-      input.setCustomValidity('Informe um nome de 1 a 120 caracteres.'); input.reportValidity(); return;
-    }
     try {
-      store.renameComponent(select.value, restoreDefault || label === entry.defaultLabel ? null : label);
+      store.customizeComponents([...draft].filter(([, item]) => item.dirty).map(([id, item]) => ({ id, ...(item.labelDirty ? { label: item.restored ? null : item.label.trim() } : {}), ...(item.hiddenDirty ? { hidden: item.hidden } : {}) })));
       dialog.close();
-    } catch (cause) {
-      error.textContent = cause.message; error.hidden = false;
+    } catch (cause) { error.textContent = cause.message; error.hidden = false; }
+  });
+  removalToggle.addEventListener('click', () => {
+    removing = !removing; removalToggle.setAttribute('aria-pressed', String(removing));
+    removalToggle.textContent = removing ? 'Concluir remoção' : 'Remover componentes';
+    root.classList.toggle('is-removing-components', removing);
+    document.getElementById('component-removal-hint').hidden = !removing; render();
+  });
+  root.addEventListener('click', event => {
+    const button = event.target.closest('[data-remove-component]'); if (!button) return;
+    event.preventDefault(); event.stopPropagation();
+    const id = button.dataset.removeComponent, entry = entries.get(id);
+    if (entry && confirm(`Remover “${entry.element.textContent}” da tela? Você poderá restaurar na central de componentes.`)) {
+      store.setComponentHidden(id, true); removalToggle.focus();
     }
   });
   return { render };

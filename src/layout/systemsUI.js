@@ -1,3 +1,4 @@
+import { displayName } from '../domain/componentCatalog.js';
 import * as R from '../auto_calc_engine/index.js';
 import * as M from '../auto_calc_engine/masteryCalculator.js';
 import * as D from '../domain/catalog.js';
@@ -12,6 +13,9 @@ function escapeHTML(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[char]));
 }
+
+const name = (id, fallback) => displayName(character, store.getDocument().sheetAppearance, id, fallback);
+const label = (id, fallback) => escapeHTML(name(id, fallback));
 
 function init(applicationStore) {
   store = applicationStore; character = store.getState();
@@ -32,6 +36,7 @@ function renderAll() {
 }
 
 function metricCard(label, value, formula, accent) {
+  if (typeof value === 'number' && !Number.isFinite(value)) value = 'Erro de cálculo';
   return `<article class="metric-card ${accent ? `metric-card--${accent}` : ''}">
     <span class="metric-card__label" data-component-label="metric:${accent}">${label}</span>
     <strong class="metric-card__value">${value}</strong>
@@ -48,11 +53,11 @@ function renderMetrics() {
   const vitality = character.dnd.vitality;
 
   document.getElementById('rule-metrics').innerHTML = [
-    metricCard('Classe de Armadura', ac.total, `${ac.base} base ${R.signed(ac.dex)} DES ${R.signed(ac.armor)} armadura ${R.signed(ac.shield)} escudo ${R.signed(ac.buffs)} buffs`, 'armor'),
-    metricCard('Iniciativa', R.signed(initiative.total), `DES ${R.signed(initiative.dex)} · buffs ${R.signed(initiative.buffs)} · talentos ${R.signed(initiative.feats)}`, 'initiative'),
-    metricCard('Vida Máxima', hp.total, `1º nível ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} × ${hp.laterPerLevel} ${R.signed(hp.feats)} talentos ${R.signed(hp.buffs)} buffs`, 'hp'),
+    metricCard('Classe de Armadura', ac.total, `${ac.base} base ${R.signed(ac.dex)} ${label('attribute:des', 'DES')} ${R.signed(ac.armor)} armadura ${R.signed(ac.shield)} escudo ${R.signed(ac.buffs)} buffs`, 'armor'),
+    metricCard('Iniciativa', R.signed(initiative.total), `${label('attribute:des', 'DES')} ${R.signed(initiative.dex)} · buffs ${R.signed(initiative.buffs)} · talentos ${R.signed(initiative.feats)}`, 'initiative'),
+    metricCard('Vida Máxima', hp.total ?? 'Erro', hp.errors.length ? escapeHTML(hp.errors.join(' · ')) : hp.configured ? 'Configurada em Características e fórmulas' : `1º nível ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} × ${hp.laterPerLevel} ${R.signed(hp.feats)} talentos ${R.signed(hp.buffs)} buffs`, 'hp'),
     metricCard('Dados de Vida', vitality.hitDie, `${vitality.hitDiceRemaining} restantes de ${R.level(character)}`, 'hitdie'),
-    metricCard('Percepção Passiva', 10 + perception.total, `10 ${R.signed(perception.total)} Percepção`, 'passive')
+    metricCard('Percepção Passiva', 10 + perception.total, `10 ${R.signed(perception.total)} ${label('skill:perception', 'Percepção')}`, 'passive')
   ].join('');
 }
 
@@ -60,10 +65,10 @@ function renderSaves() {
   const container = document.getElementById('saving-throws');
   container.innerHTML = D.ABILITIES.map(ability => {
     const result = R.saveBreakdown(character, ability.key);
-    return `<label class="save-row" title="${ability.label}: modificador ${R.signed(result.ability)} + proficiência ${R.signed(result.proficiency)}">
+    return `<label class="save-row" title="${label(`save:${ability.key}`, ability.label)}: modificador ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)}">
       <input type="checkbox" data-save="${ability.key}" ${character.dnd.saves[ability.key] ? 'checked' : ''}>
-      <span class="save-row__ability" data-component-label="save:${ability.key}">${ability.short}</span>
-      <span class="save-row__parts">${R.signed(result.ability)} atributo ${R.signed(result.proficiency)} prof.</span>
+      <span class="save-row__ability" data-component-label="save:${ability.key}">${label(`attribute:${ability.key}`, ability.short)}</span>
+      <span class="save-row__parts">${R.signed(result.ability)} atributo ${R.signed(result.proficiency)} ${label('indicator:proficiency', 'prof.')}</span>
       <strong>${R.signed(result.total)}</strong>
     </label>`;
   }).join('');
@@ -84,16 +89,16 @@ function renderSkills() {
       const state = character.dnd.skills[skill.key];
       const result = R.skillBreakdown(character, skill);
       const totalBonus = result.external + result.mastery;
-      return `<div class="skill-row" title="${skill.name}: ${ability.short} ${R.signed(result.ability)} + proficiência ${R.signed(result.proficiency)} + bônus externo ${R.signed(result.external)} + maestria ${R.signed(result.mastery)}">
-        <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" aria-label="${skill.name}: proficiência" ${state.proficient ? 'checked' : ''}><span>○</span></label>
-        <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${skill.name}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
-        <span class="skill-row__name" data-component-label="skill:${skill.key}">${skill.name}</span>
-        <span class="skill-row__ability">${ability.short}</span>
+      return `<div class="skill-row" title="${label(`skill:${skill.key}`, skill.name)}: ${label(`attribute:${ability.key}`, ability.short)} ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)} + bônus externo ${R.signed(result.external)} + maestria ${R.signed(result.mastery)}">
+        <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: proficiência" ${state.proficient ? 'checked' : ''}><span>○</span></label>
+        <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
+        <span class="skill-row__name" data-component-label="skill:${skill.key}">${label(`skill:${skill.key}`, skill.name)}</span>
+        <span class="skill-row__ability">${label(`attribute:${ability.key}`, ability.short)}</span>
         ${totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}
         <strong>${R.signed(result.total)}</strong>
       </div>`;
     }).join('');
-    return `<section class="skill-group"><h4>${ability.label}</h4>${rows}</section>`;
+    return `<section class="skill-group"><h4>${label(`attribute:${ability.key}`, ability.label)}</h4>${rows}</section>`;
   }).join('');
 
   container.querySelectorAll('[data-skill-prof]').forEach(input => {
@@ -125,7 +130,7 @@ function renderCombatConfig() {
   const hitDice = [6, 8, 10, 12].map(value => ({ value: `d${value}`, label: `d${value}` }));
   const container = document.getElementById('combat-config');
   container.innerHTML = [
-    configField('Tipo de armadura', 'dnd.armor.type', armor.type, 'select', D.ARMOR_TYPES, 'Pesada ignora DES; média limita em +2.'),
+    configField('Tipo de armadura', 'dnd.armor.type', armor.type, 'select', D.ARMOR_TYPES, `Pesada ignora ${label('attribute:des', 'DES')}; média limita em +2.`),
     configField('Base da CA', 'dnd.armor.base', armor.base),
     configField('Bônus de armadura', 'dnd.armor.armorBonus', armor.armorBonus),
     configField('Escudo', 'dnd.armor.shield', armor.shield),
@@ -139,15 +144,16 @@ function renderCombatConfig() {
     configField('PV por talentos', 'dnd.vitality.featBonus', vitality.featBonus),
     configField('PV por buffs', 'dnd.vitality.buffs', vitality.buffs)
   ].join('') + `<div class="formula-status ${hp.errors.length ? 'is-error' : ''}">
-    <strong>Prévia de Vida Máxima: ${hp.total}</strong>
-    <span>1º nível: ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} níveis seguintes × ${hp.laterPerLevel} = ${hp.laterLevels}</span>
-    ${hp.errors.length ? `<small>${escapeHTML(hp.errors.join(' · '))} Usando o cálculo padrão como fallback.</small>` : '<small>Fórmulas válidas.</small>'}
+    <strong>Prévia de Vida Máxima: ${hp.total ?? 'Erro'}</strong>
+    <span>${hp.errors.length ? 'Resultado indisponível até corrigir a regra.' : hp.configured ? 'Vida configurada no calculador. As fórmulas legadas só voltam a ser aplicadas ao selecionar Vida legada.' : `1º nível: ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} níveis seguintes × ${hp.laterPerLevel} = ${hp.laterLevels}`}</span>
+    ${hp.errors.length ? `<small>${escapeHTML(hp.errors.join(' · '))} O último valor persistido é preservado até corrigir a regra.</small>` : '<small>Fórmulas válidas.</small>'}
   </div>`;
 
   container.querySelectorAll('[data-config-path]').forEach(input => {
     input.addEventListener('change', () => {
       const value = input.dataset.configType === 'number' ? Number(input.value) || 0 : input.value.trim();
-      store.dispatch('setField', { path: input.dataset.configPath, value });
+      try { store.dispatch('setField', { path: input.dataset.configPath, value }); input.setCustomValidity(''); }
+      catch (error) { input.setCustomValidity(error.message); input.reportValidity(); container.querySelector('.formula-status').textContent = error.message; }
     });
   });
 }
@@ -165,9 +171,9 @@ function renderAttackPanel() {
       <div class="toolbar-row"><label><span data-component-label="weapon:equipped">Arma equipada</span> <select id="equipped-weapon-select"><option value="">Nenhuma</option>${choices}</select></label></div>
       <article class="weapon-summary">
         <div class="weapon-summary__icon">${escapeHTML(weapon.icon || '⚔')}</div>
-        <div class="weapon-summary__identity"><span>Arma equipada</span><h3>${escapeHTML(weapon.name)}</h3><small>${escapeHTML(weapon.dndElement || 'Sem elemento')} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
-        <div class="attack-result"><span data-component-label="attack:bonus">Ataque</span><strong>${R.signed(attack.total)}</strong><small>${R.signed(attack.ability)} atributo · ${R.signed(attack.proficiency)} prof. · ${R.signed(attack.buffs)} buffs · ${R.signed(attack.mastery)} maestria</small></div>
-        <div class="attack-result"><span data-component-label="attack:damage">Dano</span><strong>${escapeHTML(damage.expression)}</strong><small>${escapeHTML(damage.dice)} ${R.signed(damage.ability)} atributo ${R.signed(damage.buffs)} buffs ${R.signed(damage.mastery)} maestria</small></div>
+        <div class="weapon-summary__identity"><span>${label('weapon:equipped')}</span><h3>${escapeHTML(weapon.name)}</h3><small>${escapeHTML(weapon.dndElement || 'Sem elemento')} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
+        <div class="attack-result"><span data-component-label="attack:bonus">Ataque</span><strong>${R.signed(attack.total)}</strong><small>${R.signed(attack.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} · ${R.signed(attack.proficiency)} ${label('indicator:proficiency', 'prof.')} · ${R.signed(attack.buffs)} buffs · ${R.signed(attack.mastery)} maestria</small></div>
+        <div class="attack-result"><span data-component-label="attack:damage">Dano</span><strong>${escapeHTML(damage.expression)}</strong><small>${escapeHTML(damage.dice)} ${R.signed(damage.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} ${R.signed(damage.buffs)} buffs ${R.signed(damage.mastery)} maestria</small></div>
       </article>`;
   }
   document.getElementById('equipped-weapon-select').addEventListener('change', event => {
@@ -187,20 +193,28 @@ function renderMasteryPanel() {
   const progress = Math.max(0, Math.min(100, (Number(state.xp) || 0) / Math.max(1, Number(state.xpToNext) || 100) * 100));
   const unlocks = M.parseUnlocks(weapon);
   masteryContainer.innerHTML = `<div class="mastery-card">
-    <div class="mastery-card__head"><div><span>Maestria da Arma</span><h3>${escapeHTML(weapon.name)}</h3></div><strong>Lv ${Number(state.level) || 1}</strong></div>
+    <div class="mastery-card__head"><div><span>${label('subsection:mastery')}</span><h3>${escapeHTML(weapon.name)}</h3></div><strong>Lv ${Number(state.level) || 1}</strong></div>
     <div class="mastery-track"><span style="width:${progress}%"></span></div>
     <div class="mastery-controls">
       <label><span data-component-label="mastery:level">Nível</span> <input type="number" min="1" max="20" data-mastery="level" value="${Number(state.level) || 1}"></label>
       <label><span data-component-label="mastery:xp">XP</span> <input type="number" min="0" data-mastery="xp" value="${Number(state.xp) || 0}"></label>
       <label><span data-component-label="mastery:xpToNext">Próximo</span> <input type="number" min="1" data-mastery="xpToNext" value="${Number(state.xpToNext) || 100}"></label>
     </div>
-    <div class="unlock-list">${unlocks.map(unlock => `<div class="unlock ${unlock.level <= state.level ? 'is-unlocked' : ''}"><span>Lv ${unlock.level}</span><strong>${escapeHTML(unlock.name)}</strong><small>${escapeHTML(unlock.description)}</small></div>`).join('') || '<div class="empty-hint">Sem técnicas cadastradas.</div>'}</div>
+    <div class="unlock-list">${unlocks.map(unlock => `<div class="unlock ${unlock.level <= state.level ? 'is-unlocked' : ''}"><span>Lv ${unlock.level}</span><strong>${escapeHTML(unlock.name)}</strong><small>${unlockDescription(unlock)}</small></div>`).join('') || '<div class="empty-hint">Sem técnicas cadastradas.</div>'}</div>
   </div>`;
   masteryContainer.querySelectorAll('[data-mastery]').forEach(input => {
     input.addEventListener('change', () => {
       store.dispatch('setMastery', { id: weapon.id, key: input.dataset.mastery, value: input.value });
     });
   });
+}
+
+function unlockDescription(unlock) {
+  const effects = unlock.effects;
+  const descriptions = [['attack', 'attack:bonus'], ['damage', 'attack:damage'], ['initiative', 'metric:initiative']]
+    .filter(([key]) => effects[key]).map(([key, id]) => `${label(id)} ${R.signed(effects[key])}`);
+  for (const [key, value] of Object.entries(effects.skills)) descriptions.push(`${label(`skill:${key}`, D.SKILLS.find(s => s.key === key)?.name || key)} ${R.signed(value)}`);
+  return descriptions.join(' · ') || escapeHTML(unlock.description);
 }
 
 function renderEquipment() {
@@ -225,19 +239,19 @@ function renderEquipment() {
 
   const buffs = document.getElementById('buff-list');
   buffs.innerHTML = (character.buffs || []).map(buff => `<article class="buff-card" data-buff-edit="${buff.id}" tabindex="0">
-    <div><span>${escapeHTML(buff.source || 'Buff')}</span><strong>${escapeHTML(buff.name)}</strong></div>
+    <div><span>${escapeHTML(buff.source || 'Buff')}</span><strong data-component-label="record:buffs:${buff.id}">${escapeHTML(buff.name)}</strong></div>
     <div class="effect-tags">${buffTags(buff)}</div>
   </article>`).join('') || '<div class="empty-hint">Nenhum buff ativo. Adicione skills, talentos ou efeitos de itens.</div>';
   buffs.querySelectorAll('[data-buff-edit]').forEach(card => card.addEventListener('click', () => openBuffEditor(character.buffs.find(buff => buff.id === card.dataset.buffEdit))));
 }
 
 function buffTags(buff) {
-  const labels = { attack: 'Ataque', damage: 'Dano', armorClass: 'CA', initiative: 'Iniciativa', hp: 'PV' };
+  const labels = { attack: label('attack:bonus'), damage: label('attack:damage'), armorClass: label('metric:armor'), initiative: label('metric:initiative'), hp: label('metric:hp') };
   const tags = Object.keys(labels)
     .filter(key => Number(buff[key]))
     .map(key => `<span>${labels[key]} ${R.signed(buff[key])}</span>`);
   const skill = D.SKILLS.find(item => item.key === buff.skill);
-  if (skill && Number(buff.skillBonus)) tags.push(`<span>${skill.name} ${R.signed(buff.skillBonus)}</span>`);
+  if (skill && Number(buff.skillBonus)) tags.push(`<span>${label(`skill:${skill.key}`, skill.name)} ${R.signed(buff.skillBonus)}</span>`);
   if (String(buff.damageDice || '').trim()) tags.push(`<span>+ ${escapeHTML(String(buff.damageDice).trim())}</span>`);
   return tags.join('') || '<span>Sem modificadores</span>';
 }
@@ -246,7 +260,7 @@ function renderLibrary() {
   const weaponContainer = document.getElementById('weapon-library');
   weaponContainer.innerHTML = (character.library.weapons || []).map(weapon => `<article class="library-card ${character.equipment.weaponId === weapon.id ? 'is-equipped' : ''}">
     <div class="library-card__icon">${escapeHTML(weapon.icon || '⚔')}</div>
-    <div class="library-card__body"><span>${character.equipment.weaponId === weapon.id ? 'Equipada' : 'Arma'}</span><strong>${escapeHTML(weapon.name)}</strong><small>${escapeHTML(weapon.damageDice || '—')} · ${escapeHTML(String(weapon.ability || 'for').toUpperCase())} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
+    <div class="library-card__body"><span>${character.equipment.weaponId === weapon.id ? 'Equipada' : 'Arma'}</span><strong data-component-label="record:weapons:${weapon.id}">${escapeHTML(weapon.name)}</strong><small>${escapeHTML(weapon.damageDice || '—')} · ${label(`attribute:${weapon.ability || 'for'}`, String(weapon.ability || 'for').toUpperCase())} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
     <div class="library-card__actions"><button class="btn btn--ghost btn--sm" data-equip-weapon="${weapon.id}">${character.equipment.weaponId === weapon.id ? 'Remover' : 'Equipar'}</button><button class="btn btn--ghost btn--sm" data-edit-weapon="${weapon.id}">Editar</button></div>
   </article>`).join('') || '<div class="empty-hint">Nenhuma arma cadastrada.</div>';
 
@@ -261,7 +275,7 @@ function renderLibrary() {
     const slot = D.ARMOR_SLOTS.find(candidate => candidate.key === item.slot);
     return `<article class="library-card ${equipped ? 'is-equipped' : ''}">
       <div class="library-card__icon">⬢</div>
-      <div class="library-card__body"><span>${slot ? slot.label : 'Armadura'}</span><strong>${escapeHTML(item.name)}</strong><small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small></div>
+      <div class="library-card__body"><span>${slot ? label(`armor:${slot.key}`, slot.label) : 'Armadura'}</span><strong data-component-label="record:armors:${item.id}">${escapeHTML(item.name)}</strong><small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small></div>
       <div class="library-card__actions"><button class="btn btn--ghost btn--sm" data-equip-armor="${item.id}">${equipped ? 'Remover' : 'Equipar'}</button><button class="btn btn--ghost btn--sm" data-edit-armor="${item.id}">Editar</button></div>
     </article>`;
   }).join('') || '<div class="empty-hint">Nenhuma peça cadastrada.</div>';
@@ -286,7 +300,7 @@ function openWeaponEditor(weapon) {
     fields: [
       { key: 'icon', label: 'Ícone', type: 'select', options: D.WEAPON_ICONS },
       { key: 'damageDice', label: 'Dano D&D (ex.: 2d6)', type: 'text' },
-      { key: 'ability', label: 'Atributo do ataque', type: 'select', options: D.ABILITIES.map(item => ({ value: item.key, label: `${item.short} — ${item.label}` })) },
+      { key: 'ability', label: 'Atributo do ataque', type: 'select', options: D.ABILITIES.map(item => ({ value: item.key, label: name(`attribute:${item.key}`, `${item.short} — ${item.label}`) })) },
       { key: 'proficient', label: 'Usa proficiência?', type: 'select', options: [{ value: 'true', label: 'Sim' }, { value: 'false', label: 'Não' }] },
       { key: 'critMin', label: 'Crítico mínimo (19 = 19–20)', type: 'number' },
       { key: 'dndElement', label: 'Elemento D&D', type: 'text' },
@@ -302,7 +316,7 @@ function openArmorEditor(item) {
     eyebrow: item ? 'Editar armadura da biblioteca' : 'Nova armadura da biblioteca',
     entry: item ? { title: item.name, ...item } : null,
     fields: [
-      { key: 'slot', label: 'Peça', type: 'select', options: D.ARMOR_SLOTS.map(slot => ({ value: slot.key, label: slot.label })) },
+      { key: 'slot', label: 'Peça', type: 'select', options: D.ARMOR_SLOTS.map(slot => ({ value: slot.key, label: name(`armor:${slot.key}`, slot.label) })) },
       { key: 'acBonus', label: 'Bônus de CA D&D', type: 'number' },
       { key: 'resistances', label: 'Resistências', type: 'text' },
       { key: 'skills', label: 'Skills', type: 'textarea', rows: 3 },
@@ -316,7 +330,7 @@ function openArmorEditor(item) {
 function openBuffEditor(buff) {
   const fields = [
     { key: 'source', label: 'Origem (item, skill, talento)', type: 'text' },
-    { key: 'skill', label: 'Perícia afetada', type: 'select', options: [{ value: '', label: 'Nenhuma perícia' }, ...D.SKILLS.map(skill => ({ value: skill.key, label: skill.name }))] },
+    { key: 'skill', label: 'Perícia afetada', type: 'select', options: [{ value: '', label: 'Nenhuma perícia' }, ...D.SKILLS.map(skill => ({ value: skill.key, label: name(`skill:${skill.key}`, skill.name) }))] },
     { key: 'skillBonus', label: 'Bônus na perícia', type: 'number' },
     { key: 'attack', label: 'Bônus de ataque D&D', type: 'number' },
     { key: 'damage', label: 'Bônus flat de dano D&D', type: 'number' },
