@@ -28,7 +28,6 @@
 </nav>
 
 <div id="app">
-
   <div class="top-actions">
     <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema" aria-label="Alternar tema"><span aria-hidden="true">◐</span></button>
     <button class="btn btn--ghost btn--sm" id="btn-edit-names">Editar componentes</button>
@@ -176,6 +175,20 @@
     </div>
   </section>
 
+  <section class="panel codex-section" id="calculations" aria-label="Características e fórmulas">
+    <div class="panel__header"><h2 class="panel__title" data-component-label="section:calculations">Características e fórmulas</h2><button class="btn btn--ghost btn--sm" id="btn-calculation-add">+ Característica</button></div>
+    <p>Atributos começam em modo manual. Configure máximos e progressões sem recuperar automaticamente os recursos atuais.</p>
+    <div class="calculation-actions"><button class="btn btn--ghost" id="btn-spellcasting">Configurar conjuração global</button></div>
+    <p class="rule-preview" id="spellcasting-summary"></p><p class="rule-errors" id="calculation-error" role="alert"></p>
+    <div class="calculation-list" id="calculation-list"></div>
+  </section>
+  <section class="panel codex-section" id="temporal" aria-label="Efeitos temporais">
+    <div class="panel__header"><h2 class="panel__title" data-component-label="section:temporal">Efeitos temporais</h2><button class="btn btn--ghost btn--sm" id="btn-effect-add">+ Efeito temporal</button></div>
+    <p>Cada ação aplica a recuperação ou o consumo e depois reduz a duração nessa unidade. Turnos e rodadas são independentes. Descanso dispara recursos, sem avançar turnos ou rodadas. Reabrir a ficha não dispara eventos.</p>
+    <p id="event-counts" role="status"></p><p id="temporal-error" class="rule-errors" role="alert"></p>
+    <div class="event-actions"><button class="btn btn--ghost" data-event="turn">Avançar turno</button><button class="btn btn--ghost" data-event="round">Avançar rodada</button><button class="btn btn--ghost" data-event="rest">Aplicar descanso</button></div>
+    <div class="temporal-list" id="temporal-list"></div>
+  </section>
   <footer class="app-footer">Hunter's Codex &mdash; Registro da Guilda &middot; salvo localmente no seu navegador</footer>
 </div>
 
