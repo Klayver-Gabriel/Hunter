@@ -49,7 +49,9 @@ function createStarterWeapon() {
 function createDefault() {
   const starterWeapon = createStarterWeapon();
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
+    calculations: { rules: {}, characteristics: [], spellcasting: { ability: 'int', formula: '8 + PROFICIENCIA + MOD_CONJURACAO + BONUS_DT', bonus: 0 } },
+    temporal: { turn: 0, round: 0, rest: 0, effects: [] },
     id: uid('char'),
     info: {
       name: '',

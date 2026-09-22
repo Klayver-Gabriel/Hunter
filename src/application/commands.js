@@ -1,4 +1,7 @@
 import * as C from '../domain/character.js';
+import { validateCalculations, targetIds } from '../domain/calculations.js';
+import { calculateCharacter, baseValue, characterLevel, assertCalculations } from '../auto_calc_engine/characterCalculator.js';
+import { advanceEvent } from './temporal.js';
 import * as D from '../domain/catalog.js';
 const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const fields = new Set([
@@ -19,17 +22,19 @@ export function applyCommand(c, type, p = {}) {
       C.set(c, p.path, p.value); break;
     case 'setAttribute':
       if (!C.ATTRS.includes(p.key)) throw Error('Atributo inválido.');
+      if (c.calculations.rules[`attribute:${p.key}`] && c.calculations.rules[`attribute:${p.key}`].mode !== 'manual') throw Error('Altere a regra deste atributo no calculador.');
       c.attributes[p.key] = Math.max(1, Math.min(30, numeric(p.value) || 10)); break;
     case 'addResource': C.addResource(c, { name: 'Novo Recurso', current: 10, max: 10 }); break;
     case 'removeResource':
-      if (lookup(c.resources, p.id)?.removable) C.removeResource(c, p.id); break;
+      if (lookup(c.resources, p.id)?.removable) { C.removeResource(c, p.id); delete c.calculations.rules[`resource:${p.id}`]; } break;
     case 'setResource': {
       const r = lookup(c.resources, p.id);
       if (!r || !['name', 'current', 'max'].includes(p.key)) throw Error('Recurso inválido.');
+      if (p.key === 'max' && c.calculations.rules[`resource:${r.id}`] && c.calculations.rules[`resource:${r.id}`].mode !== 'manual') throw Error('Altere a regra deste recurso no calculador.');
       if (p.key === 'name') { if (r.removable) r.name = String(p.value).trim() || r.name; }
-      else if (!(p.key === 'max' && r.type === 'hp')) {
+      else if (!(p.key === 'max' && r.type === 'hp' && !c.calculations.rules[`resource:${r.id}`])) {
         r[p.key] = Math.max(0, numeric(p.value));
-        if (p.key === 'max') r.current = Math.min(r.current, r.max);
+        if (p.key === 'max') { r.baseMax = r.max; r.current = Math.min(r.current, r.max); }
       }
       break;
     }
@@ -98,6 +103,56 @@ export function applyCommand(c, type, p = {}) {
       else if (p.id) C.updateEntry(c, p.list, p.id, p.data);
       else C.addEntry(c, p.list, p.data);
       break;
+    case 'setCalculationRule': {
+      if (!targetIds(c).includes(p.target)) throw Error('Característica inexistente.');
+      const previous = calculateCharacter(c);
+      const rule = structuredClone(p.rule);
+      if (p.target === 'spellcasting' && p.spellcasting) c.calculations.spellcasting = { ...c.calculations.spellcasting, ...p.spellcasting };
+      if (rule.mode === 'manual') {
+        const value = p.value ?? previous.baseValues[p.target] ?? baseValue(c, p.target);
+        const [kind, key] = p.target.split(':');
+        if (p.target === 'spellcasting') c.calculations.spellcasting.base = value;
+        else if (kind === 'attribute') c.attributes[key] = value;
+        else if (kind === 'resource') lookup(c.resources, key).baseMax = value;
+        else lookup(c.calculations.characteristics, key).base = value;
+      }
+      if (rule.mode === 'progression' && rule.policy === 'recorded') {
+        const old = c.calculations.rules[p.target];
+        const comparable = r => JSON.stringify({ mode: r?.mode, initial: r?.initial, gain: r?.gain, bonuses: r?.bonuses, policy: r?.policy, min: r?.min, max: r?.max });
+        rule.history = old?.history && comparable(old) === comparable(rule) ? structuredClone(old.history) : { anchorLevel: characterLevel(c), anchorValue: previous.baseValues[p.target] ?? baseValue(c, p.target), gains: {} };
+      } else delete rule.history;
+      c.calculations.rules[p.target] = rule;
+      validateCalculations(c); assertCalculations(c); break;
+    }
+    case 'useLegacyHp':
+      if (!c.resources.some(r => `resource:${r.id}` === p.target && (r.type === 'hp' || r.id === 'hp'))) throw Error('Recurso de vida inexistente.');
+      delete c.calculations.rules[p.target]; assertCalculations(c); break;
+    case 'setSpellcasting': delete c.calculations.rules.spellcasting; c.calculations.spellcasting = structuredClone(p.data); validateCalculations(c); assertCalculations(c); break;
+    case 'addCharacteristic':
+      c.calculations.characteristics.push({ id: C.uid('stat'), name: p.name || 'Nova característica', base: 0 }); break;
+    case 'removeCharacteristic':
+      c.calculations.characteristics = c.calculations.characteristics.filter(r => r.id !== p.id);
+      delete c.calculations.rules[`characteristic:${p.id}`]; break;
+    case 'saveEffect': {
+      const id = p.id || C.uid('effect');
+      upsert(c.temporal.effects, { ...p.data, id }); break;
+    }
+    case 'activateEffect': {
+      const effect = lookup(c.temporal.effects, p.id);
+      if (!effect) throw Error('Efeito inexistente.');
+      if (!effect.active) { effect.active = true; effect.remaining = effect.duration; }
+      break;
+    }
+    case 'deactivateEffect': {
+      const effect = lookup(c.temporal.effects, p.id);
+      if (!effect) throw Error('Efeito inexistente.');
+      effect.active = false; break;
+    }
+    case 'removeEffect': c.temporal.effects = c.temporal.effects.filter(e => e.id !== p.id); break;
+    case 'advanceEvent': advanceEvent(c, p.event); break;
     default: throw Error(`Comando desconhecido: ${type}`);
   }
+  validateCalculations(c);
+  if (['removeResource', 'removeCharacteristic', 'saveEntry', 'saveEffect', 'activateEffect'].includes(type)) assertCalculations(c);
+  if (type === 'setField' && p.path.includes('Formula')) assertCalculations(c);
 }

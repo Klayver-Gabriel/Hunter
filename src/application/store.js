@@ -1,6 +1,9 @@
 import { createAppearance, validateAppearance, validId } from '../domain/sheetAppearance.js';
 import { applyCommand } from './commands.js';
-import { maxHpBreakdown, level } from '../auto_calc_engine/index.js';
+import { level } from '../auto_calc_engine/index.js';
+import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
+import { createCalculations, createTemporal } from '../domain/calculations.js';
+import { componentCatalog, recordFor, recordNameKey } from '../domain/componentCatalog.js';
 export function freeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.values(value).forEach(freeze); Object.freeze(value);
@@ -8,8 +11,14 @@ export function freeze(value) {
   return value;
 }
 function synchronize(c) {
-  const hp = c.resources.find(r => r.id === 'hp' || r.type === 'hp');
-  if (hp) { hp.max = maxHpBreakdown(c).total; hp.current = Math.min(Number(hp.current) || 0, hp.max); }
+  c.calculations ||= createCalculations(); c.temporal ||= createTemporal();
+  for (const resource of c.resources) resource.baseMax ??= resource.max;
+  const result = calculateCharacter(c);
+  for (const resource of c.resources) {
+    const value = result.values[`resource:${resource.id}`];
+    if (value != null) { resource.max = value; resource.current = Math.max(0, Math.min(resource.current, value)); }
+  }
+  for (const [id, history] of Object.entries(result.histories)) c.calculations.rules[id].history = history;
   c.dnd.vitality.hitDiceRemaining = Math.min(level(c), Math.max(0, Number(c.dnd.vitality.hitDiceRemaining) || 0));
   return c;
 }
@@ -39,11 +48,45 @@ export function createStore(initial) {
     getState: () => state,
     getDocument: () => ({ formatVersion: 1, character: state, sheetAppearance: appearance }),
     replaceDocument(next) {
-      appearance = freeze(validateAppearance(next.sheetAppearance));
-      publish(structuredClone(next.character), 'replace'); return true;
+      const nextAppearance = freeze(validateAppearance(next.sheetAppearance));
+      const nextState = freeze(synchronize(structuredClone(next.character)));
+      appearance = nextAppearance; state = nextState;
+      for (const listener of listeners) listener(state, 'replace');
+      return true;
     },
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    customizeComponents(changes) {
+      const next = structuredClone(appearance), draft = structuredClone(state);
+      const catalog = componentCatalog(state, appearance);
+      for (const change of changes) {
+        const entry = catalog.find(e => e.id === change.id);
+        if (!entry) throw Error('Componente inexistente.');
+        const component = next.components[change.id] ||= {};
+        if (Object.hasOwn(change, 'label')) {
+          if (change.label !== null && (typeof change.label !== 'string' || !change.label.trim() || change.label.length > 120)) throw Error('Nome deve conter de 1 a 120 caracteres.');
+          const record = recordFor(draft, change.id);
+          if (record) {
+            const key = recordNameKey(record, change.id);
+            record.originalName ||= record[key];
+            record[key] = change.label === null ? record.originalName : change.label.trim();
+            delete component.label;
+          } else if (change.label === null) delete component.label;
+          else component.label = change.label.trim();
+        }
+        if (Object.hasOwn(change, 'hidden')) {
+          if (typeof change.hidden !== 'boolean') throw Error('Visibilidade inválida.');
+          if (change.hidden) component.hidden = true; else delete component.hidden;
+        }
+        if (!Object.keys(component).length) delete next.components[change.id];
+      }
+      const validated = freeze(validateAppearance(next));
+      const nextState = freeze(synchronize(draft));
+      appearance = validated; state = nextState;
+      for (const listener of listeners) listener(state, 'customizeComponents');
+      return true;
+    },
     renameComponent(id, label) {
+      if (recordFor(state, id)) return this.customizeComponents([{ id, label }]);
       if (!validId(id)) throw Error('Componente inválido.');
       if (label !== null && (typeof label !== 'string' || !label.trim() || label.length > 120)) {
         throw Error('Nome deve conter de 1 a 120 caracteres.');

@@ -45,6 +45,6 @@ export function damageBreakdown(character, weapon) {
   const baseExpression = `${weapon.damageDice || '1d6'}${totalBonus === 0 ? '' : signed(totalBonus)}`;
   return {
     dice: weapon.damageDice || '1d6', ability, buffs, mastery, totalBonus, additionalDice,
-    expression: [baseExpression, ...additionalDice].join(' + ')
+    expression: Number.isFinite(totalBonus) ? [baseExpression, ...additionalDice].join(' + ') : 'Erro de cálculo'
   };
 }

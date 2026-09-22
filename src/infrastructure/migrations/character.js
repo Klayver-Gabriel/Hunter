@@ -1,12 +1,14 @@
 import { createDefault, createSkillState, createSaveState, ATTRS, uid } from '../../domain/character.js';
+import { createCalculations, createTemporal, validateCalculations } from '../../domain/calculations.js';
+import { assertCalculations, characterLevel, baseValue } from '../../auto_calc_engine/characterCalculator.js';
 import * as D from '../../domain/catalog.js';
 
-export function migrateCharacter(raw) {
+export function migrateCharacter(raw, options = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Formato de ficha inválido.');
   }
 
-  if (raw.schemaVersion != null && (![1, 2].includes(raw.schemaVersion))) {
+  if (raw.schemaVersion != null && (![1, 2, 3].includes(raw.schemaVersion))) {
     throw new Error('Versão de ficha incompatível.');
   }
   for (const key of ['info', 'attributes', 'equipment', 'dnd', 'library', 'meta', 'masteries']) {
@@ -54,7 +56,9 @@ export function migrateCharacter(raw) {
   const migrated = {
     ...defaults,
     ...raw,
-    schemaVersion: 2,
+    schemaVersion: 3,
+    calculations: raw.calculations ?? createCalculations(),
+    temporal: raw.temporal ?? createTemporal(),
     info: { ...defaults.info, ...(raw.info || {}) },
     attributes: { ...defaults.attributes, ...(raw.attributes || {}) },
     resources: Array.isArray(raw.resources) ? raw.resources : defaults.resources,
@@ -111,5 +115,15 @@ export function migrateCharacter(raw) {
   for (const [id, state] of Object.entries(migrated.masteries)) {
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !state || typeof state !== 'object' || Array.isArray(state)) throw new Error('Maestria inválida.');
   }
+  // Schema 2 → 3 adds configuration only. Legacy HP formulas retain their evaluator.
+  for (const spell of migrated.spells) {
+    spell.dt ??= { mode: 'none', bonus: 0, resistance: '' };
+    if (!Object.hasOwn(spell, 'circle') && /^\d+$/.test(String(spell.level ?? '').trim())) spell.circle = Number(spell.level);
+  }
+  validateCalculations(migrated);
+  for (const [id, rule] of Object.entries(migrated.calculations.rules)) {
+    if (rule.mode === 'progression' && rule.policy === 'recorded' && !rule.history) rule.history = { anchorLevel: characterLevel(migrated), anchorValue: id.startsWith('resource:') ? migrated.resources.find(r => `resource:${r.id}` === id).max : baseValue(migrated, id), gains: {} };
+  }
+  if (raw.schemaVersion === 3) assertCalculations(migrated, options);
   return migrated;
 }
