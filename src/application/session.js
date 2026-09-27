@@ -10,7 +10,7 @@ export function createSession({ repository, migrate, onStatus = () => {} }) {
   let initial;
   try {
     const requiresMigration = !loaded.empty && (loaded.value?.formatVersion !== 1
-      || loaded.value?.character?.schemaVersion !== 3 || loaded.value?.sheetAppearance?.version !== 1);
+      || loaded.value?.character?.schemaVersion !== 3 || !loaded.value?.character?.skillTables || loaded.value?.sheetAppearance?.version !== 1);
     if (requiresMigration) {
       const backup = repository.backup(loaded.raw); if (!backup.ok) throw backup.error;
     }

@@ -1,4 +1,5 @@
-import { ABILITIES, SKILLS, ARMOR_SLOTS } from './catalog.js';
+import { ABILITIES, ARMOR_SLOTS } from './catalog.js';
+import { activeSkills, allSkills } from './skillTemplates.js';
 
 export const CATEGORIES = [
   ['identity', 'Identidade'], ['attributes', 'Atributos'], ['skills', 'Perícias'], ['resources', 'Recursos'],
@@ -9,9 +10,9 @@ const entries = (category, labels) => Object.entries(labels).map(([id, original]
 export const STRUCTURAL_COMPONENTS = [
   ...entries('identity', Object.fromEntries(Object.entries({ class: 'Classe', subclass: 'Subclasse', race: 'Raça', background: 'Antecedente', alignment: 'Alinhamento', xp: 'XP', level: 'Nível', guildName: 'Guilda', guildRank: 'Rank' }).map(([key, value]) => [`field:info.${key}`, value]))),
   ...entries('attributes', { 'section:attributes': 'Atributos', ...Object.fromEntries(ABILITIES.map(a => [`attribute:${a.key}`, a.label])) }),
-  ...entries('skills', { 'subsection:skills': 'Perícias', ...Object.fromEntries(SKILLS.map(s => [`skill:${s.key}`, s.name])) }),
+  ...entries('skills', { 'subsection:skills': 'Perícias' }),
   ...entries('resources', { 'section:resources': 'Recursos', 'metric:hp': 'Vida Máxima', 'metric:hitdie': 'Dados de Vida' }),
-  ...entries('combat', { 'section:dnd-rules': 'D&D 2024', 'indicator:proficiency': 'Proficiência', 'subsection:saves': 'Testes de Resistência', 'metric:armor': 'Classe de Armadura', 'metric:initiative': 'Iniciativa', 'metric:passive': 'Percepção Passiva', 'section:armory': 'Ataques', 'attack:bonus': 'Ataque', 'attack:damage': 'Dano', ...Object.fromEntries(ABILITIES.map(a => [`save:${a.key}`, a.label])) }),
+  ...entries('combat', { 'section:dnd-rules': 'Perícias', 'indicator:proficiency': 'Proficiência', 'subsection:saves': 'Testes de Resistência', 'metric:armor': 'Classe de Armadura', 'metric:initiative': 'Iniciativa', 'metric:passive': 'Percepção Passiva', 'section:armory': 'Ataques', 'attack:bonus': 'Ataque', 'attack:damage': 'Dano', ...Object.fromEntries(ABILITIES.map(a => [`save:${a.key}`, a.label])) }),
   ...entries('equipment', { 'weapon:equipped': 'Arma equipada', 'section:equipment': 'Equipamento & Buffs', 'section:library': 'Biblioteca da Guilda', 'subsection:equipped-armor': 'Armadura equipada', 'subsection:buffs': 'Buff Engine', 'subsection:weapons': 'Armas', 'subsection:armors': 'Armaduras', 'armor:total': 'Bônus de CA das peças', ...Object.fromEntries(ARMOR_SLOTS.map(s => [`armor:${s.key}`, s.label])) }),
   ...entries('powers', { 'tab:powers': 'Poderes' }), ...entries('spells', { 'tab:spells': 'Magias', 'metric:dt': 'DT de magias' }),
   ...entries('masteries', { 'subsection:mastery': 'Maestria da arma', 'mastery:level': 'Nível', 'mastery:xp': 'XP', 'mastery:xpToNext': 'Próximo' }),
@@ -28,17 +29,22 @@ export function recordFor(c, id) {
 }
 export const recordNameKey = (record, id) => id?.startsWith('resource:') || /^record:(weapons|armors|buffs|characteristics):/.test(id) ? 'name' : id?.startsWith('record:') ? 'title' : Object.hasOwn(record, 'title') ? 'title' : 'name';
 export function componentCatalog(c, appearance) {
-  const result = [...STRUCTURAL_COMPONENTS];
+  const result = [...STRUCTURAL_COMPONENTS, ...activeSkills(c).map(s => ({ id: `skill:${s.key}`, original: s.name, category: 'skills', kind: 'structure' }))];
   for (const r of c.resources) result.push({ id: `resource:${r.id}`, original: r.originalName || r.name, category: 'resources', kind: r.type === 'custom' ? 'record' : 'structure' });
   const groups = { weapons: 'equipment', armors: 'equipment', buffs: 'equipment', powers: 'powers', spells: 'spells', journal: 'other', characteristics: 'other' };
   for (const [list, records] of Object.entries(recordCollections(c))) for (const r of records) result.push({ id: `record:${list}:${r.id}`, original: r.originalName || r[recordNameKey(r, `record:${list}:${r.id}`)], category: groups[list], kind: 'record' });
-  for (const id of Object.keys(appearance?.components || {})) if (!result.some(e => e.id === id)) result.push({ id, original: id, category: 'other', kind: 'structure' });
+  const skillIds = new Set(allSkills(c).map(s => `skill:${s.key}`));
+  for (const id of Object.keys(appearance?.components || {})) if (!result.some(e => e.id === id) && !skillIds.has(id)) result.push({ id, original: id, category: 'other', kind: 'structure' });
   return result;
 }
 export function displayName(c, appearance, id, fallback) {
   const record = recordFor(c, id);
   if (record) return record[recordNameKey(record, id)];
   if (appearance?.components[id]?.label) return appearance.components[id].label;
+  if (id.startsWith('skill:')) {
+    const skill = allSkills(c).find(s => `skill:${s.key}` === id);
+    if (skill) return skill.name;
+  }
   // A resistance follows its attribute unless it has its own explicit label.
   if (id.startsWith('save:') && appearance?.components[id.replace('save:', 'attribute:')]?.label) return appearance.components[id.replace('save:', 'attribute:')].label;
   return fallback ?? STRUCTURAL_COMPONENTS.find(e => e.id === id)?.original ?? c.resources.find(r => `resource:${r.id}` === id)?.name ?? id;

@@ -3,6 +3,7 @@ import { validateCalculations, targetIds } from '../domain/calculations.js';
 import { calculateCharacter, baseValue, characterLevel, assertCalculations } from '../auto_calc_engine/characterCalculator.js';
 import { advanceEvent } from './temporal.js';
 import * as D from '../domain/catalog.js';
+import { assertSkillTemplate, saveSkillTemplate } from '../domain/skillTemplates.js';
 const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const fields = new Set([
   ...Object.keys(C.createDefault().info).map(key => `info.${key}`),
@@ -17,6 +18,10 @@ function upsert(list, value) {
 /** Commands mutate only the store's private draft, never a renderer snapshot. */
 export function applyCommand(c, type, p = {}) {
   switch (type) {
+    case 'switchSkillTemplate':
+      assertSkillTemplate(p.id); c.skillTables.activeId = p.id; break;
+    case 'saveSkillTemplate':
+      saveSkillTemplate(c, p.id, p.skills); break;
     case 'setField':
       if (!fields.has(p.path)) throw Error('Campo inválido.');
       C.set(c, p.path, p.value); break;

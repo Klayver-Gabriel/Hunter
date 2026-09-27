@@ -6,6 +6,7 @@ export function skillBreakdown(character, skill) {
   const ability = abilityModifier(character, skill.ability);
   const profMultiplier = state.expertise ? 2 : state.proficient ? 1 : 0;
   const proficiencyPart = proficiency(character) * profMultiplier;
+  const manual = Number(skill.bonus) || 0;
   const external = (character.buffs || [])
     .filter(buff => buff.skill === skill.key)
     .reduce((total, buff) => total + (Number(buff.skillBonus) || 0), 0);
@@ -18,7 +19,8 @@ export function skillBreakdown(character, skill) {
     proficiency: proficiencyPart,
     external,
     mastery,
-    total: ability + proficiencyPart + external + mastery,
+    manual,
+    total: ability + proficiencyPart + external + mastery + manual,
     profMultiplier
   };
 }

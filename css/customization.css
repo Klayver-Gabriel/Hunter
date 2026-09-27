@@ -22,3 +22,15 @@
 .rules-dialog { margin: auto; color: var(--parchment); }
 .rules-dialog::backdrop { background: rgba(6,5,3,.72); backdrop-filter: blur(2px); }
 dialog.name-editor, dialog.rules-dialog { position: fixed; inset: 0; }
+
+.skill-template-toolbar { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin-block: .75rem; }
+.skill-template-toolbar label { flex: 1; min-width: 150px; }
+.skill-template-toolbar select { display: block; width: 100%; padding: .5rem; background: var(--void-deep); color: var(--parchment); border: 1px solid var(--iron-line-lt); border-radius: 4px; font: inherit; }
+.skill-template-help { font-size: .85rem; color: var(--parchment-dim); margin-block: .75rem; }
+.skill-template-row { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: .6rem; align-items: center; border-block-end: 1px solid var(--iron-line-lt); }
+.skill-template-row > label { min-width: 0; }
+@media (max-width: 620px) {
+  .skill-template-row { grid-template-columns: 1fr 1fr; padding-block: .5rem; }
+  .skill-template-row > label:first-child { grid-column: 1 / -1; }
+  .skill-template-row > button { grid-column: 1 / -1; justify-self: end; }
+}

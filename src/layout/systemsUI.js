@@ -3,10 +3,13 @@ import * as R from '../auto_calc_engine/index.js';
 import * as M from '../auto_calc_engine/masteryCalculator.js';
 import * as D from '../domain/catalog.js';
 import * as modal from './modal.js';
+import { activeSkills, allSkills, SKILL_TEMPLATES } from '../domain/skillTemplates.js';
+import { createSkillTemplateEditor } from './skillTemplatesUI.js';
 
 let character = null;
 let store = null;
 let staticBound = false;
+let skillTemplateEditor;
 
 function escapeHTML(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({
@@ -19,6 +22,7 @@ const label = (id, fallback) => escapeHTML(name(id, fallback));
 
 function init(applicationStore) {
   store = applicationStore; character = store.getState();
+  skillTemplateEditor = createSkillTemplateEditor(store);
   store.subscribe(next => { character = next; });
   bindStaticActions();
 }
@@ -81,15 +85,17 @@ function renderSaves() {
 }
 
 function renderSkills() {
+  skillTemplateEditor.render();
+  const catalog = activeSkills(character);
   const container = document.getElementById('skill-groups');
   container.innerHTML = D.ABILITIES.map(ability => {
-    const skills = D.SKILLS.filter(skill => skill.ability === ability.key);
+    const skills = catalog.filter(skill => skill.ability === ability.key);
     if (skills.length === 0) return '';
     const rows = skills.map(skill => {
       const state = character.dnd.skills[skill.key];
       const result = R.skillBreakdown(character, skill);
-      const totalBonus = result.external + result.mastery;
-      return `<div class="skill-row" title="${label(`skill:${skill.key}`, skill.name)}: ${label(`attribute:${ability.key}`, ability.short)} ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)} + bônus externo ${R.signed(result.external)} + maestria ${R.signed(result.mastery)}">
+      const totalBonus = result.external + result.mastery + result.manual;
+      return `<div class="skill-row" title="${label(`skill:${skill.key}`, skill.name)}: ${label(`attribute:${ability.key}`, ability.short)} ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)} + bônus manual ${R.signed(result.manual)} + bônus externo ${R.signed(result.external)} + maestria ${R.signed(result.mastery)}">
         <label class="check-dot" title="Proficiência"><input type="checkbox" data-skill-prof="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: proficiência" ${state.proficient ? 'checked' : ''}><span>○</span></label>
         <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
         <span class="skill-row__name" data-component-label="skill:${skill.key}">${label(`skill:${skill.key}`, skill.name)}</span>
@@ -100,6 +106,7 @@ function renderSkills() {
     }).join('');
     return `<section class="skill-group"><h4>${label(`attribute:${ability.key}`, ability.label)}</h4>${rows}</section>`;
   }).join('');
+  document.getElementById('skill-template-empty').hidden = catalog.length > 0;
 
   container.querySelectorAll('[data-skill-prof]').forEach(input => {
     input.addEventListener('change', () => {
@@ -191,7 +198,7 @@ function renderMasteryPanel() {
 
   const state = M.masteryState(character, weapon);
   const progress = Math.max(0, Math.min(100, (Number(state.xp) || 0) / Math.max(1, Number(state.xpToNext) || 100) * 100));
-  const unlocks = M.parseUnlocks(weapon);
+  const unlocks = M.parseUnlocks(weapon, [...D.SKILLS, ...allSkills(character)]);
   masteryContainer.innerHTML = `<div class="mastery-card">
     <div class="mastery-card__head"><div><span>${label('subsection:mastery')}</span><h3>${escapeHTML(weapon.name)}</h3></div><strong>Lv ${Number(state.level) || 1}</strong></div>
     <div class="mastery-track"><span style="width:${progress}%"></span></div>
@@ -213,7 +220,7 @@ function unlockDescription(unlock) {
   const effects = unlock.effects;
   const descriptions = [['attack', 'attack:bonus'], ['damage', 'attack:damage'], ['initiative', 'metric:initiative']]
     .filter(([key]) => effects[key]).map(([key, id]) => `${label(id)} ${R.signed(effects[key])}`);
-  for (const [key, value] of Object.entries(effects.skills)) descriptions.push(`${label(`skill:${key}`, D.SKILLS.find(s => s.key === key)?.name || key)} ${R.signed(value)}`);
+  for (const [key, value] of Object.entries(effects.skills)) descriptions.push(`${label(`skill:${key}`, allSkills(character).find(s => s.key === key)?.name || key)} ${R.signed(value)}`);
   return descriptions.join(' · ') || escapeHTML(unlock.description);
 }
 
@@ -250,7 +257,7 @@ function buffTags(buff) {
   const tags = Object.keys(labels)
     .filter(key => Number(buff[key]))
     .map(key => `<span>${labels[key]} ${R.signed(buff[key])}</span>`);
-  const skill = D.SKILLS.find(item => item.key === buff.skill);
+  const skill = allSkills(character).find(item => item.key === buff.skill);
   if (skill && Number(buff.skillBonus)) tags.push(`<span>${label(`skill:${skill.key}`, skill.name)} ${R.signed(buff.skillBonus)}</span>`);
   if (String(buff.damageDice || '').trim()) tags.push(`<span>+ ${escapeHTML(String(buff.damageDice).trim())}</span>`);
   return tags.join('') || '<span>Sem modificadores</span>';
@@ -299,11 +306,11 @@ function openWeaponEditor(weapon) {
     entry: weapon ? { title: weapon.name, ...weapon } : null,
     fields: [
       { key: 'icon', label: 'Ícone', type: 'select', options: D.WEAPON_ICONS },
-      { key: 'damageDice', label: 'Dano D&D (ex.: 2d6)', type: 'text' },
+      { key: 'damageDice', label: 'Dano (ex.: 2d6)', type: 'text' },
       { key: 'ability', label: 'Atributo do ataque', type: 'select', options: D.ABILITIES.map(item => ({ value: item.key, label: name(`attribute:${item.key}`, `${item.short} — ${item.label}`) })) },
       { key: 'proficient', label: 'Usa proficiência?', type: 'select', options: [{ value: 'true', label: 'Sim' }, { value: 'false', label: 'Não' }] },
       { key: 'critMin', label: 'Crítico mínimo (19 = 19–20)', type: 'number' },
-      { key: 'dndElement', label: 'Elemento D&D', type: 'text' },
+      { key: 'dndElement', label: 'Elemento', type: 'text' },
       { key: 'masteryUnlocks', label: 'Desbloqueios — ex.: 3|Técnica|pericia.atletismo:2', type: 'textarea', rows: 5 }
     ],
     onSave: data => store.dispatch('saveWeapon', { id: weapon?.id, data }),
@@ -317,7 +324,7 @@ function openArmorEditor(item) {
     entry: item ? { title: item.name, ...item } : null,
     fields: [
       { key: 'slot', label: 'Peça', type: 'select', options: D.ARMOR_SLOTS.map(slot => ({ value: slot.key, label: name(`armor:${slot.key}`, slot.label) })) },
-      { key: 'acBonus', label: 'Bônus de CA D&D', type: 'number' },
+      { key: 'acBonus', label: 'Bônus de CA', type: 'number' },
       { key: 'resistances', label: 'Resistências', type: 'text' },
       { key: 'skills', label: 'Skills', type: 'textarea', rows: 3 },
       { key: 'slots', label: 'Slots (ex.: 2-1-1)', type: 'text' }
@@ -328,12 +335,14 @@ function openArmorEditor(item) {
 }
 
 function openBuffEditor(buff) {
+  const skillOptions = SKILL_TEMPLATES.flatMap(template => character.skillTables.templates[template.id].map(skill => ({ value: skill.key, label: `${template.name} · ${name(`skill:${skill.key}`, skill.name)}` })));
+  if (buff?.skill && !skillOptions.some(option => option.value === buff.skill)) skillOptions.push({ value: buff.skill, label: `${buff.skill} (fora da tabela)` });
   const fields = [
     { key: 'source', label: 'Origem (item, skill, talento)', type: 'text' },
-    { key: 'skill', label: 'Perícia afetada', type: 'select', options: [{ value: '', label: 'Nenhuma perícia' }, ...D.SKILLS.map(skill => ({ value: skill.key, label: name(`skill:${skill.key}`, skill.name) }))] },
+    { key: 'skill', label: 'Perícia afetada', type: 'select', options: [{ value: '', label: 'Nenhuma perícia' }, ...skillOptions] },
     { key: 'skillBonus', label: 'Bônus na perícia', type: 'number' },
-    { key: 'attack', label: 'Bônus de ataque D&D', type: 'number' },
-    { key: 'damage', label: 'Bônus flat de dano D&D', type: 'number' },
+    { key: 'attack', label: 'Bônus de ataque', type: 'number' },
+    { key: 'damage', label: 'Bônus fixo de dano', type: 'number' },
     { key: 'damageDice', label: 'Dano adicional em dados (ex.: 3d6 Fogo)', type: 'text' },
     { key: 'armorClass', label: 'Classe de Armadura', type: 'number' },
     { key: 'initiative', label: 'Iniciativa', type: 'number' },
