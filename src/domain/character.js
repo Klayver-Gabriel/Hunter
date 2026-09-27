@@ -1,4 +1,5 @@
 import * as D from './catalog.js';
+import { createSkillTables } from './skillTemplates.js';
 
 const ATTRS = ['for', 'des', 'con', 'int', 'sab', 'car'];
 const ATTR_LABELS = { for: 'FOR', des: 'DES', con: 'CON', int: 'INT', sab: 'SAB', car: 'CAR' };
@@ -50,6 +51,7 @@ function createDefault() {
   const starterWeapon = createStarterWeapon();
   return {
     schemaVersion: 3,
+    skillTables: createSkillTables(),
     calculations: { rules: {}, characteristics: [], spellcasting: { ability: 'int', formula: '8 + PROFICIENCIA + MOD_CONJURACAO + BONUS_DT', bonus: 0 } },
     temporal: { turn: 0, round: 0, rest: 0, effects: [] },
     id: uid('char'),

@@ -62,7 +62,7 @@ export function applyComponentVisibility(root, entries, appearance, removing) {
     ['#rule-metrics', '.metric-card'], ['#saving-throws', '.save-row'],
     ['.rules-layout > div:first-child', '#saving-throws'],
     ['.skill-group', '.skill-row'], ['#skill-groups', '.skill-group'],
-    ['.skills-column', '#skill-groups'], ['.rules-layout', ':scope > div'],
+    ['.skills-column', '#skill-groups, .skill-template-toolbar'], ['.rules-layout', ':scope > div'],
     ['.mastery-controls', ':scope > label'], ['.toolbar-row', ':scope > label'],
     ['#armor-slots', '.armor-slot, .armor-total'], ['.equipment-layout > div:first-child', '#armor-slots'],
     ['.equipment-layout', ':scope > div'],

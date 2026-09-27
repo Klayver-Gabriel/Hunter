@@ -7,6 +7,14 @@ export function migrateDocument(raw, options = {}) {
   const enveloped = raw.formatVersion === 1;
   const character = migrateCharacter(enveloped ? raw.character : raw, options);
   const sheetAppearance = validateAppearance(enveloped ? raw.sheetAppearance : null);
+  if (enveloped && raw.character.schemaVersion === 4) {
+    for (const skill of character.skillTables.templates.tormenta20) {
+      const previousId = `skill:tormenta20:${skill.key.slice(4)}`, id = `skill:${skill.key}`;
+      if (!sheetAppearance.components[previousId]) continue;
+      sheetAppearance.components[id] ||= sheetAppearance.components[previousId];
+      delete sheetAppearance.components[previousId];
+    }
+  }
   // A record has a single authoritative name; migrate old visual overrides into its data.
   for (const [id, component] of Object.entries(sheetAppearance.components)) {
     const record = recordFor(character, id);

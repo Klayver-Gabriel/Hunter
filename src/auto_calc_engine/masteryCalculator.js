@@ -27,7 +27,6 @@ function parseUnlocks(weapon) {
         const amount = Number(value) || 0;
 
         // Compatibilidade: o antigo bônus percentual Hunter passa a ser
-        // um bônus de dano D&D, sem alterar o texto salvo pelo usuário.
         if (key === 'hunterAttackPercent') key = 'damage';
 
         if (key === 'attack' || key === 'damage' || key === 'initiative') {

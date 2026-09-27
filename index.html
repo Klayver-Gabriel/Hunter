@@ -23,7 +23,7 @@
   <a class="guild-nav__brand" href="#guild-card" aria-label="Hunter’s Codex — visão geral"><span class="guild-nav__monogram" aria-hidden="true">H</span><span class="guild-nav__wordmark">Hunter’s Codex<small>Seu registro de caçador</small></span></a>
   <div class="guild-nav__links">
     <a class="guild-nav__link" data-page-link href="#guild-card" aria-controls="page-guild-card" title="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-nav-label>Visão geral</span></a>
-    <a class="guild-nav__link" data-page-link href="#dnd-rules" aria-controls="page-dnd-rules" title="Combate"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="M12 7v10M8 12h8"/></svg><span data-nav-label>Combate</span></a>
+    <a class="guild-nav__link" data-page-link href="#dnd-rules" aria-controls="page-dnd-rules" title="Perícias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="M12 7v10M8 12h8"/></svg><span data-nav-label>Perícias</span></a>
     <a class="guild-nav__link" data-page-link href="#equipment" aria-controls="page-equipment" title="Equipamento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5 4 4v9h10v-9l4-4-5-5-4 3z"/><path d="M9 3a3 3 0 0 0 6 0"/></svg><span data-nav-label>Equipamento</span></a>
     <a class="guild-nav__link" data-page-link href="#records" aria-controls="page-records" title="Registros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h12v16H4zM8 8h4M8 12h4M8 16h3M19 4v11l2 3 2-3V4z"/></svg><span data-nav-label>Registros</span></a>
     <a class="guild-nav__link" data-page-link href="#temporal" aria-controls="page-temporal" title="Efeitos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 10-13h-7z"/></svg><span data-nav-label>Efeitos</span></a>
@@ -121,9 +121,9 @@
 
   </div>
   <div class="sheet-page" id="page-dnd-rules" data-sheet-page="dnd-rules" hidden>
-    <section class="panel codex-section" id="dnd-rules" aria-label="Regras de D&D 2024">
+    <section class="panel codex-section" id="dnd-rules" aria-label="Perícias">
       <div class="panel__header">
-        <div><span class="section-kicker">Motor oficial</span><h2 class="panel__title" data-component-label="section:dnd-rules">D&amp;D 2024</h2></div>
+        <h2 class="panel__title" data-component-label="section:dnd-rules">Perícias</h2>
         <div class="proficiency-badge" title="Calculado automaticamente pelo nível"><span data-component-label="indicator:proficiency">Proficiência</span> <strong id="proficiency-value">+2</strong></div>
       </div>
       <div class="metric-grid" id="rule-metrics"></div>
@@ -134,7 +134,13 @@
         </div>
         <div class="skills-column">
           <h3 class="subsection-title" data-component-label="subsection:skills">Perícias</h3>
+          <div class="skill-template-toolbar">
+            <label for="skill-template-select">Tabela de perícias <select id="skill-template-select" aria-describedby="skill-template-help"></select></label>
+            <button type="button" class="btn btn--ghost btn--sm" id="btn-edit-skill-template">Editar tabela</button>
+          </div>
+          <p class="skill-template-help" id="skill-template-help">Escolha um template e personalize suas perícias. As duas tabelas usam o cálculo atual: modificador de atributo, proficiência ou expertise e bônus.</p>
           <div class="skill-legend"><span>○ Proficiência</span><span>◇ Expertise</span><span>Resultado</span></div>
+          <p id="skill-template-empty" hidden>Tabela vazia. Use Editar tabela para adicionar perícias.</p>
           <div class="skill-groups" id="skill-groups"></div>
         </div>
       </div>
@@ -223,6 +229,20 @@
   </div>
   <footer class="app-footer">Hunter's Codex &mdash; Registro da Guilda &middot; salvo localmente no seu navegador</footer>
 </main>
+
+<dialog class="modal rules-dialog" id="skill-template-editor" aria-labelledby="skill-template-title" aria-describedby="skill-template-description">
+  <form id="skill-template-form">
+    <h2 id="skill-template-title">Editar tabela de perícias</h2>
+    <p id="skill-template-description">Personalize nomes, atributos e bônus. Adicione linhas para especializações, como Ofício (Alquimista). As alterações ficam salvas somente nesta tabela ao aplicar.</p>
+    <div id="skill-template-rows"></div>
+    <button type="button" class="btn btn--ghost" id="skill-template-add">+ Adicionar perícia</button>
+    <p class="rule-errors" id="skill-template-error" role="alert" hidden></p>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost" id="skill-template-cancel">Cancelar</button>
+      <button type="submit" class="btn btn--primary">Aplicar tabela</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog class="modal name-editor" id="name-editor" aria-labelledby="name-editor-title" aria-describedby="name-editor-description">
   <form id="name-editor-form">

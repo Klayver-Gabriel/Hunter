@@ -1,0 +1,113 @@
+import { test, expect } from '@playwright/test';
+import { openPage } from './helpers/navigation.js';
+
+async function saved(page) {
+  await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
+  return page.evaluate(() => JSON.parse(localStorage.getItem('hunterscodex:sheet:v1')));
+}
+
+test('seletor por teclado troca só as perícias e o editor cancela sem perder dados', async ({ page }) => {
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.locator('[data-attr="for"]').fill('18'); await page.locator('[data-attr="for"]').press('Tab');
+  await page.locator('[data-res-current="hp"]').fill('3'); await page.locator('[data-res-current="hp"]').press('Tab');
+  await openPage(page, 'dnd-rules');
+  await page.getByRole('checkbox', { name: 'Acrobacia: expertise', exact: true }).check();
+  const before = await saved(page), metrics = await page.locator('#rule-metrics').innerText();
+  const selector = page.getByRole('combobox', { name: 'Tabela de perícias' });
+  await selector.focus(); await selector.press('ArrowDown'); await selector.press('Enter');
+  await expect(selector).toHaveValue('tormenta20');
+  await expect(page.locator('#skill-groups .skill-row')).toHaveCount(29);
+  await expect(page.getByRole('checkbox', { name: 'Luta: proficiência', exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Acrobacia: expertise', exact: true })).not.toBeChecked();
+  expect(await page.locator('#rule-metrics').innerText()).toBe(metrics);
+  await expect(page.locator('#btn-system')).toHaveCount(0);
+  const after = await saved(page);
+  for (const key of ['info', 'attributes', 'resources', 'equipment', 'calculations', 'temporal', 'dnd']) expect(after.character[key]).toEqual(before.character[key]);
+  await page.getByRole('button', { name: 'Editar tabela', exact: true }).click();
+  const row = page.locator('[data-template-skill="t20_luta"]');
+  await row.getByLabel('Nome da perícia').fill('Não salvar');
+  await row.getByLabel('Nome da perícia').press('Escape');
+  await expect(page.locator('#skill-template-editor')).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Editar tabela', exact: true })).toBeFocused();
+  expect(await saved(page)).toEqual(after);
+  await page.getByRole('button', { name: 'Editar tabela', exact: true }).click();
+  await row.getByRole('button', { name: 'Remover perícia Luta', exact: true }).click();
+  await page.locator('#skill-template-cancel').click();
+  await expect(page.getByRole('checkbox', { name: 'Luta: proficiência', exact: true })).toBeVisible();
+  await selector.selectOption('dnd5e');
+  await expect(page.locator('#skill-groups .skill-row')).toHaveCount(18);
+  await expect(page.getByRole('checkbox', { name: 'Acrobacia: expertise', exact: true })).toBeChecked();
+  expect(errors).toEqual([]);
+});
+
+test('edita os dois templates, integra personalização e buffs, persiste e exporta/importa', async ({ page }) => {
+  await page.goto('/'); await openPage(page, 'dnd-rules');
+  const selector = page.getByRole('combobox', { name: 'Tabela de perícias' });
+  await page.getByRole('button', { name: 'Editar tabela', exact: true }).click();
+  await page.locator('[data-template-skill="acrobatics"] [data-skill-name]').fill('Equilíbrio D&D');
+  await page.getByRole('button', { name: 'Aplicar tabela', exact: true }).click();
+  await selector.selectOption('tormenta20');
+  await page.getByRole('button', { name: 'Editar tabela', exact: true }).click();
+  const row = page.locator('[data-template-skill="t20_luta"]');
+  await row.getByLabel('Nome da perícia').fill('Luta personalizada');
+  await row.getByRole('combobox', { name: 'Atributo', exact: true }).selectOption('int');
+  await row.getByLabel('Bônus manual').fill('-1');
+  await page.locator('[data-template-skill="t20_jogatina"] [data-remove-skill]').click();
+  await page.locator('#skill-template-add').click();
+  await page.locator('#skill-template-rows > div').last().getByLabel('Nome da perícia').fill('Ofício (Alquimista)');
+  await page.locator('#skill-template-rows > div').last().getByLabel('Bônus manual').fill('3');
+  await page.getByRole('button', { name: 'Aplicar tabela', exact: true }).click();
+  await page.getByRole('checkbox', { name: 'Luta personalizada: proficiência', exact: true }).check();
+  await expect(page.locator('.skill-row').filter({ has: page.locator('[data-component-label="skill:t20_luta"]') }).locator('strong')).toHaveText('+1');
+  await expect(page.getByRole('checkbox', { name: 'Ofício (Alquimista): proficiência', exact: true })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: 'Jogatina: proficiência', exact: true })).toHaveCount(0);
+  await page.locator('#btn-edit-names').click();
+  await page.locator('[data-name-input="skill:t20_luta"]').fill('Esgrima');
+  await page.getByRole('button', { name: 'Aplicar alterações', exact: true }).click();
+  await page.getByRole('button', { name: 'Editar tabela', exact: true }).click();
+  await expect(row.getByLabel('Nome da perícia')).toHaveValue('Esgrima');
+  await page.getByRole('button', { name: 'Aplicar tabela', exact: true }).click();
+  await openPage(page, 'equipment'); await page.locator('#btn-add-buff').click();
+  await page.locator('#modal-title-input').fill('Treino');
+  await page.locator('#mf-skill').selectOption({ label: 'Tabela 2 · Esgrima' });
+  await page.locator('#mf-skillBonus').fill('2'); await page.locator('#modal-save').click();
+  await openPage(page, 'dnd-rules');
+  await expect(page.locator('.skill-row').filter({ has: page.locator('[data-component-label="skill:t20_luta"]') }).locator('strong')).toHaveText('+3');
+  await selector.selectOption('dnd5e');
+  await expect(page.getByRole('checkbox', { name: 'Equilíbrio D&D: proficiência', exact: true })).toBeVisible();
+  await selector.selectOption('tormenta20');
+  const document = await saved(page);
+  await page.reload(); await expect(selector).toHaveValue('tormenta20');
+  await expect(page.getByRole('checkbox', { name: 'Esgrima: proficiência', exact: true })).toBeChecked();
+  const event = page.waitForEvent('download'); await page.locator('#btn-export').click();
+  const stream = await (await event).createReadStream(), chunks = [];
+  for await (const chunk of stream) chunks.push(chunk);
+  const exported = JSON.parse(Buffer.concat(chunks).toString());
+  expect(exported).toEqual(document);
+  await selector.selectOption('dnd5e');
+  await page.locator('#file-import').setInputFiles({ name: 'templates.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
+  await expect(selector).toHaveValue('tormenta20');
+  expect(await saved(page)).toEqual(exported);
+});
+
+test.describe('templates no celular', () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  test('tabela vazia mantém controles acessíveis e aceita novas linhas sem transbordar', async ({ page }) => {
+    await page.goto('/'); const document = await saved(page);
+    document.character.skillTables.activeId = 'tormenta20';
+    document.character.skillTables.templates.tormenta20 = [];
+    await page.locator('#file-import').setInputFiles({ name: 'empty-template.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
+    await openPage(page, 'dnd-rules');
+    await expect(page.locator('#skill-template-empty')).toBeVisible();
+    await page.getByRole('button', { name: 'Editar tabela', exact: true }).tap();
+    await page.locator('#skill-template-add').tap();
+    await page.locator('#skill-template-rows [data-skill-name]').fill('Perícia própria');
+    expect(await page.locator('#skill-template-editor').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.getByRole('button', { name: 'Aplicar tabela', exact: true }).tap();
+    await expect(page.getByRole('checkbox', { name: 'Perícia própria: proficiência', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.getByRole('combobox', { name: 'Tabela de perícias' }).selectOption('dnd5e');
+    await expect(page.locator('#skill-groups .skill-row')).toHaveCount(18);
+  });
+});

@@ -2,11 +2,14 @@ import { createDefault, createSkillState, createSaveState, ATTRS, uid } from '..
 import { createCalculations, createTemporal, validateCalculations } from '../../domain/calculations.js';
 import { assertCalculations, characterLevel, baseValue } from '../../auto_calc_engine/characterCalculator.js';
 import * as D from '../../domain/catalog.js';
+import { initializeSkillTables } from '../../domain/skillTemplates.js';
+import { restoreDndProfile } from './retiredSystemProfiles.js';
 
 export function migrateCharacter(raw, options = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Formato de ficha inválido.');
   }
+  raw = restoreDndProfile(raw);
 
   if (raw.schemaVersion != null && (![1, 2, 3].includes(raw.schemaVersion))) {
     throw new Error('Versão de ficha incompatível.');
@@ -120,6 +123,7 @@ export function migrateCharacter(raw, options = {}) {
     spell.dt ??= { mode: 'none', bonus: 0, resistance: '' };
     if (!Object.hasOwn(spell, 'circle') && /^\d+$/.test(String(spell.level ?? '').trim())) spell.circle = Number(spell.level);
   }
+  initializeSkillTables(migrated);
   validateCalculations(migrated);
   for (const [id, rule] of Object.entries(migrated.calculations.rules)) {
     if (rule.mode === 'progression' && rule.policy === 'recorded' && !rule.history) rule.history = { anchorLevel: characterLevel(migrated), anchorValue: id.startsWith('resource:') ? migrated.resources.find(r => `resource:${r.id}` === id).max : baseValue(migrated, id), gains: {} };

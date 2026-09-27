@@ -1,8 +1,8 @@
 {
   "name": "Hunter's Codex",
   "short_name": "HunterCodex",
-  "description": "Ficha de personagem oficial da Guilda de Caçadores.",
-  "start_url": "index.html",
+  "description": "Ficha de personagem automática generalista para qualquer tipo de sistema de rpg.",
+  "start_url": "character.html",
   "display": "standalone",
   "background_color": "#12100d",
   "theme_color": "#b8925a",
