@@ -82,6 +82,7 @@ export function saveSkillTemplate(character, id, skills) {
   for (const { key } of removed) {
     // D&D flags also feed passive perception, independently of the displayed table.
     if (!SKILLS.some(skill => skill.key === key)) delete character.dnd.skills[key];
+    delete character.calculations?.rules[`skill:${key}`];
   }
   character.skillTables = tables;
   initializeSkillTables(character);

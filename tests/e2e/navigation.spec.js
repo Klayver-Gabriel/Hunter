@@ -3,7 +3,7 @@ import { openPage } from './helpers/navigation.js';
 
 const snapshot = page => page.evaluate(() => localStorage.getItem('hunterscodex:sheet:v1'));
 
-test('menu separa páginas, agrupa equipamentos e abre fórmulas pela engrenagem', async ({ page }) => {
+test('menu separa páginas, mantém apenas configurações gerais e edita defesa na ficha', async ({ page }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
   const original = await snapshot(page);
@@ -22,13 +22,14 @@ test('menu separa páginas, agrupa equipamentos e abre fórmulas pela engrenagem
   await openPage(page, 'calculations');
   await expect(page.locator('#page-title')).toHaveText('Configurações');
   await expect(page.locator('.equipment-navigation')).toBeHidden();
-  await expect(page.locator('#btn-spellcasting')).toBeVisible();
-  await page.getByText('Ajustar componentes de combate', { exact: true }).click();
-  await expect(page.locator('[data-config-path="dnd.vitality.firstLevelFormula"]')).toBeVisible();
+  await expect(page.locator('#btn-manage-components')).toBeVisible();
+  await expect(page.locator('#combat-config, #calculation-list')).toHaveCount(0);
   expect(await snapshot(page)).toBe(original);
-  await page.locator('[data-config-path="dnd.armor.base"]').fill('15');
-  await page.locator('[data-config-path="dnd.armor.base"]').press('Tab');
   await openPage(page, 'dnd-rules');
+  await page.locator('[data-calculation-target="metric:armor"]').dblclick();
+  await page.locator('#component-advanced summary').click();
+  await page.locator('[name="parameter:dnd.armor.base"]').fill('15');
+  await page.locator('#component-save').click();
   await expect(page.locator('.metric-card--armor .metric-card__value')).toHaveText('15');
   expect(errors).toEqual([]);
 });

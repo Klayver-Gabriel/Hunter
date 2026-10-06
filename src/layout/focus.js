@@ -1,4 +1,4 @@
-const keys = ['data-field', 'data-attr', 'data-res-current', 'data-res-max', 'data-res-name', 'data-save', 'data-skill-prof', 'data-skill-expertise', 'data-config-path', 'data-mastery', 'data-armor-slot'];
+const keys = ['data-calculation-target', 'data-field', 'data-attr', 'data-res-current', 'data-res-max', 'data-res-name', 'data-save', 'data-skill-prof', 'data-skill-expertise', 'data-config-path', 'data-mastery', 'data-armor-slot'];
 export function preserveFocus(render) {
   const current = document.activeElement;
   const key = keys.find(k => current?.hasAttribute(k));

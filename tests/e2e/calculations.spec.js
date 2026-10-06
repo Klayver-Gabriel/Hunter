@@ -1,12 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { openPage } from './helpers/navigation.js';
 const rule = async (page, id) => {
-  await openPage(page, 'calculations');
-  await page.locator(`[data-rule-edit="${id}"]`).click();
-  await expect(page.locator('#rules-dialog')).toBeInViewport();
+  const target = id === 'spellcasting' ? 'metric:dt' : id;
+  await openPage(page, id.startsWith('resource:') || id.startsWith('attribute:') ? 'guild-card' : 'dnd-rules');
+  await page.locator(`[data-calculation-target="${target}"]`).dblclick();
+  await expect(page.locator('#component-editor')).toBeInViewport();
 };
-const save = async page => { await expect(page.locator('#rule-save')).toBeEnabled(); await page.locator('#rule-save').click(); await expect(page.locator('#rules-dialog')).not.toBeVisible(); };
-const field = (page, name) => page.locator(`#rules-dialog [name="${name}"]`);
+const dialog = page => page.locator('dialog:visible').filter({ has: page.locator('#component-save, #rule-save') });
+const save = async page => {
+  await expect(dialog(page).locator('[type="submit"]')).toBeEnabled();
+  await dialog(page).locator('[type="submit"]').click();
+  await expect(page.locator('#rules-dialog[open], #component-editor[open]')).toHaveCount(0);
+};
+const field = (page, name) => dialog(page).locator(`[name="${name}"]`);
 const snapshot = page => page.evaluate(() => JSON.parse(localStorage.getItem('hunterscodex:sheet:v1')));
 
 test('central agrupa, busca, aplica lote e propaga nomes em seletores, grupos e tooltips', async ({ page }) => {
@@ -41,21 +47,21 @@ test('progressão, prévia, variável e validação funcionam sem curar o recurs
   await page.goto('/'); await page.locator('[data-res-current="atp"]').fill('4'); await page.locator('[data-res-current="atp"]').press('Tab');
   await rule(page, 'resource:atp'); await field(page, 'mode').selectOption('progression');
   await field(page, 'initial').fill('10 + MOD_INT'); await field(page, 'gain').fill('NIVEL_AVALIADO');
-  await field(page, 'bonuses').fill('5|5'); await expect(page.locator('#rule-preview')).toContainText('Resultado efetivo: 10'); await save(page);
+  await field(page, 'bonuses').fill('5|5'); await expect(page.locator('#component-preview')).toContainText('Resultado: 10'); await save(page);
   await openPage(page, 'guild-card');
   await page.locator('[data-field="info.level"]').fill('5'); await page.locator('[data-field="info.level"]').press('Tab');
   await expect(page.locator('[data-res-max="atp"]')).toHaveValue('29'); await expect(page.locator('[data-res-current="atp"]')).toHaveValue('4');
   await rule(page, 'resource:atp'); await field(page, 'mode').selectOption('formula');
-  await field(page, 'formula').fill('1/0'); await expect(page.locator('#rule-error')).toContainText('Divisão por zero'); await expect(page.locator('#rule-save')).toBeDisabled();
+  await field(page, 'formula').fill('1/0'); await expect(dialog(page).locator('#rule-error, #component-error')).toContainText('Divisão por zero'); await expect(dialog(page).locator('[type="submit"]')).toBeDisabled();
   await field(page, 'formula').fill('10 + '); await field(page, 'formula').focus();
-  await page.locator('#formula-variable').selectOption('MOD_INT'); await page.locator('#insert-variable').click();
+  await page.locator('#component-variable').selectOption('MOD_INT'); await page.locator('#component-insert').click();
   await expect(field(page, 'formula')).toHaveValue('10 + MOD_INT'); await save(page);
   await expect(page.locator('[data-res-max="atp"]')).toHaveValue('10');
 });
 
 test('magias exibem DT e resistência sem converter círculo textual', async ({ page }) => {
-  await page.goto('/'); await openPage(page, 'calculations'); await page.locator('#btn-spellcasting').click();
-  await field(page, 'formula').fill('10 + floor(NIVEL / 2) + MOD_CONJURACAO + BONUS_DT'); await field(page, 'bonus').fill('2'); await save(page);
+  await page.goto('/'); await rule(page, 'spellcasting'); await field(page, 'mode').selectOption('formula'); await page.locator('#component-advanced').click();
+  await field(page, 'formula').fill('10 + floor(NIVEL / 2) + MOD_CONJURACAO + BONUS_DT'); await field(page, 'parameter:casting.bonus').fill('2'); await save(page);
   await openPage(page, 'records'); await page.locator('#tab-btn-spells').click(); await page.locator('[data-add="spells"]').click();
   await field(page, 'title').fill('Luz'); await field(page, 'level').fill('Especial');
   await field(page, 'resistance').selectOption('des'); await save(page);
@@ -66,7 +72,7 @@ test('magias exibem DT e resistência sem converter círculo textual', async ({ 
   await openPage(page, 'records');
   await page.locator('#tab-spells [data-entry-id]').click(); await field(page, 'mode').selectOption('formula');
   await field(page, 'formula').fill('10 + CIRCULO + MOD_INT + BONUS_MAGIA');
-  await expect(page.locator('#rule-error')).toContainText('CIRCULO'); await expect(page.locator('#rule-save')).toBeDisabled();
+  await expect(dialog(page).locator('#rule-error, #component-error')).toContainText('CIRCULO'); await expect(dialog(page).locator('[type="submit"]')).toBeDisabled();
   await field(page, 'circle').fill('3'); await field(page, 'bonus').fill('1'); await save(page);
   await expect(page.locator('#tab-spells .spell-dt')).toContainText('DT 17');
   await expect(page.locator('#tab-spells .entry-card__subtitle')).toContainText('Especial');
@@ -99,7 +105,7 @@ test.describe('novos editores em tela estreita', () => {
     await page.goto('/'); await page.locator('#btn-edit-names').tap(); await page.locator('[data-name-category="resources"]').tap();
     await page.locator('[data-name-input="resource:atp"]').fill('Mana'); await page.getByRole('button', { name: 'Aplicar alterações', exact: true }).tap();
     await rule(page, 'resource:atp'); await field(page, 'mode').selectOption('formula'); await field(page, 'formula').fill('10 + MOD_INT');
-    expect(await page.locator('#rules-dialog').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true); await save(page);
+    expect(await page.locator('#component-editor').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true); await save(page);
     await openPage(page, 'temporal'); await page.locator('#btn-effect-add').tap(); await field(page, 'name').fill('Descanso'); await field(page, 'event').selectOption('rest'); await field(page, 'durationUnit').selectOption('unlimited'); await save(page);
     await page.locator('[data-event="rest"]').tap(); await expect(page.locator('#event-counts')).toContainText('Descansos: 1');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

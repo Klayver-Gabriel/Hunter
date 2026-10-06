@@ -1,3 +1,4 @@
+import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
 import { displayName } from '../domain/componentCatalog.js';
 import * as R from '../auto_calc_engine/index.js';
 import * as M from '../auto_calc_engine/masteryCalculator.js';
@@ -32,7 +33,6 @@ function renderAll() {
   renderMetrics();
   renderSaves();
   renderSkills();
-  renderCombatConfig();
   renderAttackPanel();
   renderMasteryPanel();
   renderEquipment();
@@ -53,15 +53,17 @@ function renderMetrics() {
   const ac = R.armorClassBreakdown(character);
   const initiative = R.initiativeBreakdown(character);
   const hp = R.maxHpBreakdown(character);
-  const perception = R.skillBreakdown(character, D.SKILLS.find(skill => skill.key === 'perception'));
+  const calculated = calculateCharacter(character);
+  const passive = calculateCharacter(character).values['metric:passive'];
   const vitality = character.dnd.vitality;
 
   document.getElementById('rule-metrics').innerHTML = [
-    metricCard('Classe de Armadura', ac.total, `${ac.base} base ${R.signed(ac.dex)} ${label('attribute:des', 'DES')} ${R.signed(ac.armor)} armadura ${R.signed(ac.shield)} escudo ${R.signed(ac.buffs)} buffs`, 'armor'),
-    metricCard('Iniciativa', R.signed(initiative.total), `${label('attribute:des', 'DES')} ${R.signed(initiative.dex)} · buffs ${R.signed(initiative.buffs)} · talentos ${R.signed(initiative.feats)}`, 'initiative'),
-    metricCard('Vida Máxima', hp.total ?? 'Erro', hp.errors.length ? escapeHTML(hp.errors.join(' · ')) : hp.configured ? 'Configurada em Características e fórmulas' : `1º nível ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} × ${hp.laterPerLevel} ${R.signed(hp.feats)} talentos ${R.signed(hp.buffs)} buffs`, 'hp'),
+    metricCard('Classe de Armadura', ac.total, ac.error || (ac.configured ? 'Cálculo personalizado' : `${ac.base} base ${R.signed(ac.dex)} ${label('attribute:des', 'DES')} ${R.signed(ac.armor)} armadura ${R.signed(ac.shield)} escudo ${R.signed(ac.buffs)} buffs`), 'armor'),
+    metricCard('Iniciativa', R.signed(initiative.total), initiative.error || (initiative.configured ? 'Cálculo personalizado' : `${label('attribute:des', 'DES')} ${R.signed(initiative.dex)} · buffs ${R.signed(initiative.buffs)} · talentos ${R.signed(initiative.feats)}`), 'initiative'),
+    metricCard('Vida Máxima', hp.total ?? 'Erro', hp.errors.length ? escapeHTML(hp.errors.join(' · ')) : hp.configured ? 'Cálculo personalizado · duplo clique para editar' : `1º nível ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} × ${hp.laterPerLevel} ${R.signed(hp.feats)} talentos ${R.signed(hp.buffs)} buffs`, 'hp'),
     metricCard('Dados de Vida', vitality.hitDie, `${vitality.hitDiceRemaining} restantes de ${R.level(character)}`, 'hitdie'),
-    metricCard('Percepção Passiva', 10 + perception.total, `10 ${R.signed(perception.total)} ${label('skill:perception', 'Percepção')}`, 'passive')
+    metricCard('Percepção Passiva', passive ?? 'Erro', calculated.errors['metric:passive'] || '10 + Percepção', 'passive'),
+    metricCard('DT de magias', calculated.casting.value ?? 'Erro', calculated.casting.error || 'Conjuração global', 'dt')
   ].join('');
 }
 
@@ -69,12 +71,13 @@ function renderSaves() {
   const container = document.getElementById('saving-throws');
   container.innerHTML = D.ABILITIES.map(ability => {
     const result = R.saveBreakdown(character, ability.key);
-    return `<label class="save-row" title="${label(`save:${ability.key}`, ability.label)}: modificador ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)}">
-      <input type="checkbox" data-save="${ability.key}" ${character.dnd.saves[ability.key] ? 'checked' : ''}>
+    return `<div class="save-row" title="${label(`save:${ability.key}`, ability.label)}: modificador ${R.signed(result.ability)} + ${label('indicator:proficiency', 'proficiência')} ${R.signed(result.proficiency)}">
+      <input type="checkbox" aria-label="${label(`save:${ability.key}`, ability.label)}: proficiência" data-save="${ability.key}" ${character.dnd.saves[ability.key] ? 'checked' : ''}>
       <span class="save-row__ability" data-component-label="save:${ability.key}">${label(`attribute:${ability.key}`, ability.short)}</span>
-      <span class="save-row__parts">${R.signed(result.ability)} atributo ${R.signed(result.proficiency)} ${label('indicator:proficiency', 'prof.')}</span>
+      <span class="save-row__parts">${result.configured ? 'Cálculo personalizado' : `${R.signed(result.ability)} atributo ${R.signed(result.proficiency)} ${label('indicator:proficiency', 'prof.')}`}</span>
       <strong>${R.signed(result.total)}</strong>
-    </label>`;
+      ${result.error ? `<small class="rule-errors calculation-row-error">${escapeHTML(result.error)}</small>` : ''}
+    </div>`;
   }).join('');
 
   container.querySelectorAll('[data-save]').forEach(input => {
@@ -100,8 +103,9 @@ function renderSkills() {
         <label class="check-dot check-dot--expertise" title="Expertise"><input type="checkbox" data-skill-expertise="${skill.key}" aria-label="${label(`skill:${skill.key}`, skill.name)}: expertise" ${state.expertise ? 'checked' : ''}><span>◇</span></label>
         <span class="skill-row__name" data-component-label="skill:${skill.key}">${label(`skill:${skill.key}`, skill.name)}</span>
         <span class="skill-row__details"><span class="skill-row__ability">${label(`attribute:${ability.key}`, ability.short)}</span>
-        ${totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}</span>
+        ${result.configured ? '<span class="skill-row__external">Personalizado</span>' : totalBonus ? `<span class="skill-row__external">${R.signed(totalBonus)} bônus</span>` : '<span></span>'}</span>
         <strong>${R.signed(result.total)}</strong>
+        ${result.error ? `<small class="rule-errors calculation-row-error">${escapeHTML(result.error)}</small>` : ''}
       </div>`;
     }).join('');
     return `<section class="skill-group"><h4>${label(`attribute:${ability.key}`, ability.label)}</h4>${rows}</section>`;
@@ -120,51 +124,6 @@ function renderSkills() {
   });
 }
 
-function configField(label, path, value, type, options, hint) {
-  const field = type === 'select'
-    ? `<select data-config-path="${path}" data-config-type="select">${options.map(option => `<option value="${escapeHTML(option.value)}" ${String(option.value) === String(value) ? 'selected' : ''}>${escapeHTML(option.label)}</option>`).join('')}</select>`
-    : type === 'text'
-      ? `<input data-config-path="${path}" data-config-type="text" type="text" value="${escapeHTML(value)}">`
-      : `<input data-config-path="${path}" data-config-type="number" type="number" value="${Number(value) || 0}">`;
-  return `<label class="config-field"><span data-component-label="config:${path}">${label}</span>${field}${hint ? `<small>${hint}</small>` : ''}</label>`;
-}
-
-function renderCombatConfig() {
-  const armor = character.dnd.armor;
-  const initiative = character.dnd.initiative;
-  const vitality = character.dnd.vitality;
-  const hp = R.maxHpBreakdown(character);
-  const hitDice = [6, 8, 10, 12].map(value => ({ value: `d${value}`, label: `d${value}` }));
-  const container = document.getElementById('combat-config');
-  container.innerHTML = [
-    configField('Tipo de armadura', 'dnd.armor.type', armor.type, 'select', D.ARMOR_TYPES, `Pesada ignora ${label('attribute:des', 'DES')}; média limita em +2.`),
-    configField('Base da CA', 'dnd.armor.base', armor.base),
-    configField('Bônus de armadura', 'dnd.armor.armorBonus', armor.armorBonus),
-    configField('Escudo', 'dnd.armor.shield', armor.shield),
-    configField('Buff manual de CA', 'dnd.armor.buffs', armor.buffs),
-    configField('Buff de iniciativa', 'dnd.initiative.buffs', initiative.buffs),
-    configField('Talentos de iniciativa', 'dnd.initiative.feats', initiative.feats),
-    configField('Dado de Vida', 'dnd.vitality.hitDie', vitality.hitDie, 'select', hitDice),
-    configField('Dados restantes', 'dnd.vitality.hitDiceRemaining', vitality.hitDiceRemaining),
-    configField('Fórmula do 1º nível', 'dnd.vitality.firstLevelFormula', vitality.firstLevelFormula, 'text', null, 'Use CON para o modificador. Ex.: 8 + CON.'),
-    configField('Fórmula por nível seguinte', 'dnd.vitality.laterLevelFormula', vitality.laterLevelFormula, 'text', null, 'Aplicada uma vez por nível após o primeiro. Ex.: 4 + CON.'),
-    configField('PV por talentos', 'dnd.vitality.featBonus', vitality.featBonus),
-    configField('PV por buffs', 'dnd.vitality.buffs', vitality.buffs)
-  ].join('') + `<div class="formula-status ${hp.errors.length ? 'is-error' : ''}">
-    <strong>Prévia de Vida Máxima: ${hp.total ?? 'Erro'}</strong>
-    <span>${hp.errors.length ? 'Resultado indisponível até corrigir a regra.' : hp.configured ? 'Vida configurada no calculador. As fórmulas legadas só voltam a ser aplicadas ao selecionar Vida legada.' : `1º nível: ${hp.firstLevel} · ${Math.max(0, R.level(character) - 1)} níveis seguintes × ${hp.laterPerLevel} = ${hp.laterLevels}`}</span>
-    ${hp.errors.length ? `<small>${escapeHTML(hp.errors.join(' · '))} O último valor persistido é preservado até corrigir a regra.</small>` : '<small>Fórmulas válidas.</small>'}
-  </div>`;
-
-  container.querySelectorAll('[data-config-path]').forEach(input => {
-    input.addEventListener('change', () => {
-      const value = input.dataset.configType === 'number' ? Number(input.value) || 0 : input.value.trim();
-      try { store.dispatch('setField', { path: input.dataset.configPath, value }); input.setCustomValidity(''); }
-      catch (error) { input.setCustomValidity(error.message); input.reportValidity(); container.querySelector('.formula-status').textContent = error.message; }
-    });
-  });
-}
-
 function renderAttackPanel() {
   const container = document.getElementById('attack-panel');
   const weapon = R.equippedWeapon(character);
@@ -179,8 +138,8 @@ function renderAttackPanel() {
       <article class="weapon-summary">
         <div class="weapon-summary__icon">${escapeHTML(weapon.icon || '⚔')}</div>
         <div class="weapon-summary__identity"><span>${label('weapon:equipped')}</span><h3>${escapeHTML(weapon.name)}</h3><small>${escapeHTML(weapon.dndElement || 'Sem elemento')} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
-        <div class="attack-result"><span data-component-label="attack:bonus">Ataque</span><strong>${R.signed(attack.total)}</strong><small>${R.signed(attack.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} · ${R.signed(attack.proficiency)} ${label('indicator:proficiency', 'prof.')} · ${R.signed(attack.buffs)} buffs · ${R.signed(attack.mastery)} maestria</small></div>
-        <div class="attack-result"><span data-component-label="attack:damage">Dano</span><strong>${escapeHTML(damage.expression)}</strong><small>${escapeHTML(damage.dice)} ${R.signed(damage.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} ${R.signed(damage.buffs)} buffs ${R.signed(damage.mastery)} maestria</small></div>
+        <div class="attack-result"><span data-component-label="attack:bonus">Ataque</span><strong>${R.signed(attack.total)}</strong><small>${attack.error ? escapeHTML(attack.error) : attack.configured ? 'Cálculo personalizado' : `${R.signed(attack.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} · ${R.signed(attack.proficiency)} ${label('indicator:proficiency', 'prof.')} · ${R.signed(attack.buffs)} buffs · ${R.signed(attack.mastery)} maestria`}</small></div>
+        <div class="attack-result"><span data-component-label="attack:damage">Dano</span><strong>${escapeHTML(damage.expression)}</strong><small>${damage.error ? escapeHTML(damage.error) : damage.configured ? `Bônus numérico personalizado: ${R.signed(damage.totalBonus)}` : `${escapeHTML(damage.dice)} ${R.signed(damage.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} ${R.signed(damage.buffs)} buffs ${R.signed(damage.mastery)} maestria`}</small></div>
       </article>`;
   }
   document.getElementById('equipped-weapon-select').addEventListener('change', event => {
@@ -237,7 +196,7 @@ function renderEquipment() {
         ${item ? `<small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small>` : '<small>Nenhuma peça equipada</small>'}
       </div>
     </article>`;
-  }).join('') + `<div class="armor-total"><span data-component-label="armor:total">Bônus de CA das peças</span><strong>${R.signed(R.equippedArmor(character).reduce((total, item) => total + (Number(item.acBonus) || 0), 0))}</strong></div>`;
+  }).join('') + `<div class="armor-total"><span data-component-label="armor:total">Bônus de CA das peças</span><strong>${R.signed(calculateCharacter(character).values['armor:total'])}</strong></div>`;
   slots.querySelectorAll('[data-armor-slot]').forEach(select => {
     select.addEventListener('change', () => {
       store.dispatch('equipArmor', { slot: select.dataset.armorSlot, id: select.value });

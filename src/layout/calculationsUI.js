@@ -1,7 +1,7 @@
 import { ABILITIES } from '../domain/catalog.js';
 import { targetIds, referenceFor, DEFAULT_DT } from '../domain/calculations.js';
 import { displayName } from '../domain/componentCatalog.js';
-import { calculateCharacter, baseValue } from '../auto_calc_engine/characterCalculator.js';
+import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
 import { applyCommand } from '../application/commands.js';
 import { escapeHTML as h } from './html.js';
 
@@ -17,7 +17,6 @@ const input = (key, label, value, type = 'text', extra = '') => `<label>${h(labe
 const select = (key, label, values, value) => `<label>${h(label)}<select name="${key}">${options(values, value)}</select></label>`;
 const formulaInput = (key, label, value) => input(key, label, value, 'text', 'data-formula maxlength="2000"');
 const area = (key, label, value) => `<label>${h(label)}<textarea name="${key}" rows="3">${h(value)}</textarea></label>`;
-const modes = [['manual', 'Manual'], ['formula', 'Fórmula direta'], ['progression', 'Progressão por nível']];
 const abilities = () => ABILITIES.map(a => [a.key, name(`attribute:${a.key}`, a.label)]);
 export function variables(spell = false) {
   const result = [['NIVEL', 'Nível final do personagem'], ['NIVEL_FINAL', 'Nível final (alias)'], ['NIVEL_AVALIADO', 'Nível sendo avaliado na progressão'], ['PROFICIENCIA', name('indicator:proficiency')], ['MOD_CONJURACAO', 'Modificador de conjuração'], ['BONUS_DT', 'Bônus global da DT']];
@@ -70,30 +69,9 @@ function editor(title, body, build, preview, spell = false) {
   };
   update(); dialog.showModal(); form.querySelector('input, select, textarea')?.focus();
 }
-export function openRule(target) {
-  const c = store.getState(), casting = target === 'spellcasting';
-  const rule = c.calculations.rules[target] || (casting ? { mode: 'formula', formula: c.calculations.spellcasting.formula } : {});
-  const legacy = target.startsWith('resource:') && c.resources.some(r => `resource:${r.id}` === target && (r.type === 'hp' || r.id === 'hp'));
-  const mode = rule.mode || (legacy ? 'legacy' : 'manual');
-  editor(`Calcular ${targetName(target)}`, `${casting ? select('ability', 'Atributo de conjuração', abilities(), c.calculations.spellcasting.ability) + input('bonus', 'Bônus adicional da DT', c.calculations.spellcasting.bonus, 'number', 'step="any"') : ''}${select('mode', 'Modo de cálculo', legacy ? [['legacy', 'Vida legada (compatibilidade)'], ...modes] : modes, mode)}
-    <p data-modes="legacy">As fórmulas antigas continuam em Ajustar componentes de combate. CON é o modificador; o ganho usa o nível final e é multiplicado pelos níveis seguintes. Escolher outro modo converte explicitamente este recurso.</p>
-    <div data-modes="manual">${input('value', 'Valor manual base', calculateCharacter(c).baseValues[target] ?? baseValue(c, target), 'number', 'step="any"')}</div>
-    <div data-modes="formula">${formulaInput('formula', 'Fórmula direta', rule.formula || '10 + MOD_INT')}</div>
-    <div data-modes="progression">${formulaInput('initial', 'Valor ou fórmula inicial', rule.initial || '10 + MOD_INT')}${formulaInput('gain', 'Ganho por nível seguinte', rule.gain || '3 + MOD_INT')}
-    ${area('bonuses', 'Bônus específicos: um nível|fórmula por linha', (rule.bonuses || []).map(b => `${b.level}|${b.formula}`).join('\n'))}
-    ${select('policy', 'Retroatividade', [['current', 'Recalcular usando atributos atuais'], ['recorded', 'Preservar ganhos registrados']], rule.policy || 'current')}
-    <p>Ativar ou alterar a regra de registro estabelece um novo ponto inicial com o valor atual. Salvar a mesma regra mantém o histórico. Não reconstrói níveis anteriores. Abaixo desse ponto, mantém o valor inicial; ganhos futuros já registrados são reutilizados ao recuperar níveis.</p></div>
-    <div data-modes="formula progression">${input('min', 'Limite mínimo (opcional)', rule.min ?? '', 'number', 'step="any"')}${input('max', 'Limite máximo (opcional)', rule.max ?? '', 'number', 'step="any"')}</div>`, data => {
-    if (data.mode === 'legacy') return { type: 'useLegacyHp', payload: { target } };
-    const rule = { mode: data.mode };
-    if (data.mode === 'formula') rule.formula = data.formula;
-    if (data.mode === 'progression') Object.assign(rule, { initial: data.initial, gain: data.gain, policy: data.policy, bonuses: data.bonuses.trim() ? data.bonuses.trim().split('\n').map(line => { const [level, ...formula] = line.split('|'); return { level: Number(level), formula: formula.join('|').trim() }; }) : [] });
-    if (data.mode !== 'manual') for (const key of ['min', 'max']) if (data[key] !== '') rule[key] = Number(data[key]);
-    if (data.mode === 'manual' && (data.value === '' || !Number.isFinite(Number(data.value)))) throw Error('Informe um valor manual válido.');
-    return { type: 'setCalculationRule', payload: { target, rule, value: Number(data.value), ...(casting ? { spellcasting: { ability: data.ability, bonus: Number(data.bonus) } } : {}) } };
-  }, result => `Resultado efetivo: ${result.values[target]}\nBase: ${result.baseValues[target]}\n${(result.details[target] || []).map(part => `${part.label}: ${part.value}\n${explain(part)}`).join('\n')}`);
-}
-function openCasting() { openRule('spellcasting'); }
+let componentEditor;
+export function setComponentEditor(editor) { componentEditor = editor; }
+export function openRule(target) { componentEditor.open(target); }
 export function openSpell(entry) {
   const dt = entry?.dt || { mode: entry ? 'none' : 'global', bonus: 0, resistance: '' };
   editor(entry ? 'Editar magia' : 'Nova magia', `${input('title', 'Nome da magia', entry?.title || '', 'text', 'maxlength="120"')}${input('level', 'Círculo / Nível (texto original)', entry?.level || '')}${input('circle', 'Círculo numérico para fórmulas (opcional)', entry?.circle ?? '', 'number', 'min="0" step="1"')}${input('school', 'Escola', entry?.school || '')}${area('description', 'Descrição', entry?.description || '')}
@@ -118,8 +96,7 @@ function openEffect(effect) {
 export function init(applicationStore) {
   store = applicationStore;
   dialog = document.createElement('dialog'); dialog.id = 'rules-dialog'; dialog.className = 'modal rules-dialog'; dialog.setAttribute('aria-labelledby', 'rules-title'); document.body.append(dialog);
-  document.getElementById('btn-calculation-add').onclick = () => store.dispatch('addCharacteristic');
-  document.getElementById('btn-spellcasting').onclick = openCasting;
+  document.getElementById('btn-calculation-add').onclick = () => componentEditor.createCharacteristic();
   document.getElementById('btn-effect-add').onclick = () => openEffect();
   document.querySelectorAll('[data-event]').forEach(button => { button.onclick = () => {
     try { store.dispatch('advanceEvent', { event: button.dataset.event }); document.getElementById('temporal-error').textContent = ''; }
@@ -127,17 +104,13 @@ export function init(applicationStore) {
   }; });
 }
 export function render() {
-  const c = store.getState(), result = calculateCharacter(c);
-  document.getElementById('spellcasting-summary').textContent = `DT global · ${explain(result.casting)}`;
-  const list = document.getElementById('calculation-list');
-  list.innerHTML = targetIds(c).map(id => {
-    const rule = c.calculations.rules[id];
-    const component = id === 'spellcasting' ? 'metric:dt' : id.startsWith('characteristic:') ? `record:characteristics:${id.slice(15)}` : null;
-    return `<article class="calculation-card"><h3 ${component ? `data-component-label="${h(component)}"` : ''}>${h(targetName(id))}</h3><strong>${result.values[id] ?? 'Erro de cálculo'}</strong><small>Base: ${result.baseValues[id] ?? '—'} · ${h(modes.find(([mode]) => mode === rule?.mode)?.[1] || (id === 'spellcasting' ? 'Fórmula direta' : id === 'resource:hp' ? 'Vida legada' : 'Manual'))}</small>${result.errors[id] ? `<p class="rule-errors" role="alert">${h(result.errors[id])}</p>` : ''}<button class="btn btn--ghost btn--sm" data-rule-edit="${h(id)}">Configurar ${h(targetName(id))}</button>${id.startsWith('characteristic:') ? `<button class="btn btn--ghost btn--sm" data-stat-delete="${h(id.slice(15))}">Excluir característica</button>` : ''}</article>`;
-  }).join('');
-  list.querySelectorAll('[data-rule-edit]').forEach(b => { b.onclick = () => openRule(b.dataset.ruleEdit); });
-  list.querySelectorAll('[data-stat-delete]').forEach(b => { b.onclick = () => {
-    try { store.dispatch('removeCharacteristic', { id: b.dataset.statDelete }); } catch (error) { document.getElementById('calculation-error').textContent = error.message; }
+  const c = store.getState();
+  const list = document.getElementById('characteristic-management');
+  list.innerHTML = c.calculations.characteristics.map(item => `<div class="calculation-actions"><span>${h(item.name)}</span><button class="btn btn--ghost btn--sm" data-stat-edit="${h(item.id)}">Editar</button><button class="btn btn--ghost btn--sm" data-stat-delete="${h(item.id)}">Excluir</button></div>`).join('') || '<p>Nenhuma característica personalizada.</p>';
+  list.querySelectorAll('[data-stat-edit]').forEach(button => { button.onclick = () => openRule(`characteristic:${button.dataset.statEdit}`); });
+  list.querySelectorAll('[data-stat-delete]').forEach(button => { button.onclick = () => {
+    try { store.dispatch('removeCharacteristic', { id: button.dataset.statDelete }); document.getElementById('calculation-error').textContent = ''; }
+    catch (error) { document.getElementById('calculation-error').textContent = error.message; }
   }; });
   document.getElementById('event-counts').textContent = `Turnos: ${c.temporal.turn} · Rodadas: ${c.temporal.round} · Descansos: ${c.temporal.rest}`;
   const effects = document.getElementById('temporal-list');

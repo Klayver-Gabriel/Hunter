@@ -5,6 +5,8 @@ import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
 import { createCalculations, createTemporal } from '../domain/calculations.js';
 import { componentCatalog, recordFor, recordNameKey } from '../domain/componentCatalog.js';
 import { initializeSkillTables } from '../domain/skillTemplates.js';
+import { currentResourceId } from '../domain/calculationTargets.js';
+import { applyComponentConfiguration } from './componentConfiguration.js';
 export function freeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.values(value).forEach(freeze); Object.freeze(value);
@@ -18,7 +20,7 @@ function synchronize(c) {
   const result = calculateCharacter(c);
   for (const resource of c.resources) {
     const value = result.values[`resource:${resource.id}`];
-    if (value != null) { resource.max = value; resource.current = Math.max(0, Math.min(resource.current, value)); }
+    if (value != null) { resource.max = value; resource.current = result.values[currentResourceId(`resource:${resource.id}`)] ?? resource.current; }
   }
   for (const [id, history] of Object.entries(result.histories)) c.calculations.rules[id].history = history;
   c.dnd.vitality.hitDiceRemaining = Math.min(level(c), Math.max(0, Number(c.dnd.vitality.hitDiceRemaining) || 0));
@@ -58,6 +60,13 @@ export function createStore(initial) {
       return true;
     },
     subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    configureComponent(patch) {
+      const document = { character: structuredClone(state), sheetAppearance: structuredClone(appearance) };
+      applyComponentConfiguration(document, patch);
+      document.character.meta.updatedAt = new Date().toISOString();
+      publish(document.character, 'configureComponent', validateAppearance(document.sheetAppearance));
+      return true;
+    },
     customizeComponents(changes) {
       const next = structuredClone(appearance), draft = structuredClone(state);
       const catalog = componentCatalog(state, appearance);

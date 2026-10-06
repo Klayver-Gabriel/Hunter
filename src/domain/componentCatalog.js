@@ -16,7 +16,7 @@ export const STRUCTURAL_COMPONENTS = [
   ...entries('equipment', { 'weapon:equipped': 'Arma equipada', 'section:equipment': 'Equipamento & Buffs', 'section:library': 'Biblioteca da Guilda', 'subsection:equipped-armor': 'Armadura equipada', 'subsection:buffs': 'Buff Engine', 'subsection:weapons': 'Armas', 'subsection:armors': 'Armaduras', 'armor:total': 'Bônus de CA das peças', ...Object.fromEntries(ARMOR_SLOTS.map(s => [`armor:${s.key}`, s.label])) }),
   ...entries('powers', { 'tab:powers': 'Poderes' }), ...entries('spells', { 'tab:spells': 'Magias', 'metric:dt': 'DT de magias' }),
   ...entries('masteries', { 'subsection:mastery': 'Maestria da arma', 'mastery:level': 'Nível', 'mastery:xp': 'XP', 'mastery:xpToNext': 'Próximo' }),
-  ...entries('other', { 'tab:journal': 'Diário', 'section:calculations': 'Características e fórmulas', 'section:temporal': 'Efeitos temporais' }),
+  ...entries('other', { 'tab:journal': 'Diário', 'section:calculations': 'Configurações gerais', 'section:characteristics': 'Características', 'section:temporal': 'Efeitos temporais' }),
   ...entries('combat', Object.fromEntries(Object.entries({ 'armor.type': 'Tipo de armadura', 'armor.base': 'Base da CA', 'armor.armorBonus': 'Bônus de armadura', 'armor.shield': 'Escudo', 'armor.buffs': 'Buff manual de CA', 'initiative.buffs': 'Buff de iniciativa', 'initiative.feats': 'Talentos de iniciativa', 'vitality.hitDie': 'Dado de Vida', 'vitality.hitDiceRemaining': 'Dados restantes', 'vitality.firstLevelFormula': 'Fórmula do 1º nível', 'vitality.laterLevelFormula': 'Fórmula por nível seguinte', 'vitality.featBonus': 'PV por talentos', 'vitality.buffs': 'PV por buffs' }).map(([key, value]) => [`config:dnd.${key}`, value])))
 ];
 export function recordCollections(c) {

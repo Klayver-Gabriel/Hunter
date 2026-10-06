@@ -5,7 +5,7 @@ const descriptions = {
   equipment: 'Monte seu equipamento e acompanhe os bônus ativos.',
   library: 'Suas armas e armaduras, prontas para equipar.',
   records: 'Poderes, magias e anotações da sua jornada.',
-  calculations: 'Fórmulas, progressões, conjuração e ajustes de combate.',
+  calculations: 'Crie características e gerencie componentes. Edite cálculos diretamente na ficha.',
   temporal: 'Gerencie os efeitos de cada turno, rodada e descanso.'
 };
 const equipmentPages = ['equipment', 'armory', 'library'];

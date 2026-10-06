@@ -4,6 +4,7 @@ import { calculateCharacter, baseValue, characterLevel, assertCalculations } fro
 import { advanceEvent } from './temporal.js';
 import * as D from '../domain/catalog.js';
 import { assertSkillTemplate, saveSkillTemplate } from '../domain/skillTemplates.js';
+import { resourceNonNegative, limitResourceCurrent } from '../domain/calculationTargets.js';
 const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const fields = new Set([
   ...Object.keys(C.createDefault().info).map(key => `info.${key}`),
@@ -27,7 +28,7 @@ export function applyCommand(c, type, p = {}) {
       C.set(c, p.path, p.value); break;
     case 'setAttribute':
       if (!C.ATTRS.includes(p.key)) throw Error('Atributo inválido.');
-      if (c.calculations.rules[`attribute:${p.key}`] && c.calculations.rules[`attribute:${p.key}`].mode !== 'manual') throw Error('Altere a regra deste atributo no calculador.');
+      if (c.calculations.rules[`attribute:${p.key}`] && !['default', 'manual'].includes(c.calculations.rules[`attribute:${p.key}`].mode)) throw Error('Edite o cálculo com duplo clique no nome do atributo.');
       c.attributes[p.key] = Math.max(1, Math.min(30, numeric(p.value) || 10)); break;
     case 'addResource': C.addResource(c, { name: 'Novo Recurso', current: 10, max: 10 }); break;
     case 'removeResource':
@@ -35,11 +36,11 @@ export function applyCommand(c, type, p = {}) {
     case 'setResource': {
       const r = lookup(c.resources, p.id);
       if (!r || !['name', 'current', 'max'].includes(p.key)) throw Error('Recurso inválido.');
-      if (p.key === 'max' && c.calculations.rules[`resource:${r.id}`] && c.calculations.rules[`resource:${r.id}`].mode !== 'manual') throw Error('Altere a regra deste recurso no calculador.');
+      if (p.key === 'max' && c.calculations.rules[`resource:${r.id}`] && !['default', 'manual'].includes(c.calculations.rules[`resource:${r.id}`].mode)) throw Error('Edite o cálculo com duplo clique no nome do recurso.');
       if (p.key === 'name') { if (r.removable) r.name = String(p.value).trim() || r.name; }
       else if (!(p.key === 'max' && r.type === 'hp' && !c.calculations.rules[`resource:${r.id}`])) {
-        r[p.key] = Math.max(0, numeric(p.value));
-        if (p.key === 'max') { r.baseMax = r.max; r.current = Math.min(r.current, r.max); }
+        r[p.key] = p.key === 'max' || resourceNonNegative(c, `resource:${r.id}`) ? Math.max(0, numeric(p.value)) : numeric(p.value);
+        if (p.key === 'max') { r.baseMax = r.max; r.current = limitResourceCurrent(c, `resource:${r.id}`, r.current, r.max); }
       }
       break;
     }
@@ -104,7 +105,7 @@ export function applyCommand(c, type, p = {}) {
     case 'saveEntry':
     case 'deleteEntry':
       if (!['powers', 'spells', 'journal'].includes(p.list)) throw Error('Lista inválida.');
-      if (type === 'deleteEntry') C.removeEntry(c, p.list, p.id);
+      if (type === 'deleteEntry') { C.removeEntry(c, p.list, p.id); if (p.list === 'spells') delete c.calculations.rules[`spell:${p.id}`]; }
       else if (p.id) C.updateEntry(c, p.list, p.id, p.data);
       else C.addEntry(c, p.list, p.data);
       break;
@@ -119,12 +120,13 @@ export function applyCommand(c, type, p = {}) {
         if (p.target === 'spellcasting') c.calculations.spellcasting.base = value;
         else if (kind === 'attribute') c.attributes[key] = value;
         else if (kind === 'resource') lookup(c.resources, key).baseMax = value;
-        else lookup(c.calculations.characteristics, key).base = value;
+        else if (kind === 'characteristic') lookup(c.calculations.characteristics, key).base = value;
+        else rule.value = value;
       }
       if (rule.mode === 'progression' && rule.policy === 'recorded') {
         const old = c.calculations.rules[p.target];
         const comparable = r => JSON.stringify({ mode: r?.mode, initial: r?.initial, gain: r?.gain, bonuses: r?.bonuses, policy: r?.policy, min: r?.min, max: r?.max });
-        rule.history = old?.history && comparable(old) === comparable(rule) ? structuredClone(old.history) : { anchorLevel: characterLevel(c), anchorValue: previous.baseValues[p.target] ?? baseValue(c, p.target), gains: {} };
+        rule.history = old?.history && comparable(old) === comparable(rule) ? structuredClone(old.history) : { anchorLevel: characterLevel(c), anchorValue: previous.baseValues[p.target] ?? baseValue(c, p.target) ?? 0, gains: {} };
       } else delete rule.history;
       c.calculations.rules[p.target] = rule;
       validateCalculations(c); assertCalculations(c); break;
@@ -158,6 +160,6 @@ export function applyCommand(c, type, p = {}) {
     default: throw Error(`Comando desconhecido: ${type}`);
   }
   validateCalculations(c);
-  if (['removeResource', 'removeCharacteristic', 'saveEntry', 'saveEffect', 'activateEffect'].includes(type)) assertCalculations(c);
+  if (['removeResource', 'removeCharacteristic', 'saveEntry', 'deleteEntry', 'saveSkillTemplate', 'saveEffect', 'activateEffect'].includes(type)) assertCalculations(c);
   if (type === 'setField' && p.path.includes('Formula')) assertCalculations(c);
 }
