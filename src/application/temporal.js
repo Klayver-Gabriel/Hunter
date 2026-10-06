@@ -1,4 +1,5 @@
 import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
+import { limitResourceCurrent } from '../domain/calculationTargets.js';
 
 // Events are commands. Rendering and synchronization never call this function.
 export function advanceEvent(c, event) {
@@ -13,7 +14,7 @@ export function advanceEvent(c, event) {
   // Simultaneous resource changes use the maximum at the start of the event.
   for (const [target, amount] of changes) {
     const resource = c.resources.find(r => `resource:${r.id}` === target);
-    resource.current = Math.max(0, Math.min(calculated.values[target], resource.current + amount));
+    resource.current = limitResourceCurrent(c, target, resource.current + amount, calculated.values[target]);
   }
   c.temporal[event] += 1;
   for (const effect of c.temporal.effects) {

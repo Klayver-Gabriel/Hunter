@@ -26,20 +26,23 @@ npm run test:e2e
 
 Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia o servidor estático automaticamente e guarda traces das falhas em `test-results/`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
 
+## Configuração de componentes
+
+Dê **duplo clique no nome** de um atributo, recurso, perícia, resistência, defesa, iniciativa, proficiência, ataque, dano ou DT para abrir o editor desse componente. Com o nome focado, Enter ou Espaço abre o mesmo popup; no celular, use o botão ✎. Valores como nível, XP e dados restantes continuam sendo dados de entrada editáveis.
+
+O popup oferece **Padrão**, **Manual**, **Fórmula** e **Progressão por nível**, além de nome, prévia e parâmetros específicos. Opções avançadas guardam limites, regras de progressão, ajustes de combate e detalhamento do cálculo. Salvar confirma nome e configuração juntos. Cancelar ou Escape descarta o rascunho.
+
+- `VALOR_PADRAO + MOD_INT` ajusta o cálculo original; uma expressão como `FOR * 2` substitui o cálculo base. Bônus temporários são aplicados uma vez depois da regra.
+- O seletor **Usar outro valor** insere referências estáveis a outros componentes. Para recursos, há opções separadas para valor atual e máximo. Renomear não quebra referências; dependências circulares e exclusões de componentes referenciados são rejeitadas.
+- Em recursos, **Não negativo** começa ativado. Desativar permite saldo atual negativo; o máximo continua maior ou igual a zero. Aumentar o máximo não recupera o recurso; reduzir o máximo limita o atual e recalcula os dependentes.
+- Vida Máxima e HP compartilham a regra do recurso de vida. A DT de magias configura a conjuração global; cada magia também possui um popup contextual de DT, além do cadastro completo.
+- Perícias das duas tabelas mantêm suas regras ao trocar a tabela visível. O cálculo padrão continua usando atributo, proficiência/expertise, bônus, buffs e maestria.
+
+**Configurações** reúne criação e gestão de características personalizadas, exibidas em um bloco próprio da ficha. **Editar componentes** permite renomear em lote, ocultar e restaurar componentes. **Efeitos** mantém as ações explícitas de turno, rodada e descanso. Ocultar componentes preserva seus dados e cálculos.
+
 ## Personalização
 
-O botão **Personalizar ficha** abre um rascunho isolado. A edição dos dados fica suspensa até Salvar ou Cancelar. Restaurar padrão altera somente o rascunho, inclusive os dois layouts, e pode ser cancelado. Uma falha de gravação mantém o editor e o rascunho abertos.
-
-Selecione um componente na ficha ou no seletor. É possível alterar rótulo, cores por tema, seção, posição e tamanho. Campos de identidade, atributos, recursos, perícias, resistências, combate, maestria e campos individuais de equipamentos/registros mantêm seus IDs ao serem movidos. Os campos completos de entidades também estão acessíveis em **Editar campos** na visualização padrão.
-
-- A alça superior move; a inferior redimensiona. Ambas aceitam mouse e toque.
-- Com uma alça focada, as setas movem 1 px; Shift usa passos de 10 px. Alt + setas redimensiona. A alça inferior também redimensiona diretamente com as setas.
-- Posição/tamanho podem ser informados numericamente. Movimentos que excedem limites, mínimos de conteúdo ou invadem um componente irmão são rejeitados.
-- Computador e celular têm geometrias independentes; rótulos e cores são compartilhados. O perfil móvel é usado quando a área da ficha tem até 900 px.
-- A ordem de leitura e foco segue as posições visuais. Crescimento de conteúdo desloca os componentes seguintes para baixo sem reescrever coordenadas salvas.
-- Campos novos são acrescentados em espaço disponível; IDs não presentes na ficha são ignorados na renderização e preservados no documento.
-
-O tema usa a preferência do sistema até a primeira escolha explícita. O botão mostra a ação disponível: sol para ativar o tema claro, lua para o escuro.
+Nomes de registros são gravados no cadastro; nomes estruturais são rótulos de apresentação. IDs não dependem dos nomes ou da posição em uma lista. Cores e layouts de documentos antigos são preservados para compatibilidade, sem alterar os cálculos.
 
 ## Arquitetura
 
@@ -50,13 +53,12 @@ O tema usa a preferência do sistema até a primeira escolha explícita. O botã
 | `src/auto_calc_engine` | Fórmulas, combate, vitalidade, perícias e maestria; funções sem DOM ou persistência |
 | `src/application` | Comandos, snapshots imutáveis, sincronização de derivados, transações e autosave |
 | `src/application/ports` | Contratos dos repositórios |
-| `src/customization` | Aparência versionada, validação e geometria sem DOM |
 | `src/layout` | Renderização, acessibilidade, tema, registro de componentes e editor |
 | `src/infrastructure` | Armazenamento do navegador, arquivos JSON e migrações |
 
 O fluxo de alteração é `comando → draft privado → cálculos derivados → snapshot imutável → assinantes → autosave`. A interface recebe o snapshot e emite comandos; renderizar não altera o personagem. O autosave usa debounce de 500 ms e salva um snapshot capturado. Trocar de ficha cancela a gravação antiga somente após a nova gravação ter sido confirmada.
 
-Para adicionar um cálculo, exporte uma função pura do motor e acrescente testes dos resultados. Para adicionar uma operação, implemente um comando e emita-o na interface. Para campos de armas, armaduras, buffs ou registros, o catálogo `ENTITY_FIELDS` define editor, conversão e validação; para outros componentes, registre ID, elemento, rótulo, seção padrão e largura mínima no registro visual. IDs nunca devem depender do rótulo ou do índice de uma lista.
+O registro em `src/domain/calculableComponents.js` descreve parâmetros e capacidades de cada tipo; `src/auto_calc_engine/defaultCalculations.js` reúne cálculos padrão que recebem um resolvedor de dependências. A prévia e a gravação usam a mesma transação em `src/application/componentConfiguration.js`. Para adicionar um cálculo, registre seu alvo, descritor e cálculo padrão e acrescente testes dos resultados. O formulário é gerado pelos metadados do registro. Para adicionar uma operação, implemente um comando e emita-o na interface. Para campos de armas, armaduras, buffs ou registros, o catálogo `ENTITY_FIELDS` define editor, conversão e validação; para outros componentes, registre ID, elemento, rótulo, seção padrão e largura mínima no registro visual. IDs nunca devem depender do rótulo ou do índice de uma lista.
 
 ## Formato e recuperação
 
@@ -65,7 +67,7 @@ O JSON exportado usa este envelope:
 ```json
 {
   "formatVersion": 1,
-  "character": { "schemaVersion": 2 },
+  "character": { "schemaVersion": 5 },
   "sheetAppearance": {
     "version": 1,
     "components": {
@@ -90,7 +92,7 @@ Chaves de `localStorage`:
 | `hunterscodex:sheet:backup` | Conteúdo anterior à última migração ou substituição |
 | `hunterscodex:preferences:v1` | Preferência de tema, excluída da exportação |
 
-Fichas antigas recebem aparência padrão. Migrações não modificam a entrada e preservam campos desconhecidos do personagem. Versões futuras incompatíveis, identificadores inválidos e valores de aparência inseguros são rejeitados.
+O schema atual do personagem é 5; a versão 4 permanece reservada às fichas do antigo seletor de sistemas e mantém sua rotina de recuperação. Fichas antigas recebem aparência padrão. Migrações não modificam a entrada e preservam campos desconhecidos do personagem. Versões futuras incompatíveis, identificadores inválidos e valores de aparência inseguros são rejeitados.
 
 Em erro de carregamento, a tela permite baixar o original, importar uma ficha recuperada e tentar novamente. Uma ficha padrão nunca sobrescreve automaticamente um conteúdo ilegível. Para recuperação manual, salve o conteúdo da chave de backup como arquivo JSON e use **Importar ficha recuperada**. O arquivo é validado antes de substituir o documento. Exportações regulares continuam sendo a forma de guardar histórico fora do navegador.
 

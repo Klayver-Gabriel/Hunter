@@ -10,7 +10,7 @@ export function maxHpBreakdown(character) {
     const id = `resource:${hp.id}`;
     result.total = calculated.values[id] ?? null;
     result.errors = calculated.errors[id] ? [calculated.errors[id]] : [];
-    result.configured = Boolean(character.calculations?.rules[id]);
+    result.configured = Boolean(character.calculations?.rules[id] && character.calculations.rules[id].mode !== 'default');
   }
   return result;
 }

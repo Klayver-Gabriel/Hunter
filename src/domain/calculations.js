@@ -1,14 +1,10 @@
 import { ATTRS } from './character.js';
+import { calculationTargets } from './calculationTargets.js';
 
 export const DEFAULT_DT = '8 + PROFICIENCIA + MOD_CONJURACAO + BONUS_DT';
 export const createCalculations = () => ({ rules: {}, characteristics: [], spellcasting: { ability: 'int', formula: DEFAULT_DT, bonus: 0 } });
 export const createTemporal = () => ({ turn: 0, round: 0, rest: 0, effects: [] });
-export const targetIds = c => [
-  'spellcasting',
-  ...ATTRS.map(key => `attribute:${key}`),
-  ...c.resources.map(r => `resource:${r.id}`),
-  ...(c.calculations?.characteristics || []).map(r => `characteristic:${r.id}`)
-];
+export const targetIds = calculationTargets;
 // Encode the complete ID (including case) so imported IDs cannot collide.
 export const referenceFor = id => `REF_${Array.from(id).map(char => char.codePointAt(0).toString(16).padStart(2, '0')).join('').toUpperCase()}`;
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
@@ -25,7 +21,10 @@ export function validateCalculations(c) {
   const targets = new Set(targetIds(c));
   for (const [id, rule] of Object.entries(config.rules)) {
     if (!targets.has(id)) throw Error(`Característica removida ou desconhecida: ${id}.`);
-    if (!object(rule) || !['manual', 'formula', 'progression'].includes(rule.mode)) throw Error(`Modo inválido: ${id}.`);
+    if (!object(rule) || !['default', 'manual', 'formula', 'progression'].includes(rule.mode)) throw Error(`Modo inválido: ${id}.`);
+    if (Object.hasOwn(rule, 'nonNegative') && typeof rule.nonNegative !== 'boolean') throw Error(`Não negativo inválido: ${id}.`);
+    if (rule.value != null && !finite(rule.value)) throw Error(`Valor manual inválido: ${id}.`);
+    if (rule.mode === 'manual' && id !== 'spellcasting' && !/^(attribute|resource|characteristic):/.test(id) && !finite(rule.value)) throw Error(`Valor manual ausente: ${id}.`);
     if (rule.mode === 'formula' && !expression(rule.formula)) throw Error(`Fórmula vazia ou muito longa: ${id}.`);
     if (rule.mode === 'progression') {
       if (!expression(rule.initial) || !expression(rule.gain) || !['current', 'recorded'].includes(rule.policy) || !Array.isArray(rule.bonuses)) throw Error(`Progressão inválida: ${id}.`);

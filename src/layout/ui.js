@@ -1,4 +1,6 @@
 import * as calculationsUI from './calculationsUI.js';
+import { createComponentEditor } from './componentEditor.js';
+import { getCalculableComponents } from '../domain/calculableComponents.js';
 import { calculateCharacter } from '../auto_calc_engine/characterCalculator.js';
 import { displayName } from '../domain/componentCatalog.js';
 import * as C from '../domain/character.js';
@@ -10,6 +12,7 @@ import { createPageNavigation } from './pageNavigation.js';
 import { createNameEditor } from './componentNames.js';
 
 let character = null;
+let componentEditor;
 let store = null;
 let actions = null;
 let nameEditor = null;
@@ -56,6 +59,8 @@ function init(applicationStore, topActions) {
   store = applicationStore; actions = topActions; character = store.getState();
   systemsUI.init(store); calculationsUI.init(store);
   nameEditor = createNameEditor(store, document.getElementById('app'));
+  componentEditor = createComponentEditor(store, document.getElementById('app'));
+  calculationsUI.setComponentEditor(componentEditor);
   navigation = createPageNavigation();
   bindFieldInputs(); bindResourceAdd(); bindTabs(); bindTopActions();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
@@ -67,10 +72,12 @@ function renderAll() {
   renderSeal();
   renderAttributes();
   renderResources();
+  renderCharacteristics();
   TAB_LIST.forEach(renderEntryList);
   systemsUI.renderAll();
   calculationsUI.render();
   nameEditor.render();
+  componentEditor.render();
   navigation.render();
 }
 
@@ -133,7 +140,7 @@ function renderAttributes() {
       <div class="attr-tile">
         <div class="attr-tile__label" data-component-label="attribute:${key}">${C.ATTR_LABELS[key]}</div>
         <input class="attr-tile__score field-input mono" type="number"
-               data-attr="${key}" aria-label="${escapeHTML(label)}" value="${score ?? ''}" min="1" max="30" ${rule && rule.mode !== 'manual' ? 'readonly' : ''}>
+               data-attr="${key}" aria-label="${escapeHTML(label)}" value="${score ?? ''}" min="1" max="30" ${rule && !['manual', 'default'].includes(rule.mode) ? 'readonly' : ''}>
         <span class="attr-tile__mod" data-neg="${modVal < 0}">${score == null ? 'Erro' : F.modStr(score)}</span>${computed.errors[`attribute:${key}`] ? `<small class="rule-errors">${escapeHTML(computed.errors[`attribute:${key}`])}</small>` : ''}
       </div>`;
   }).join('');
@@ -150,18 +157,18 @@ function renderAttributes() {
 
 function renderResources() {
   const stack = document.getElementById('resource-stack');
+  const components = getCalculableComponents(store.getDocument());
   stack.innerHTML = character.resources.map(r => {
     const computed = calculateCharacter(character);
     const maximum = computed.values[`resource:${r.id}`];
-    const rule = character.calculations.rules[`resource:${r.id}`];
-    const automatic = rule ? rule.mode !== 'manual' : r.type === 'hp';
+    const automatic = !components.find(c => c.id === `resource:${r.id}`).inlineManual;
     const pct = F.percent(r.current, maximum);
     const typeClass = ['hp', 'atp', 'sanidade', 'evo'].includes(r.type)
       ? `resource--${r.type}` : 'resource--custom';
     return `
       <div class="resource ${typeClass}" data-id="${r.id}">
         <div class="resource__head">
-          <span class="resource__name field-input" contenteditable="${r.removable}" data-res-name="${r.id}" data-component-label="resource:${r.id}">${escapeHTML(r.name)}</span>
+          <span class="resource__name field-input" data-res-name="${r.id}" data-component-label="resource:${r.id}">${escapeHTML(r.name)}</span>
           <span class="resource__values">
             <label class="resource-value"><span class="resource-value__label">${escapeHTML(r.name)} atual</span><input type="number" class="field-input mono" data-res-current="${r.id}" value="${r.current}"></label>
             <span>/</span>
@@ -191,23 +198,21 @@ function renderResources() {
   stack.querySelectorAll('[data-res-max]').forEach(input => {
     input.addEventListener('change', () => updateResource(input.dataset.resMax, 'max', input.value));
   });
-  stack.querySelectorAll('[data-res-name]').forEach(el => {
-    el.addEventListener('blur', () => {
-      const r = character.resources.find(x => x.id === el.dataset.resName);
-      if (!r || el.textContent.trim() === displayName(character, store.getDocument().sheetAppearance, `resource:${r.id}`, r.name)) return;
-      if (store.getDocument().sheetAppearance.components[`resource:${r.id}`]?.label) {
-        const label = el.textContent.trim().slice(0, 120);
-        if (label) store.renameComponent(`resource:${r.id}`, label);
-        else nameEditor.render();
-      } else store.dispatch('setResource', { id: r.id, key: 'name', value: el.textContent });
-    });
-  });
   stack.querySelectorAll('[data-res-remove]').forEach(btn => {
     btn.addEventListener('click', () => {
       try { store.dispatch('removeResource', { id: btn.dataset.resRemove }); }
       catch (error) { document.getElementById('calculation-error').textContent = error.message; navigation.select('calculations', { focus: true, push: true }); }
     });
   });
+}
+
+function renderCharacteristics() {
+  const result = calculateCharacter(character), appearance = store.getDocument().sheetAppearance;
+  document.getElementById('characteristic-values').innerHTML = character.calculations.characteristics.map(item => {
+    const id = `characteristic:${item.id}`, labelId = `record:characteristics:${item.id}`;
+    return `<article class="calculation-card"><h3 data-component-label="${labelId}">${escapeHTML(displayName(character, appearance, labelId, item.name))}</h3><strong>${result.values[id] ?? 'Erro de cálculo'}</strong>${result.errors[id] ? `<p class="rule-errors">${escapeHTML(result.errors[id])}</p>` : ''}</article>`;
+  }).join('');
+  document.getElementById('characteristics-panel').hidden = !character.calculations.characteristics.length;
 }
 
 function updateResource(id, key, rawValue) {
@@ -248,7 +253,7 @@ function renderEntryList(listName) {
     <div class="entry-card" data-entry-id="${entry.id}" data-list="${listName}" tabindex="0" role="button">
       <div class="entry-card__title" data-component-label="record:${listName}:${entry.id}">${escapeHTML(entry.title)}</div>
       <div class="entry-card__subtitle">${escapeHTML(config.subtitle(entry))}</div>
-      ${listName === 'spells' ? spellSummary(calculated.spells[entry.id]) : ''}
+      ${listName === 'spells' ? spellSummary(calculated.spells[entry.id], entry.id) : ''}
       <div class="entry-card__excerpt">${escapeHTML(entry.description || '')}</div>
     </div>`).join('');
 
@@ -281,11 +286,12 @@ function openEntryModal(listName, entryId) {
   });
 }
 
-function spellSummary(result) {
-  if (result.error) return `<p class="rule-errors" role="alert">DT: ${escapeHTML(result.error)}</p>`;
-  if (result.value == null) return '<p class="spell-dt">Sem DT</p>';
+function spellSummary(result, id) {
+  const trigger = `<span data-component-label="spell:${id}">DT</span>`;
+  if (result.error) return `<p class="spell-dt rule-errors" role="alert">${trigger}: ${escapeHTML(result.error)}</p>`;
+  if (result.value == null) return `<p class="spell-dt">Sem ${trigger}</p>`;
   const resistance = result.resistance ? displayName(character, store.getDocument().sheetAppearance, `save:${result.resistance}`) : 'Sem resistência definida';
-  return `<p class="spell-dt" title="${escapeHTML(Object.entries(result.variables || {}).map(([k, v]) => `${k} = ${v}`).join(' · '))}">DT ${result.value} · ${escapeHTML(resistance)}${result.bonus ? ` · bônus específico ${result.bonus}` : ''}</p>`;
+  return `<p class="spell-dt" title="${escapeHTML(Object.entries(result.variables || {}).map(([k, v]) => `${k} = ${v}`).join(' · '))}">${trigger} ${result.value} · ${escapeHTML(resistance)}${result.bonus ? ` · bônus específico ${result.bonus}` : ''}</p>`;
 }
 
 function bindTopActions() {

@@ -1,6 +1,6 @@
 import { createDefault, createSkillState, createSaveState, ATTRS, uid } from '../../domain/character.js';
 import { createCalculations, createTemporal, validateCalculations } from '../../domain/calculations.js';
-import { assertCalculations, characterLevel, baseValue } from '../../auto_calc_engine/characterCalculator.js';
+import { assertCalculations, characterLevel, baseValue, calculateCharacter } from '../../auto_calc_engine/characterCalculator.js';
 import * as D from '../../domain/catalog.js';
 import { initializeSkillTables } from '../../domain/skillTemplates.js';
 import { restoreDndProfile } from './retiredSystemProfiles.js';
@@ -11,7 +11,7 @@ export function migrateCharacter(raw, options = {}) {
   }
   raw = restoreDndProfile(raw);
 
-  if (raw.schemaVersion != null && (![1, 2, 3].includes(raw.schemaVersion))) {
+  if (raw.schemaVersion != null && (![1, 2, 3, 5].includes(raw.schemaVersion))) {
     throw new Error('Versão de ficha incompatível.');
   }
   for (const key of ['info', 'attributes', 'equipment', 'dnd', 'library', 'meta', 'masteries']) {
@@ -59,7 +59,7 @@ export function migrateCharacter(raw, options = {}) {
   const migrated = {
     ...defaults,
     ...raw,
-    schemaVersion: 3,
+    schemaVersion: 5,
     calculations: raw.calculations ?? createCalculations(),
     temporal: raw.temporal ?? createTemporal(),
     info: { ...defaults.info, ...(raw.info || {}) },
@@ -118,7 +118,7 @@ export function migrateCharacter(raw, options = {}) {
   for (const [id, state] of Object.entries(migrated.masteries)) {
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !state || typeof state !== 'object' || Array.isArray(state)) throw new Error('Maestria inválida.');
   }
-  // Schema 2 → 3 adds configuration only. Legacy HP formulas retain their evaluator.
+  // Legacy HP formulas retain their original evaluator, including CON as a modifier.
   for (const spell of migrated.spells) {
     spell.dt ??= { mode: 'none', bonus: 0, resistance: '' };
     if (!Object.hasOwn(spell, 'circle') && /^\d+$/.test(String(spell.level ?? '').trim())) spell.circle = Number(spell.level);
@@ -126,8 +126,11 @@ export function migrateCharacter(raw, options = {}) {
   initializeSkillTables(migrated);
   validateCalculations(migrated);
   for (const [id, rule] of Object.entries(migrated.calculations.rules)) {
-    if (rule.mode === 'progression' && rule.policy === 'recorded' && !rule.history) rule.history = { anchorLevel: characterLevel(migrated), anchorValue: id.startsWith('resource:') ? migrated.resources.find(r => `resource:${r.id}` === id).max : baseValue(migrated, id), gains: {} };
+    if (rule.mode === 'progression' && rule.policy === 'recorded' && !rule.history) {
+      const anchorValue = id.startsWith('resource:') ? migrated.resources.find(r => `resource:${r.id}` === id).max : baseValue(migrated, id) ?? calculateCharacter(migrated).histories[id]?.anchorValue;
+      rule.history = { anchorLevel: characterLevel(migrated), anchorValue: anchorValue ?? 0, gains: {} };
+    }
   }
-  if (raw.schemaVersion === 3) assertCalculations(migrated, options);
+  if ([3, 5].includes(raw.schemaVersion)) assertCalculations(migrated, options);
   return migrated;
 }

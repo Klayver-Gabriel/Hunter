@@ -61,6 +61,7 @@ export function createNameEditor(store, root) {
     const entry = catalog.find(e => e.id === id);
     draft.set(id, { label: entry.original, hidden: false, restored: true, labelDirty: true, hiddenDirty: true, dirty: true });
   }
+  document.getElementById('btn-manage-components').onclick = () => trigger.click();
   trigger.addEventListener('click', () => {
     const { character, sheetAppearance } = store.getDocument();
     catalog = componentCatalog(character, sheetAppearance);

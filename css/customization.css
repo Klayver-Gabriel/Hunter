@@ -27,6 +27,26 @@ dialog.name-editor, dialog.rules-dialog { position: fixed; inset: 0; }
 .skill-template-toolbar label { flex: 1; min-width: 150px; }
 .skill-template-toolbar select { display: block; width: 100%; padding: .5rem; background: var(--void-deep); color: var(--parchment); border: 1px solid var(--iron-line-lt); border-radius: 4px; font: inherit; }
 .skill-template-help { font-size: .85rem; color: var(--parchment-dim); margin-block: .75rem; }
+.component-editor { width: min(500px, calc(100vw - 24px)); max-height: 88dvh; }
+.component-editor h2 { padding-right: .25rem; font-size: 1.25rem; }
+.component-editor details { margin-block: .8rem; border-block: 1px solid var(--iron-line-lt); padding-block: .65rem; }
+.component-editor summary { cursor: pointer; color: var(--parchment-dim); }
+.component-editor .component-checkbox { display: flex; align-items: center; gap: .6rem; }
+.component-editor input[type="checkbox"] { display: inline-block; width: auto; accent-color: var(--guild-gold); }
+.component-help, .component-editor small { color: var(--parchment-dim); font-size: .85rem; }
+.component-edit { display: inline-flex; align-items: center; justify-content: center; padding: .1rem .35rem; margin-inline-start: .2rem; color: var(--parchment-dim); background: transparent; border: 0; border-radius: 4px; opacity: .6; }
+.component-edit:hover, .component-edit:focus-visible { opacity: 1; color: var(--guild-gold); outline: 1px solid var(--guild-gold); }
+.component-edit::before { content: '✎'; }
+.calculation-caption { display: inline-flex; gap: .15rem; align-items: center; min-width: 0; max-width: 100%; }
+.calculation-caption > [data-calculation-target] { min-width: 0; flex: 1; }
+.is-removing-components .component-edit { display: none; }
+.attr-tile > .calculation-caption { justify-content: center; }
+.save-row { grid-template-columns: auto minmax(70px, .8fr) 1fr auto; cursor: default; }
+.calculation-row-error { grid-column: 1 / -1; font-size: .72rem; }
+[data-calculation-target] { cursor: pointer; border-radius: 3px; }
+[data-calculation-target]:focus-visible { outline: 2px solid var(--guild-gold); outline-offset: 3px; }
+.component-editor pre { font: inherit; font-size: .8rem; }
+@media (pointer: coarse) { .component-edit { min-width: 32px; min-height: 32px; opacity: 1; } }
 .skill-template-row { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: .6rem; align-items: center; border-block-end: 1px solid var(--iron-line-lt); }
 .skill-template-row > label { min-width: 0; }
 @media (max-width: 620px) {

@@ -120,7 +120,7 @@ test('documento da troca completa de sistema recupera o perfil D&D e os cadastro
   profile.info = { level: 1, class: 'Guerreiro', subclass: '', xp: 0 };
   const before = structuredClone(raw), doc = migrateDocument(raw);
   assert.deepEqual(raw, before);
-  assert.equal(doc.character.schemaVersion, 3);
+  assert.equal(doc.character.schemaVersion, 5);
   assert.equal(doc.character.systemProfiles, undefined);
   assert.equal(doc.character.systemId, undefined);
   assert.equal(doc.character.info.name, 'Caçador');

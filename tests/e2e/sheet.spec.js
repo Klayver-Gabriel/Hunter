@@ -142,7 +142,8 @@ test('recursos e registros continuam editáveis e persistidos', async ({ page })
   await page.goto('/'); await page.locator('#btn-add-resource').click();
   await expect(page.locator('.resource')).toHaveCount(5);
   const resource = page.locator('.resource--custom');
-  await resource.locator('[data-res-name]').fill('Foco'); await resource.locator('[data-res-name]').press('Tab');
+  await resource.locator('[data-res-name]').dblclick();
+  await page.locator('#component-editor [name="name"]').fill('Foco'); await page.locator('#component-save').click();
   await resource.locator('[data-res-current]').fill('6'); await resource.locator('[data-res-current]').press('Tab');
   await openPage(page, 'records');
   await page.locator('[data-add="powers"]').click();

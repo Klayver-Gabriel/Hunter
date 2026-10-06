@@ -13,7 +13,7 @@ export function level(character) {
 }
 
 export function proficiency(character) {
-  return F.proficiencyBonus(level(character));
+  return calculateCharacter(character).values['indicator:proficiency'] ?? NaN;
 }
 
 export function abilityModifier(character, ability) {

@@ -119,6 +119,10 @@
       </section>
     </div>
 
+    <section class="panel codex-section" id="characteristics-panel" hidden>
+      <div class="panel__header"><h2 class="panel__title" data-component-label="section:characteristics">Características</h2></div>
+      <div class="calculation-list" id="characteristic-values"></div>
+    </section>
   </div>
   <div class="sheet-page" id="page-dnd-rules" data-sheet-page="dnd-rules" hidden>
     <section class="panel codex-section" id="dnd-rules" aria-label="Perícias">
@@ -206,16 +210,12 @@
 
   </div>
   <div class="sheet-page" id="page-calculations" data-sheet-page="calculations" hidden>
-    <section class="panel codex-section" id="calculations" aria-label="Características e fórmulas">
-      <div class="panel__header"><h2 class="panel__title" data-component-label="section:calculations">Características e fórmulas</h2><button class="btn btn--ghost btn--sm" id="btn-calculation-add">+ Característica</button></div>
-      <p>Atributos começam em modo manual. Configure máximos e progressões sem recuperar automaticamente os recursos atuais.</p>
-      <details class="config-panel">
-        <summary>Ajustar componentes de combate</summary>
-        <div class="form-grid" id="combat-config"></div>
-      </details>
-      <div class="calculation-actions"><button class="btn btn--ghost" id="btn-spellcasting">Configurar conjuração global</button></div>
-      <p class="rule-preview" id="spellcasting-summary"></p><p class="rule-errors" id="calculation-error" role="alert"></p>
-      <div class="calculation-list" id="calculation-list"></div>
+    <section class="panel codex-section" id="calculations" aria-label="Configurações gerais">
+      <div class="panel__header"><h2 class="panel__title" data-component-label="section:calculations">Configurações gerais</h2><button class="btn btn--ghost btn--sm" id="btn-calculation-add">+ Característica</button></div>
+      <p>Edite os cálculos com duplo clique no nome de um componente da ficha. Use o botão ✎ no celular ou Enter com o nome focado.</p>
+      <p class="rule-errors" id="calculation-error" role="alert"></p>
+      <div id="characteristic-management"></div>
+      <button class="btn btn--ghost" id="btn-manage-components">Gerenciar nomes e componentes ocultos</button>
     </section>
   </div>
   <div class="sheet-page" id="page-temporal" data-sheet-page="temporal" hidden>
