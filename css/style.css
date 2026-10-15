@@ -6,8 +6,6 @@ html, body {
   height: 100%;
 }
 
-html { scroll-behavior: smooth; }
-
 body {
   background:
     radial-gradient(ellipse at top, rgba(201,98,47,0.05), transparent 60%),

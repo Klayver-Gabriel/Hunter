@@ -1,0 +1,52 @@
+.login-screen {
+  --login-bg: #f6f7f8;
+  --login-card: #fff;
+  --login-text: #21282c;
+  --login-muted: #687078;
+  --login-line: #e4e7e9;
+  --login-accent: #366252;
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 40px 20px;
+  background: var(--login-bg);
+  color: var(--login-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+[data-theme="dark"] .login-screen {
+  --login-bg: #121617;
+  --login-card: #1b2022;
+  --login-text: #f0f3f3;
+  --login-muted: #a3adaf;
+  --login-line: #31393b;
+  --login-accent: #add3bf;
+}
+.login-card { width: 100%; max-width: 400px; padding: 38px 34px 28px; border: 1px solid var(--login-line); border-radius: 22px; background: var(--login-card); text-align: center; }
+.login-mark { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 20px; border: 1px solid var(--login-line); border-radius: 15px; color: var(--login-accent); }
+.login-mark svg { width: 29px; height: 29px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#login-title { color: var(--login-text); font: 650 40px/1.15 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -1.8px; }
+.login-description { margin: 12px 0 30px; color: var(--login-muted); font-size: 14px; }
+.login-options button { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 8px; font: 500 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; transition: border-color .15s, background .15s; }
+.login-google { background: #fff; border: 1px solid #747775; color: #1f1f1f; }
+.login-google img { flex: 0 0 20px; object-fit: contain; }
+.login-google:hover:enabled { background: #f7f9fc; border-color: #1f1f1f; }
+.login-local { background: transparent; border: 1px solid var(--login-line); color: var(--login-text); }
+.login-local svg { flex: 0 0 18px; width: 18px; height: 18px; stroke: var(--login-muted); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.login-local:hover:enabled { border-color: var(--login-muted); }
+.login-options button:disabled { opacity: .5; cursor: wait; }
+.login-screen button:focus-visible { outline: 3px solid var(--login-accent); outline-offset: 4px; }
+.login-divider { display: flex; align-items: center; gap: 14px; margin: 18px 0; color: var(--login-muted); font-size: 12px; }
+.login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: var(--login-line); }
+.login-local-note { margin: 12px 0 0; color: var(--login-muted); font-size: 12px; }
+.login-status { margin: 20px 0 0; color: var(--login-muted); font-size: 12px; overflow-wrap: anywhere; }
+.login-status:empty { display: none; }
+.login-retry { margin-top: 12px; padding: 5px; color: var(--login-accent); font: 500 13px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: transparent; border: 0; text-decoration: underline; text-underline-offset: 3px; }
+.login-footer { margin: 24px 0 0; color: var(--login-muted); font-size: 12px; }
+@media (max-width: 420px) { .login-card { padding: 30px 22px 24px; border-radius: 18px; } }
+@media (max-height: 560px) { .login-screen { justify-content: flex-start; padding-top: 24px; padding-bottom: 24px; } }

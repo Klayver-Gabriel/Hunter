@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
 const rule = async (page, id) => {
   const target = id === 'spellcasting' ? 'metric:dt' : id;

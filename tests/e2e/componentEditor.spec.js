@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
 
 const editor = page => page.locator('#component-editor');

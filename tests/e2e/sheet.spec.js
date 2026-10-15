@@ -1,8 +1,9 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
+import { exportFile, importFile } from './helpers/sheets.js';
 
 async function importSheet(page, document, name = 'sheet.json') {
-  await page.locator('#file-import').setInputFiles({
+  await importFile(page, {
     name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document))
   });
 }
@@ -10,9 +11,7 @@ async function savedDocument(page) {
   return page.evaluate(() => JSON.parse(localStorage.getItem('hunterscodex:sheet:v1')));
 }
 async function exportSheet(page) {
-  const downloadEvent = page.waitForEvent('download');
-  await page.locator('#btn-export').click();
-  const stream = await (await downloadEvent).createReadStream();
+  const stream = await (await exportFile(page)).createReadStream();
   const chunks = []; for await (const chunk of stream) chunks.push(chunk);
   return JSON.parse(Buffer.concat(chunks).toString());
 }
@@ -193,7 +192,7 @@ test('recuperação aceita cópia válida e mantém backup do original', async (
   await page.evaluate(() => localStorage.setItem('hunterscodex:sheet:v1', '{broken'));
   await page.reload(); await expect(page.getByRole('button', { name: 'Importar ficha recuperada' })).toBeVisible();
   await page.locator('#recovery-file').setInputFiles({ name: 'recovered.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(valid)) });
-  await expect(page.locator('#btn-export')).toBeVisible();
+  await expect(page.locator('.guild-nav__link[href="#sheets"]')).toBeVisible();
   await expect(page.locator('[data-res-max="hp"]')).toHaveValue('10');
   expect(await page.evaluate(() => localStorage.getItem('hunterscodex:sheet:backup'))).toBe('{broken');
 });

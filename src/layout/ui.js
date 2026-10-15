@@ -14,7 +14,6 @@ import { createNameEditor } from './componentNames.js';
 let character = null;
 let componentEditor;
 let store = null;
-let actions = null;
 let nameEditor = null;
 let navigation = null;
 
@@ -55,14 +54,14 @@ const ENTRY_CONFIG = {
 
 const TAB_LIST = ['powers', 'spells', 'journal'];
 
-function init(applicationStore, topActions) {
-  store = applicationStore; actions = topActions; character = store.getState();
+function init(applicationStore) {
+  store = applicationStore; character = store.getState();
   systemsUI.init(store); calculationsUI.init(store);
   nameEditor = createNameEditor(store, document.getElementById('app'));
   componentEditor = createComponentEditor(store, document.getElementById('app'));
   calculationsUI.setComponentEditor(componentEditor);
   navigation = createPageNavigation();
-  bindFieldInputs(); bindResourceAdd(); bindTabs(); bindTopActions();
+  bindFieldInputs(); bindResourceAdd(); bindTabs();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();
 }
@@ -294,22 +293,12 @@ function spellSummary(result, id) {
   return `<p class="spell-dt" title="${escapeHTML(Object.entries(result.variables || {}).map(([k, v]) => `${k} = ${v}`).join(' · '))}">${trigger} ${result.value} · ${escapeHTML(resistance)}${result.bonus ? ` · bônus específico ${result.bonus}` : ''}</p>`;
 }
 
-function bindTopActions() {
-  document.getElementById('btn-export').addEventListener('click', () => actions.exportSheet());
-  const fileInput = document.getElementById('file-import');
-  document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
-  fileInput.addEventListener('change', async () => {
-    if (fileInput.files[0]) await actions.importSheet(fileInput.files[0]);
-    fileInput.value = '';
-  });
-  document.getElementById('btn-new').addEventListener('click', () => actions.newSheet());
-
-}
-
 function escapeHTML(str) {
   return String(str ?? '').replace(/[&<>"']/g, s => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[s]));
 }
 
-export { init, renderAll };
+function selectPage(key) { navigation.select(key, { focus: true, push: true }); }
+
+export { init, renderAll, selectPage };

@@ -32,7 +32,7 @@ export function createNameEditor(store, root) {
       entries.set(id, { element });
       applyLabel(element, displayName(character, sheetAppearance, id, defaultText(element)));
     });
-    document.querySelectorAll('[data-page-link]:not([data-page-key="calculations"])').forEach(link => {
+    document.querySelectorAll('[data-page-link]:not([data-page-key="calculations"]):not([href="#sheets"])').forEach(link => {
       const text = link.querySelector('[data-nav-label]');
       text.textContent = `${displayName(character, sheetAppearance, `section:${link.hash.slice(1)}`, defaultText(text))}`;
       link.title = text.textContent.trim();

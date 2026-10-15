@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
 
 const snapshot = page => page.evaluate(() => localStorage.getItem('hunterscodex:sheet:v1'));
@@ -96,7 +96,7 @@ for (const width of [320, 390, 768]) {
     expect(bounds.current).toBeLessThanOrEqual(bounds.maximum);
     expect(bounds.end).toBeLessThanOrEqual(bounds.limit + 1);
     await current.fill('10');
-    for (const key of ['guild-card', 'dnd-rules', 'equipment', 'armory', 'library', 'records', 'calculations', 'temporal']) {
+    for (const key of ['sheets', 'guild-card', 'dnd-rules', 'equipment', 'armory', 'library', 'records', 'calculations', 'temporal']) {
       await openPage(page, key);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), key).toBe(true);
       const nav = await page.locator('.guild-nav').boundingBox();

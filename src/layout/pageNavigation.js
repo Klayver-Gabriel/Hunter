@@ -1,4 +1,5 @@
 const descriptions = {
+  sheets: 'Abra suas fichas e escolha onde salvar.',
   'guild-card': 'Identidade, atributos e recursos do seu caçador.',
   'dnd-rules': 'Defesas, resistências e perícias em um só lugar.',
   armory: 'Sua arma, seus ataques e sua evolução em maestria.',

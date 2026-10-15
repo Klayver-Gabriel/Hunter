@@ -7,36 +7,70 @@ import { createPreferences } from '../infrastructure/preferences.js';
 import { initTheme } from '../layout/theme/theme.js';
 import * as ui from '../layout/ui.js';
 import * as modal from '../layout/modal.js';
+import { readRemoteSession } from '../infrastructure/remoteApi.js';
+import { createCloudUI } from '../layout/cloudUI.js';
+import { bootRemote, loginGoogle } from './remote.js';
+import { chooseLogin, showWorkspace } from '../layout/loginUI.js';
+import { localModeSelected, selectLocalMode, clearEntryMode } from '../infrastructure/entryMode.js';
 
 function setIndicator(status) {
   const el = document.getElementById('save-indicator');
   el.classList.toggle('saving', status === 'saving');
-  el.classList.toggle('save-error', status === 'error');
+  el.classList.toggle('save-error', ['error', 'conflict', 'expired'].includes(status));
   el.setAttribute('role', 'status');
   document.getElementById('save-indicator-text').textContent = {
-    saving: 'Salvando…', saved: 'Salvo', error: 'Erro ao salvar'
+    empty: 'Nenhuma ficha remota aberta', pending: 'Alterações pendentes', saving: 'Salvando…', saved: 'Salvo', error: 'Erro ao salvar', conflict: 'Conflito de versão', expired: 'Entre novamente para salvar'
   }[status];
 }
-function boot() {
+async function boot() {
   initTheme(createPreferences(() => localStorage));
+  let account;
+  try { account = await readRemoteSession(); }
+  catch { account = { enabled: true, user: null, unavailable: true }; }
+  const url = new URL(location.href), auth = url.searchParams.get('auth');
+  if (auth) { url.searchParams.delete('auth'); history.replaceState(null, '', url.pathname + url.search + url.hash); }
+  if (account.user) {
+    clearEntryMode(); showWorkspace('remote'); await bootRemote(account, setIndicator); return;
+  }
+  if (!localModeSelected() || auth || account.unavailable) {
+    const choice = await chooseLogin({ ...account, error: Boolean(auth) });
+    if (choice === 'google') { clearEntryMode(); loginGoogle(); return; }
+    selectLocalMode();
+  }
+  showWorkspace('local');
+  const cloud = createCloudUI({ ...account, unavailable: false });
   const repository = createSheetRepository(() => localStorage);
-  const session = createSession({ repository, migrate: migrateDocument, onStatus: setIndicator });
+  const session = createSession({ repository, migrate: migrateDocument, onStatus: status => { setIndicator(status); cloud.status(status); } });
+  cloud.on('login', async () => {
+    if (session.ok && !session.flush().ok) throw Error('Exporte sua ficha antes de entrar: o salvamento local falhou.');
+    clearEntryMode(); location.assign('/');
+  });
+  cloud.on('home', () => {
+    if (session.ok && !session.flush().ok) throw Error('Exporte a ficha antes de voltar: o salvamento local falhou.');
+    clearEntryMode(); location.assign('/');
+  });
   if (!session.ok) {
     showRecovery({ loaded: session.loaded, error: session.error, readFile: importJSON,
       recover: candidate => recoverSheet({ repository, migrate: migrateDocument, original: session.loaded.raw }, candidate), onStatus: setIndicator }); return;
   }
   const { store } = session;
   modal.init();
-  ui.init(store, {
-    exportSheet: () => exportJSON(store.getDocument()),
-    importSheet: async file => {
-      try { session.replace(await importJSON(file)); } catch (error) { alert(`Não foi possível importar: ${error.message}`); }
-    },
-    newSheet: () => {
-      if (!confirm('Criar um novo Caçador? A ficha atual será preservada em backup.')) return;
-      try { session.newSheet(); } catch (error) { alert(`Não foi possível criar a ficha: ${error.message}`); }
-    }
+  ui.init(store);
+  cloud.current(store.getDocument());
+  store.subscribe(() => cloud.current(store.getDocument()));
+  cloud.on('export', () => exportJSON(store.getDocument()));
+  cloud.on('import', async file => {
+    session.replace(await importJSON(file)); ui.selectPage('guild-card');
+  });
+  cloud.on('new', () => {
+    if (!confirm('Criar uma nova ficha? A ficha atual será preservada em backup.')) return false;
+    session.newSheet(); ui.selectPage('guild-card');
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') session.flush(); });
 }
-boot();
+boot().catch(() => {
+  document.getElementById('login-status').textContent = 'Não foi possível abrir o Cheets. Recarregue a página para tentar novamente.';
+  document.getElementById('login-retry').hidden = false;
+  document.getElementById('login-retry').onclick = () => location.reload();
+  setIndicator('error');
+});

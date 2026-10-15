@@ -1,12 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
+import { exportFile, importFile } from './helpers/sheets.js';
 
 async function saved(page) {
   await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
   return page.evaluate(() => JSON.parse(localStorage.getItem('hunterscodex:sheet:v1')));
 }
 async function importDocument(page, document) {
-  await page.locator('#file-import').setInputFiles({ name: 'components.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
+  await importFile(page, { name: 'components.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
 }
 async function remove(page, id, accept = true) {
   page.once('dialog', dialog => accept ? dialog.accept() : dialog.dismiss());
@@ -69,8 +70,8 @@ test('importação e exportação mantêm remoções e eliminam grupos vazios', 
   await expect(page.locator('.rules-layout')).toBeHidden();
   await expect(page.locator('.equipment-navigation a[href="#armory"]')).toHaveAttribute('data-component-hidden', '');
   expect((await page.locator('#resources').boundingBox()).width).toBeCloseTo((await page.locator('.sheet-grid').boundingBox()).width, 0);
-  const downloadEvent = page.waitForEvent('download'); await page.locator('#btn-export').click();
-  const stream = await (await downloadEvent).createReadStream(); const chunks = [];
+  const download = await exportFile(page);
+  const stream = await download.createReadStream(); const chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
   const exported = JSON.parse(Buffer.concat(chunks).toString());
   expect(exported).toEqual(document);

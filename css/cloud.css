@@ -1,0 +1,38 @@
+.cloud-panel { overflow-wrap: anywhere; }
+.sheet-account { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--iron-line); }
+.sheet-account p { margin: 6px 0 0; color: var(--parchment-dim); }
+.sheet-eyebrow { color: var(--parchment-faint); font-size: .7rem; letter-spacing: .12em; text-transform: uppercase; }
+.sheet-current { margin: 28px 0 0; padding: clamp(20px, 4vw, 36px); border: 1px solid var(--iron-line); border-radius: var(--radius-md); background: var(--iron-panel); }
+.sheet-current h3 { margin: 12px 0; font-size: clamp(1.5rem, 4vw, 2rem); }
+.sheet-current p { color: var(--parchment-dim); line-height: 1.6; }
+.sheet-primary-actions, .cloud-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sheet-primary-actions { margin-top: 24px; }
+.sheet-danger { margin-top: 24px; }
+.sheet-feedback { color: var(--parchment-dim); line-height: 1.6; overflow-wrap: anywhere; }
+.sheet-feedback:empty, .sheet-account-hint:empty { display: none; }
+.sheet-dialog { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); box-sizing: border-box; overflow-y: auto; padding: 24px; color: var(--parchment); background: var(--iron-panel); border: 1px solid var(--iron-line); border-radius: 12px; box-shadow: 0 24px 80px #0005; }
+.sheet-dialog::backdrop, .cloud-import::backdrop { background: #0009; }
+.sheet-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.sheet-dialog h2 { margin: 0; font-size: 1.35rem; }
+.sheet-dialog h3 { margin: 0 0 16px; font-size: 1rem; }
+.sheet-dialog p { color: var(--parchment-dim); line-height: 1.6; }
+.sheet-dialog-close { width: 36px; height: 36px; flex-shrink: 0; color: var(--parchment); background: transparent; border: 1px solid var(--iron-line); border-radius: 6px; font-size: 1.4rem; cursor: pointer; }
+.sheet-choices { display: grid; gap: 12px; margin: 20px 0; }
+.sheet-choice { display: grid; gap: 7px; width: 100%; text-align: left; padding: 20px; border: 1px solid var(--iron-line); border-radius: 8px; background: var(--iron-panel-lt); color: var(--parchment); cursor: pointer; font: inherit; }
+.sheet-choice:hover:enabled { border-color: var(--guild-gold); }
+.sheet-choice span { color: var(--parchment-dim); font-size: .85rem; line-height: 1.5; }
+.sheet-choice:disabled, .sheet-dialog button:disabled { opacity: .5; cursor: default; }
+.sheet-open-account label { display: block; margin-bottom: 8px; color: var(--parchment-dim); font-size: .85rem; }
+.sheet-open-account select { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid var(--iron-line); border-radius: 6px; color: var(--parchment); background: var(--iron-panel-lt); font: inherit; }
+.sheet-open-json { border-top: 1px solid var(--iron-line); margin: 24px 0; padding-top: 24px; }
+.sheet-account-hint { font-size: .85rem; }
+.cloud-import { max-width: min(650px, 90vw); color: var(--parchment); background: var(--iron-panel); border: var(--border-thin); padding: 24px; }
+.cloud-import label { display: flex; gap: 8px; padding: 12px 0; }
+.cloud-import button { margin: 6px; }
+.remote-locked [data-sheet-page]:not(#page-sheets), .remote-locked .top-actions, .remote-locked .equipment-navigation, .remote-locked .guild-nav { display: none !important; }
+.remote-locked #page-sheets { display: block !important; }
+@media (max-width: 600px) {
+  .sheet-account { align-items: flex-start; flex-direction: column; }
+  .sheet-primary-actions { align-items: stretch; flex-direction: column; }
+  .sheet-dialog { padding: 20px; }
+}

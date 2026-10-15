@@ -1,5 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './helpers/localFixture.js';
 import { openPage } from './helpers/navigation.js';
+import { exportFile, importFile } from './helpers/sheets.js';
 
 async function saved(page) {
   await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
@@ -80,13 +81,13 @@ test('edita os dois templates, integra personalização e buffs, persiste e expo
   const document = await saved(page);
   await page.reload(); await expect(selector).toHaveValue('tormenta20');
   await expect(page.getByRole('checkbox', { name: 'Esgrima: proficiência', exact: true })).toBeChecked();
-  const event = page.waitForEvent('download'); await page.locator('#btn-export').click();
-  const stream = await (await event).createReadStream(), chunks = [];
+  const download = await exportFile(page);
+  const stream = await download.createReadStream(), chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
   const exported = JSON.parse(Buffer.concat(chunks).toString());
   expect(exported).toEqual(document);
   await selector.selectOption('dnd5e');
-  await page.locator('#file-import').setInputFiles({ name: 'templates.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
+  await importFile(page, { name: 'templates.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(exported)) });
   await expect(selector).toHaveValue('tormenta20');
   expect(await saved(page)).toEqual(exported);
 });
@@ -97,7 +98,7 @@ test.describe('templates no celular', () => {
     await page.goto('/'); const document = await saved(page);
     document.character.skillTables.activeId = 'tormenta20';
     document.character.skillTables.templates.tormenta20 = [];
-    await page.locator('#file-import').setInputFiles({ name: 'empty-template.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
+    await importFile(page, { name: 'empty-template.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(document)) });
     await openPage(page, 'dnd-rules');
     await expect(page.locator('#skill-template-empty')).toBeVisible();
     await page.getByRole('button', { name: 'Editar tabela', exact: true }).tap();
