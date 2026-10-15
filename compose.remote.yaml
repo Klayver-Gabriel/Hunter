@@ -1,0 +1,26 @@
+services:
+  app:
+    build: .
+    image: ${HUNTER_IMAGE:-hunters-codex:local}
+    init: true
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      DATABASE_URL: ${DATABASE_URL:?Configure DATABASE_URL no .env para o PostgreSQL externo}
+      PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:4173}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://127.0.0.1:4173/auth/google/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Preencha GOOGLE_CLIENT_ID no .env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Preencha GOOGLE_CLIENT_SECRET no .env}
+      SESSION_SECONDS: ${SESSION_SECONDS:-28800}
+      MAX_BODY_BYTES: ${MAX_BODY_BYTES:-1048576}
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
+      RATE_AUTH_START: ${RATE_AUTH_START:-20}
+      RATE_AUTH_CALLBACK: ${RATE_AUTH_CALLBACK:-40}
+      RATE_READ: ${RATE_READ:-300}
+      RATE_SAVE: ${RATE_SAVE:-120}
+      RATE_MUTATION: ${RATE_MUTATION:-30}
+    ports:
+      - "127.0.0.1:${APP_PORT:-4173}:4173"
+    read_only: true
+    cap_drop: [ALL]
+    restart: unless-stopped

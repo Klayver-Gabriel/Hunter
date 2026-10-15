@@ -1,0 +1,74 @@
+x-node-service: &node-service
+  build: .
+  image: ${HUNTER_IMAGE:-hunters-codex:local}
+  init: true
+  read_only: true
+  cap_drop: [ALL]
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: hunter_admin
+      POSTGRES_DB: hunter
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Execute npm run docker:setup}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  migrate:
+    <<: *node-service
+    command: [node, scripts/migrate-docker.js]
+    environment:
+      DATABASE_URL: postgresql://hunter_admin:${POSTGRES_ADMIN_PASSWORD:?Execute npm run docker:setup}@db:5432/hunter
+      RUNTIME_DATABASE_PASSWORD: ${POSTGRES_RUNTIME_PASSWORD:?Execute npm run docker:setup}
+    networks: [database]
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: "no"
+
+  app:
+    <<: *node-service
+    environment:
+      HOST: 0.0.0.0
+      PORT: 4173
+      PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:4173}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://127.0.0.1:4173/auth/google/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Preencha GOOGLE_CLIENT_ID no .env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Preencha GOOGLE_CLIENT_SECRET no .env}
+      DATABASE_URL: postgresql://hunter_runtime:${POSTGRES_RUNTIME_PASSWORD:?Execute npm run docker:setup}@db:5432/hunter
+      SESSION_SECONDS: ${SESSION_SECONDS:-28800}
+      MAX_BODY_BYTES: ${MAX_BODY_BYTES:-1048576}
+      TRUSTED_PROXY_IPS: ${TRUSTED_PROXY_IPS:-}
+      RATE_AUTH_START: ${RATE_AUTH_START:-20}
+      RATE_AUTH_CALLBACK: ${RATE_AUTH_CALLBACK:-40}
+      RATE_READ: ${RATE_READ:-300}
+      RATE_SAVE: ${RATE_SAVE:-120}
+      RATE_MUTATION: ${RATE_MUTATION:-30}
+    ports:
+      - "127.0.0.1:${APP_PORT:-4173}:4173"
+    networks: [default, database]
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+networks:
+  database:
+    internal: true
+
+volumes:
+  postgres_data:

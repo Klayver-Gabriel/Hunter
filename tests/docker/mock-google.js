@@ -1,0 +1,9 @@
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async (url, options) => {
+  if (String(url) === 'https://accounts.google.com/.well-known/openid-configuration') {
+    return Response.json({ issuer: 'https://accounts.google.com', authorization_endpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      token_endpoint: 'https://oauth2.googleapis.com/token', jwks_uri: 'https://www.googleapis.com/oauth2/v3/certs',
+      response_types_supported: ['code'], subject_types_supported: ['public'], id_token_signing_alg_values_supported: ['RS256'] });
+  }
+  return originalFetch(url, options);
+};

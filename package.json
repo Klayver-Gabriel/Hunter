@@ -9,7 +9,12 @@
     "start": "node --env-file-if-exists=.env server/main.js",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
     "db:cleanup": "node --env-file-if-exists=.env scripts/cleanup.js",
+    "docker:setup": "node scripts/setup-docker.js",
+    "docker:up": "node --env-file-if-exists=.env scripts/docker-up.js",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f app migrate",
     "test:integration": "node --test tests/integration/*.test.js",
+    "test:docker": "node scripts/test-docker.js",
     "test:e2e": "playwright test",
     "lint": "eslint ."
   },

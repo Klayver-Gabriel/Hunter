@@ -1,0 +1,12 @@
+.git
+.env*
+node_modules
+test-results
+playwright-report
+coverage
+tests
+docs
+.github
+.agents
+.codex
+.aws
