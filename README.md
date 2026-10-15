@@ -1,6 +1,41 @@
-# Hunter's Codex
+# Cheets
 
-Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON e editor de aparência. A aplicação é servida como arquivos estáticos; não requer backend, CDN ou build de produçã,,,3o.
+Ficha de personagem em JavaScript com cálculos locais, importação/exportação JSON e editor de aparência. O modo local utiliza arquivos estáticos. O modo remoto utiliza login Google, API na mesma origem e PostgreSQL.
+
+Na tela inicial, selecione **Entrar com Google** para acessar as fichas da conta ou **Usar armazenamento local** para abrir as fichas deste navegador. O login Google utiliza redirecionamento na mesma janela e retorna à tela principal.
+
+A aba **Fichas**, primeiro item da barra lateral, reúne as operações de arquivos e conta:
+
+- **Salvar ficha** abre as opções **Salvar na conta** e **Salvar como JSON**. O JSON inclui personagem, aparência e configurações de cálculo.
+- **Abrir ficha** permite selecionar uma ficha da conta ou escolher um arquivo JSON. Ao abrir um JSON autenticado, confirme a criação da ficha na conta.
+- **Nova ficha** inicia outro personagem. **Excluir ficha da conta** remove a ficha ativa da lista remota.
+
+Com login, as edições são salvas automaticamente na conta. No modo local, o autosave grava neste navegador; as operações da conta exigem login.
+
+Consulte [autenticação, persistência e implantação](docs/remote-sheets.md) para configurar Google, banco, domínio, proxy/túnel, migração e recuperação.
+
+## Docker
+
+Prepare o ambiente:
+
+```sh
+npm run docker:setup
+```
+
+Preencha `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no `.env`. Cadastre `http://127.0.0.1:4173/auth/google/callback` como URI de redirecionamento autorizada do cliente Google.
+
+```sh
+npm run docker:up
+```
+
+Abra `http://127.0.0.1:4173`. O Compose inicia PostgreSQL, aplica a migração e inicia a aplicação. As senhas do banco são geradas pelo comando de configuração. Os dados ficam no volume Docker `postgres_data`, no host do Docker.
+
+```sh
+npm run docker:logs
+npm run docker:down
+```
+
+`docker:down` preserva o volume de dados. Para PostgreSQL externo, utilize [compose.remote.yaml](compose.remote.yaml) conforme o [guia de execução](docs/remote-sheets.md#postgresql-externo).
 
 ## Desenvolvimento
 
@@ -11,9 +46,9 @@ npm ci
 npm run dev
 ```
 
-Abra `http://127.0.0.1:4173`. A porta pode ser alterada com `PORT=8080 npm run dev`. Módulos ES requerem HTTP; abrir `index.html` via `file://` não é suportado.
+Abra `http://127.0.0.1:4173`. A porta pode ser alterada com `PORT=8080 npm run dev`. Sirva os módulos ES por HTTP.
 
-Para hospedar, publique `index.html`, `manifest.json`, `src/`, `css/` e `assets/` no mesmo diretório. O servidor precisa servir `.js` como JavaScript. As preferências e a ficha pertencem à origem do navegador: exporte o JSON antes de mudar domínio ou porta. Não há service worker nem sincronização em nuvem.
+Para hospedar o modo local, publique `index.html`, `manifest.json`, `src/`, `css/` e `assets/` no mesmo diretório. Configure o servidor para servir `.js` como JavaScript e retornar 404 em `/api/session`. As preferências e as fichas locais pertencem à origem do navegador: exporte o JSON antes de mudar domínio ou porta. Para autenticação e salvamento remoto, configure o ambiente, aplique a migração e execute `npm start`, conforme o [guia de configuração](docs/remote-sheets.md).
 
 ## Verificações
 
@@ -24,11 +59,11 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia o servidor estático automaticamente e guarda traces das falhas em `test-results/`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
+Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia um servidor estático na porta `4174` e guarda traces das falhas em `test-results/`. A porta de teste pode ser alterada com `E2E_PORT`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
 
 ## Configuração de componentes
 
-Dê **duplo clique no nome** de um atributo, recurso, perícia, resistência, defesa, iniciativa, proficiência, ataque, dano ou DT para abrir o editor desse componente. Com o nome focado, Enter ou Espaço abre o mesmo popup; no celular, use o botão ✎. Valores como nível, XP e dados restantes continuam sendo dados de entrada editáveis.
+Dê **duplo clique no nome** de um atributo, recurso, perícia, resistência, defesa, iniciativa, proficiência, ataque, dano ou DT para abrir o editor desse componente. Com o nome focado, Enter ou Espaço abre o mesmo popup; no celular, use o botão ✎. Edite nível, XP e dados restantes diretamente nos respectivos campos.
 
 O popup oferece **Padrão**, **Manual**, **Fórmula** e **Progressão por nível**, além de nome, prévia e parâmetros específicos. Opções avançadas guardam limites, regras de progressão, ajustes de combate e detalhamento do cálculo. Salvar confirma nome e configuração juntos. Cancelar ou Escape descarta o rascunho.
 
@@ -36,29 +71,13 @@ O popup oferece **Padrão**, **Manual**, **Fórmula** e **Progressão por nível
 - O seletor **Usar outro valor** insere referências estáveis a outros componentes. Para recursos, há opções separadas para valor atual e máximo. Renomear não quebra referências; dependências circulares e exclusões de componentes referenciados são rejeitadas.
 - Em recursos, **Não negativo** começa ativado. Desativar permite saldo atual negativo; o máximo continua maior ou igual a zero. Aumentar o máximo não recupera o recurso; reduzir o máximo limita o atual e recalcula os dependentes.
 - Vida Máxima e HP compartilham a regra do recurso de vida. A DT de magias configura a conjuração global; cada magia também possui um popup contextual de DT, além do cadastro completo.
-- Perícias das duas tabelas mantêm suas regras ao trocar a tabela visível. O cálculo padrão continua usando atributo, proficiência/expertise, bônus, buffs e maestria.
+- Perícias das duas tabelas mantêm suas regras ao trocar a tabela visível. O cálculo padrão utiliza atributo, proficiência/expertise, bônus, buffs e maestria.
 
 **Configurações** reúne criação e gestão de características personalizadas, exibidas em um bloco próprio da ficha. **Editar componentes** permite renomear em lote, ocultar e restaurar componentes. **Efeitos** mantém as ações explícitas de turno, rodada e descanso. Ocultar componentes preserva seus dados e cálculos.
 
 ## Personalização
 
-Nomes de registros são gravados no cadastro; nomes estruturais são rótulos de apresentação. IDs não dependem dos nomes ou da posição em uma lista. Cores e layouts de documentos antigos são preservados para compatibilidade, sem alterar os cálculos.
-
-## Arquitetura
-
-| Camada | Responsabilidade |
-| --- | --- |
-| `src/app` | Composição das dependências e inicialização |
-| `src/domain` | Personagem, catálogos, campos de entidades e validação |
-| `src/auto_calc_engine` | Fórmulas, combate, vitalidade, perícias e maestria; funções sem DOM ou persistência |
-| `src/application` | Comandos, snapshots imutáveis, sincronização de derivados, transações e autosave |
-| `src/application/ports` | Contratos dos repositórios |
-| `src/layout` | Renderização, acessibilidade, tema, registro de componentes e editor |
-| `src/infrastructure` | Armazenamento do navegador, arquivos JSON e migrações |
-
-O fluxo de alteração é `comando → draft privado → cálculos derivados → snapshot imutável → assinantes → autosave`. A interface recebe o snapshot e emite comandos; renderizar não altera o personagem. O autosave usa debounce de 500 ms e salva um snapshot capturado. Trocar de ficha cancela a gravação antiga somente após a nova gravação ter sido confirmada.
-
-O registro em `src/domain/calculableComponents.js` descreve parâmetros e capacidades de cada tipo; `src/auto_calc_engine/defaultCalculations.js` reúne cálculos padrão que recebem um resolvedor de dependências. A prévia e a gravação usam a mesma transação em `src/application/componentConfiguration.js`. Para adicionar um cálculo, registre seu alvo, descritor e cálculo padrão e acrescente testes dos resultados. O formulário é gerado pelos metadados do registro. Para adicionar uma operação, implemente um comando e emita-o na interface. Para campos de armas, armaduras, buffs ou registros, o catálogo `ENTITY_FIELDS` define editor, conversão e validação; para outros componentes, registre ID, elemento, rótulo, seção padrão e largura mínima no registro visual. IDs nunca devem depender do rótulo ou do índice de uma lista.
+Nomes de registros são gravados no cadastro; nomes estruturais são rótulos de apresentação. Os componentes utilizam IDs estáveis. O documento exportado inclui as configurações de aparência e cálculo.
 
 ## Formato e recuperação
 
@@ -92,8 +111,8 @@ Chaves de `localStorage`:
 | `hunterscodex:sheet:backup` | Conteúdo anterior à última migração ou substituição |
 | `hunterscodex:preferences:v1` | Preferência de tema, excluída da exportação |
 
-O schema atual do personagem é 5; a versão 4 permanece reservada às fichas do antigo seletor de sistemas e mantém sua rotina de recuperação. Fichas antigas recebem aparência padrão. Migrações não modificam a entrada e preservam campos desconhecidos do personagem. Versões futuras incompatíveis, identificadores inválidos e valores de aparência inseguros são rejeitados.
+O schema atual do personagem é 5. A importação aplica as migrações de documentos legados e preserva campos desconhecidos do personagem. Documentos sem aparência recebem a configuração padrão. A validação verifica a versão do schema, os identificadores e os valores de aparência.
 
-Em erro de carregamento, a tela permite baixar o original, importar uma ficha recuperada e tentar novamente. Uma ficha padrão nunca sobrescreve automaticamente um conteúdo ilegível. Para recuperação manual, salve o conteúdo da chave de backup como arquivo JSON e use **Importar ficha recuperada**. O arquivo é validado antes de substituir o documento. Exportações regulares continuam sendo a forma de guardar histórico fora do navegador.
+Em erro de carregamento, use as opções da tela para baixar o original, importar uma ficha recuperada ou tentar novamente. Para recuperação manual, salve o conteúdo da chave de backup como arquivo JSON e use **Importar ficha recuperada**. O arquivo é validado antes de substituir o documento. Mantenha exportações periódicas para guardar cópias das fichas fora do navegador.
 
-Uma falha de autosave mantém as alterações na memória, mostra **Erro ao salvar** e permite exportá-las. O indicador só mostra **Salvo** quando `setItem` confirma a gravação. Alterações de tema continuam funcionando mesmo se a preferência não puder ser persistida.
+O autosave local utiliza debounce de 500 ms. Uma falha mantém as alterações na memória e mostra **Erro ao salvar**; use **Fichas → Salvar ficha → Salvar como JSON** para recuperar a edição. O indicador **Salvo** confirma a gravação em `localStorage`. Consulte o [guia de fichas remotas](docs/remote-sheets.md#autosave) para os estados de salvamento da conta.
