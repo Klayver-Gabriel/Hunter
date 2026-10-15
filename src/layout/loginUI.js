@@ -2,6 +2,7 @@ export function showWorkspace(mode) {
   document.getElementById('login-screen').hidden = true;
   for (const element of document.querySelectorAll('#app, .guild-nav, .skip-link, #save-indicator')) element.hidden = false;
   document.querySelector('.app-footer').textContent = mode === 'local' ? 'Cheets · Armazenamento neste navegador' : 'Cheets · Fichas da sua conta';
+  document.documentElement.dataset.appState = 'workspace';
 }
 
 export function chooseLogin({ enabled, unavailable, error = false }) {
@@ -12,10 +13,12 @@ export function chooseLogin({ enabled, unavailable, error = false }) {
     : error ? 'Não foi possível concluir o login. Tente novamente.'
       : enabled ? '' : 'Login Google disponível na versão conectada do Cheets.';
   retry.onclick = () => location.reload();
+  document.documentElement.dataset.appState = 'login';
   return new Promise(resolve => {
     function choose(mode) {
       google.disabled = true; local.disabled = true;
       status.textContent = mode === 'google' ? 'Redirecionando para o Google…' : 'Abrindo suas fichas…';
+      document.documentElement.dataset.appState = 'loading';
       resolve(mode);
     }
     google.onclick = () => choose('google'); local.onclick = () => choose('local');

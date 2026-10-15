@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-app-state="loading">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cheets</title>
 <meta name="description" content="Suas fichas de personagem, em um só lugar.">
+<style>
+[hidden] { display: none !important; }
+html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator, .login-options) { display: none !important; }
+</style>
 
 <script src="src/layout/theme/bootstrap.js"></script>
 <link rel="stylesheet" href="css/themes.css">

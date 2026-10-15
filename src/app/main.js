@@ -30,14 +30,15 @@ async function boot() {
   const url = new URL(location.href), auth = url.searchParams.get('auth');
   if (auth) { url.searchParams.delete('auth'); history.replaceState(null, '', url.pathname + url.search + url.hash); }
   if (account.user) {
-    clearEntryMode(); showWorkspace('remote'); await bootRemote(account, setIndicator); return;
+    clearEntryMode();
+    document.getElementById('login-status').textContent = 'Abrindo suas fichas…';
+    await bootRemote(account, setIndicator); showWorkspace('remote'); return;
   }
   if (!localModeSelected() || auth || account.unavailable) {
     const choice = await chooseLogin({ ...account, error: Boolean(auth) });
     if (choice === 'google') { clearEntryMode(); loginGoogle(); return; }
     selectLocalMode();
   }
-  showWorkspace('local');
   const cloud = createCloudUI({ ...account, unavailable: false });
   const repository = createSheetRepository(() => localStorage);
   const session = createSession({ repository, migrate: migrateDocument, onStatus: status => { setIndicator(status); cloud.status(status); } });
@@ -50,6 +51,7 @@ async function boot() {
     clearEntryMode(); location.assign('/');
   });
   if (!session.ok) {
+    showWorkspace('local');
     showRecovery({ loaded: session.loaded, error: session.error, readFile: importJSON,
       recover: candidate => recoverSheet({ repository, migrate: migrateDocument, original: session.loaded.raw }, candidate), onStatus: setIndicator }); return;
   }
@@ -67,8 +69,12 @@ async function boot() {
     session.newSheet(); ui.selectPage('guild-card');
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') session.flush(); });
+  showWorkspace('local');
 }
 boot().catch(() => {
+  for (const element of document.querySelectorAll('#app, .guild-nav, .skip-link, #save-indicator')) element.hidden = true;
+  document.getElementById('login-screen').hidden = false;
+  document.documentElement.dataset.appState = 'error';
   document.getElementById('login-status').textContent = 'Não foi possível abrir o Cheets. Recarregue a página para tentar novamente.';
   document.getElementById('login-retry').hidden = false;
   document.getElementById('login-retry').onclick = () => location.reload();
