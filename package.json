@@ -6,6 +6,10 @@
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
     "dev": "node scripts/serve.js",
+    "start": "node --env-file-if-exists=.env server/main.js",
+    "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",
+    "db:cleanup": "node --env-file-if-exists=.env scripts/cleanup.js",
+    "test:integration": "node --test tests/integration/*.test.js",
     "test:e2e": "playwright test",
     "lint": "eslint ."
   },
@@ -17,5 +21,9 @@
     "@playwright/test": "^1.63.0",
     "eslint": "^10.10.0",
     "globals": "^17.12.0"
+  },
+  "dependencies": {
+    "openid-client": "^6.8.8",
+    "pg": "^8.23.1"
   }
 }
