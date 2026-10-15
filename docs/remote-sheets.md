@@ -159,6 +159,32 @@ Configure `PUBLIC_URL` com a origem HTTPS pública e encaminhe `/`, `/auth/*` e 
 
 Callbacks e cookies utilizam a origem configurada em `PUBLIC_URL`. Os cookies de produção têm prefixo `__Host-` e atributos `HttpOnly`, `Secure`, `SameSite=Lax` e `Path=/`. As requisições de API utilizam a mesma origem do frontend.
 
+### ngrok no Docker Compose
+
+O serviço opcional `ngrok` está disponível tanto em `compose.yaml` quanto em `compose.remote.yaml`. Ele encaminha o domínio público para `http://app:4173` pela rede Docker e aguarda a aplicação ficar saudável na primeira inicialização.
+
+Configure no `.env` o authtoken e o domínio da sua conta ngrok:
+
+```dotenv
+COMPOSE_PROFILES=ngrok
+NGROK_AUTHTOKEN=SEU_AUTHTOKEN
+PUBLIC_URL=https://SEU_DOMINIO.ngrok-free.dev
+GOOGLE_CALLBACK_URL=https://SEU_DOMINIO.ngrok-free.dev/auth/google/callback
+```
+
+Cadastre esse callback no cliente OAuth Google. Encerre o ngrok iniciado manualmente antes de subir o container para liberar o mesmo domínio. Inicie pelo comando habitual:
+
+```sh
+npm run docker:up
+docker compose logs -f ngrok
+```
+
+Para PostgreSQL externo, utilize `docker compose -f compose.remote.yaml up -d --no-build`. O Compose lê `COMPOSE_PROFILES` do `.env`; os comandos habituais passam a incluir o túnel. O token permanece no `.env`, ignorado pelo Git.
+
+O túnel utiliza `restart: always`: se encerrar, o Docker tenta reiniciá-lo; quando o Docker volta após reiniciar o computador, o container também volta. Em Linux com Docker Engine e systemd, habilite a inicialização do Docker com `sudo systemctl enable --now docker`. No Docker Desktop, ative a opção de iniciar ao entrar no computador. O domínio permanece o configurado em `PUBLIC_URL`. Consulte a [documentação do ngrok para Docker](https://ngrok.com/download/docker).
+
+Verifique o acesso por `https://SEU_DOMINIO.ngrok-free.dev/healthz`. Para parar temporariamente o túnel, use `docker compose stop ngrok`; com `restart: always`, ele voltará na próxima inicialização do Docker. Para desativá-lo, execute `docker compose rm --stop --force ngrok` e deixe `COMPOSE_PROFILES` vazio no `.env`. `docker compose down` remove também o container do túnel; após isso, execute `npm run docker:up` para recriá-lo.
+
 ### Cloudflare Tunnel
 
 Crie o túnel e configure o hostname no Cloudflare. Exemplo com `cloudflared` executado no mesmo host da aplicação:

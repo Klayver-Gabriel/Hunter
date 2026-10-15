@@ -30,6 +30,8 @@ npm run docker:up
 
 Abra `http://127.0.0.1:4173`. O Compose inicia PostgreSQL, aplica a migração e inicia a aplicação. As senhas do banco são geradas pelo comando de configuração. Os dados ficam no volume Docker `postgres_data`, no host do Docker.
 
+Para iniciar também o túnel ngrok, configure `COMPOSE_PROFILES=ngrok`, `NGROK_AUTHTOKEN`, `PUBLIC_URL` com seu domínio HTTPS do ngrok e `GOOGLE_CALLBACK_URL` com essa origem seguida de `/auth/google/callback` no `.env`. Execute `npm run docker:up` novamente. O túnel usa `restart: always` para voltar automaticamente quando o Docker iniciar após reiniciar o computador. O Docker deve estar habilitado para iniciar com o sistema. Consulte o [guia do ngrok](docs/remote-sheets.md#ngrok-no-docker-compose).
+
 ```sh
 npm run docker:logs
 npm run docker:down

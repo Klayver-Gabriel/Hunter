@@ -24,3 +24,15 @@ services:
     read_only: true
     cap_drop: [ALL]
     restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    profiles: [ngrok]
+    init: true
+    command: [http, "http://app:4173", "--url=${PUBLIC_URL:-}", --log=stdout]
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: always
