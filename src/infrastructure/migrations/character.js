@@ -4,6 +4,7 @@ import { assertCalculations, characterLevel, baseValue, calculateCharacter } fro
 import * as D from '../../domain/catalog.js';
 import { initializeSkillTables } from '../../domain/skillTemplates.js';
 import { restoreDndProfile } from './retiredSystemProfiles.js';
+import { validateEquipmentPhoto, validatePhotoDataUrl } from '../../domain/equipmentPhoto.js';
 
 export function migrateCharacter(raw, options = {}) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
@@ -89,6 +90,12 @@ export function migrateCharacter(raw, options = {}) {
     library: { ...sourceLibrary, weapons, armors },
     meta: { ...defaults.meta, ...(raw.meta || {}) }
   };
+  migrated.info.photo = validatePhotoDataUrl(migrated.info.photo, 'Foto do personagem');
+  for (const [key, min, max] of [['photoWidth', 120, 360], ['photoHeight', 120, 360], ['photoX', 0, 100], ['photoY', 0, 100], ['photoZoom', 100, 250]]) {
+    const value = Number(migrated.info[key]);
+    if (!Number.isFinite(value)) throw new Error('Dimensões ou posição da foto inválidas.');
+    migrated.info[key] = Math.round(Math.max(min, Math.min(max, value)));
+  }
 
   const collections = [migrated.resources, migrated.powers, migrated.spells, migrated.journal,
     migrated.library.weapons, migrated.library.armors, migrated.buffs];
@@ -99,6 +106,12 @@ export function migrateCharacter(raw, options = {}) {
       item.id ||= uid('item');
       if (typeof item.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(item.id) || ['__proto__', 'constructor', 'prototype'].includes(item.id) || seen.has(item.id)) throw new Error('Identificador inválido ou duplicado.');
       seen.add(item.id);
+    }
+  }
+  for (const item of [...migrated.library.weapons, ...migrated.library.armors]) {
+    if (item.photo != null) {
+      try { item.photo = validateEquipmentPhoto(item.photo); }
+      catch { throw new Error('Foto de equipamento inválida.'); }
     }
   }
   for (const key of ATTRS) {

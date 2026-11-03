@@ -10,6 +10,7 @@ import * as modal from './modal.js';
 import { preserveFocus } from './focus.js';
 import { createPageNavigation } from './pageNavigation.js';
 import { createNameEditor } from './componentNames.js';
+import { createPhotoDataUrl } from './photo.js';
 
 let character = null;
 let componentEditor;
@@ -61,13 +62,14 @@ function init(applicationStore) {
   componentEditor = createComponentEditor(store, document.getElementById('app'));
   calculationsUI.setComponentEditor(componentEditor);
   navigation = createPageNavigation();
-  bindFieldInputs(); bindResourceAdd(); bindTabs();
+  bindFieldInputs(); bindCharacterPhoto(); bindResourceAdd(); bindTabs();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();
 }
 
 function renderAll() {
   renderInfoFields();
+  renderCharacterPhoto();
   renderSeal();
   renderAttributes();
   renderResources();
@@ -127,6 +129,144 @@ function renderSeal() {
   seal.style.setProperty('--rank-color', `var(${varName})`);
 }
 
+function renderCharacterPhoto() {
+  const trigger = document.getElementById('btn-character-photo');
+  const image = document.getElementById('character-photo');
+  const photo = character.info.photo || '';
+  trigger.style.setProperty('--portrait-width', `${character.info.photoWidth}px`);
+  trigger.style.setProperty('--portrait-height', `${character.info.photoHeight}px`);
+  trigger.style.setProperty('--portrait-x', `${character.info.photoX}%`);
+  trigger.style.setProperty('--portrait-y', `${character.info.photoY}%`);
+  trigger.style.setProperty('--portrait-zoom', `${character.info.photoZoom / 100}`);
+  trigger.setAttribute('aria-label', photo ? 'Editar foto do personagem' : 'Adicionar foto do personagem');
+  image.hidden = !photo;
+  if (photo) {
+    image.src = photo;
+    image.alt = `Retrato de ${character.info.name || 'personagem'}`;
+  } else {
+    image.removeAttribute('src');
+    image.alt = '';
+  }
+  document.getElementById('character-photo-placeholder').hidden = Boolean(photo);
+}
+
+function bindCharacterPhoto() {
+  const dialog = document.getElementById('character-photo-editor');
+  const form = document.getElementById('character-photo-editor-form');
+  const image = document.getElementById('character-photo-editor-image');
+  const placeholder = document.getElementById('character-photo-editor-placeholder');
+  const input = document.getElementById('character-photo-editor-input');
+  const replace = document.getElementById('btn-character-photo-replace');
+  const remove = document.getElementById('btn-character-photo-delete');
+  const apply = document.getElementById('btn-character-photo-apply');
+  const status = document.getElementById('character-photo-editor-status');
+  let request = 0;
+  let draft = null, pending = false;
+
+  function readSettings() {
+    for (const key of ['width', 'height', 'x', 'y', 'zoom']) {
+      const raw = form.elements[key].value;
+      const value = Number(raw);
+      if (raw !== '' && Number.isFinite(value)) draft[key] = value;
+    }
+  }
+
+  function renderDraft() {
+    if (!draft) return;
+    const preview = document.getElementById('character-photo-editor-preview');
+    preview.style.setProperty('--portrait-width', `${draft.width}px`);
+    preview.style.setProperty('--portrait-height', `${draft.height}px`);
+    preview.style.setProperty('--portrait-x', `${draft.x}%`);
+    preview.style.setProperty('--portrait-y', `${draft.y}%`);
+    preview.style.setProperty('--portrait-zoom', `${draft.zoom / 100}`);
+    image.hidden = !draft.photo;
+    if (draft.photo) image.src = draft.photo;
+    else image.removeAttribute('src');
+    placeholder.hidden = Boolean(draft.photo);
+    replace.textContent = draft.photo ? 'Trocar foto' : 'Adicionar foto';
+    remove.hidden = !draft.photo;
+    document.getElementById('character-photo-zoom-value').value = `${draft.zoom}%`;
+    document.getElementById('character-photo-x-value').value = `${draft.x}%`;
+    document.getElementById('character-photo-y-value').value = `${draft.y}%`;
+    apply.disabled = pending;
+  }
+
+  function openEditor() {
+    if (dialog.open) return;
+    request++;
+    draft = {
+      photo: character.info.photo || '',
+      width: character.info.photoWidth,
+      height: character.info.photoHeight,
+      x: character.info.photoX,
+      y: character.info.photoY,
+      zoom: character.info.photoZoom
+    };
+    for (const key of ['width', 'height', 'x', 'y', 'zoom']) form.elements[key].value = draft[key];
+    status.textContent = '';
+    pending = false;
+    renderDraft();
+    dialog.showModal();
+  }
+
+  document.getElementById('btn-character-photo').addEventListener('click', openEditor);
+  replace.addEventListener('click', () => { input.value = ''; input.click(); });
+  remove.addEventListener('click', () => {
+    request++;
+    pending = false;
+    input.value = '';
+    draft.photo = '';
+    status.textContent = 'A foto será removida ao aplicar.';
+    renderDraft();
+  });
+  form.querySelectorAll('[name]').forEach(control => control.addEventListener('input', () => {
+    readSettings();
+    renderDraft();
+  }));
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file || !draft) return;
+    const currentRequest = ++request;
+    pending = true;
+    status.textContent = 'Preparando foto…';
+    renderDraft();
+    try {
+      const photo = await createPhotoDataUrl(file);
+      if (currentRequest !== request || !dialog.open) return;
+      draft.photo = photo;
+      status.textContent = '';
+      renderDraft();
+    } catch (error) {
+      if (currentRequest === request && dialog.open) status.textContent = error.message;
+    } finally {
+      if (currentRequest === request) {
+        pending = false;
+        input.value = '';
+        if (dialog.open) renderDraft();
+      }
+    }
+  });
+  document.getElementById('btn-character-photo-cancel').addEventListener('click', () => dialog.close());
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!draft || pending || !form.reportValidity()) return;
+    readSettings();
+    try {
+      store.dispatch('setCharacterPortrait', {
+        photo: draft.photo, width: draft.width, height: draft.height,
+        x: draft.x, y: draft.y, zoom: draft.zoom
+      });
+      dialog.close();
+    } catch (error) { status.textContent = error.message; }
+  });
+  dialog.addEventListener('close', () => {
+    request++;
+    pending = false;
+    input.value = '';
+    draft = null;
+  });
+}
+
 function renderAttributes() {
   const grid = document.getElementById('attr-grid');
   grid.innerHTML = C.ATTRS.map(key => {
@@ -139,7 +279,7 @@ function renderAttributes() {
       <div class="attr-tile">
         <div class="attr-tile__label" data-component-label="attribute:${key}">${C.ATTR_LABELS[key]}</div>
         <input class="attr-tile__score field-input mono" type="number"
-               data-attr="${key}" aria-label="${escapeHTML(label)}" value="${score ?? ''}" min="1" max="30" ${rule && !['manual', 'default'].includes(rule.mode) ? 'readonly' : ''}>
+               data-attr="${key}" aria-label="${escapeHTML(label)}" value="${score ?? ''}" ${rule?.min != null ? `min="${rule.min}"` : ''} ${rule?.max != null ? `max="${rule.max}"` : ''} ${rule && !['manual', 'default'].includes(rule.mode) ? 'readonly' : ''}>
         <span class="attr-tile__mod" data-neg="${modVal < 0}">${score == null ? 'Erro' : F.modStr(score)}</span>${computed.errors[`attribute:${key}`] ? `<small class="rule-errors">${escapeHTML(computed.errors[`attribute:${key}`])}</small>` : ''}
       </div>`;
   }).join('');

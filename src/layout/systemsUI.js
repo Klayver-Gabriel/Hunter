@@ -18,6 +18,12 @@ function escapeHTML(value) {
   }[char]));
 }
 
+function equipmentPhoto(item, fallback) {
+  return item.photo
+    ? `<img class="equipment-photo" src="${escapeHTML(item.photo)}" alt="Foto de ${escapeHTML(item.name)}">`
+    : fallback;
+}
+
 const name = (id, fallback) => displayName(character, store.getDocument().sheetAppearance, id, fallback);
 const label = (id, fallback) => escapeHTML(name(id, fallback));
 
@@ -136,7 +142,7 @@ function renderAttackPanel() {
     container.innerHTML = `
       <div class="toolbar-row"><label><span data-component-label="weapon:equipped">Arma equipada</span> <select id="equipped-weapon-select"><option value="">Nenhuma</option>${choices}</select></label></div>
       <article class="weapon-summary">
-        <div class="weapon-summary__icon">${escapeHTML(weapon.icon || '⚔')}</div>
+        <div class="weapon-summary__icon">${equipmentPhoto(weapon, escapeHTML(weapon.icon || '⚔'))}</div>
         <div class="weapon-summary__identity"><span>${label('weapon:equipped')}</span><h3>${escapeHTML(weapon.name)}</h3><small>${escapeHTML(weapon.dndElement || 'Sem elemento')} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
         <div class="attack-result"><span data-component-label="attack:bonus">Ataque</span><strong>${R.signed(attack.total)}</strong><small>${attack.error ? escapeHTML(attack.error) : attack.configured ? 'Cálculo personalizado' : `${R.signed(attack.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} · ${R.signed(attack.proficiency)} ${label('indicator:proficiency', 'prof.')} · ${R.signed(attack.buffs)} buffs · ${R.signed(attack.mastery)} maestria`}</small></div>
         <div class="attack-result"><span data-component-label="attack:damage">Dano</span><strong>${escapeHTML(damage.expression)}</strong><small>${damage.error ? escapeHTML(damage.error) : damage.configured ? `Bônus numérico personalizado: ${R.signed(damage.totalBonus)}` : `${escapeHTML(damage.dice)} ${R.signed(damage.ability)} ${label(`attribute:${weapon.ability || 'for'}`)} ${R.signed(damage.buffs)} buffs ${R.signed(damage.mastery)} maestria`}</small></div>
@@ -190,7 +196,7 @@ function renderEquipment() {
     const equippedId = character.equipment.armor[slot.key];
     const item = compatible.find(candidate => candidate.id === equippedId);
     return `<article class="armor-slot ${item ? 'is-equipped' : ''}">
-      <div class="armor-slot__icon">${item ? '⬢' : '◇'}</div>
+      <div class="armor-slot__icon">${item ? equipmentPhoto(item, '⬢') : '◇'}</div>
       <div class="armor-slot__body"><span data-component-label="armor:${slot.key}">${slot.label}</span>
         <select data-armor-slot="${slot.key}" aria-label="${slot.label}"><option value="">Vazio</option>${compatible.map(candidate => `<option value="${candidate.id}" ${candidate.id === equippedId ? 'selected' : ''}>${escapeHTML(candidate.name)}</option>`).join('')}</select>
         ${item ? `<small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small>` : '<small>Nenhuma peça equipada</small>'}
@@ -225,7 +231,7 @@ function buffTags(buff) {
 function renderLibrary() {
   const weaponContainer = document.getElementById('weapon-library');
   weaponContainer.innerHTML = (character.library.weapons || []).map(weapon => `<article class="library-card ${character.equipment.weaponId === weapon.id ? 'is-equipped' : ''}">
-    <div class="library-card__icon">${escapeHTML(weapon.icon || '⚔')}</div>
+    <div class="library-card__icon">${equipmentPhoto(weapon, escapeHTML(weapon.icon || '⚔'))}</div>
     <div class="library-card__body"><span>${character.equipment.weaponId === weapon.id ? 'Equipada' : 'Arma'}</span><strong data-component-label="record:weapons:${weapon.id}">${escapeHTML(weapon.name)}</strong><small>${escapeHTML(weapon.damageDice || '—')} · ${label(`attribute:${weapon.ability || 'for'}`, String(weapon.ability || 'for').toUpperCase())} · Crítico ${Number(weapon.critMin) || 20}–20</small></div>
     <div class="library-card__actions"><button class="btn btn--ghost btn--sm" data-equip-weapon="${weapon.id}">${character.equipment.weaponId === weapon.id ? 'Remover' : 'Equipar'}</button><button class="btn btn--ghost btn--sm" data-edit-weapon="${weapon.id}">Editar</button></div>
   </article>`).join('') || '<div class="empty-hint">Nenhuma arma cadastrada.</div>';
@@ -240,7 +246,7 @@ function renderLibrary() {
     const equipped = character.equipment.armor[item.slot] === item.id;
     const slot = D.ARMOR_SLOTS.find(candidate => candidate.key === item.slot);
     return `<article class="library-card ${equipped ? 'is-equipped' : ''}">
-      <div class="library-card__icon">⬢</div>
+      <div class="library-card__icon">${equipmentPhoto(item, '⬢')}</div>
       <div class="library-card__body"><span>${slot ? label(`armor:${slot.key}`, slot.label) : 'Armadura'}</span><strong data-component-label="record:armors:${item.id}">${escapeHTML(item.name)}</strong><small>CA ${R.signed(item.acBonus)} · Slots ${escapeHTML(item.slots || '—')} · ${escapeHTML(item.resistances || 'Sem resistências')}</small></div>
       <div class="library-card__actions"><button class="btn btn--ghost btn--sm" data-equip-armor="${item.id}">${equipped ? 'Remover' : 'Equipar'}</button><button class="btn btn--ghost btn--sm" data-edit-armor="${item.id}">Editar</button></div>
     </article>`;
@@ -270,7 +276,8 @@ function openWeaponEditor(weapon) {
       { key: 'proficient', label: 'Usa proficiência?', type: 'select', options: [{ value: 'true', label: 'Sim' }, { value: 'false', label: 'Não' }] },
       { key: 'critMin', label: 'Crítico mínimo (19 = 19–20)', type: 'number' },
       { key: 'dndElement', label: 'Elemento', type: 'text' },
-      { key: 'masteryUnlocks', label: 'Desbloqueios — ex.: 3|Técnica|pericia.atletismo:2', type: 'textarea', rows: 5 }
+      { key: 'masteryUnlocks', label: 'Desbloqueios — ex.: 3|Técnica|pericia.atletismo:2', type: 'textarea', rows: 5 },
+      { key: 'photo', label: 'Foto do equipamento', type: 'photo' }
     ],
     onSave: data => store.dispatch('saveWeapon', { id: weapon?.id, data }),
     onDelete: weapon ? () => store.dispatch('deleteWeapon', { id: weapon.id }) : null
@@ -286,7 +293,8 @@ function openArmorEditor(item) {
       { key: 'acBonus', label: 'Bônus de CA', type: 'number' },
       { key: 'resistances', label: 'Resistências', type: 'text' },
       { key: 'skills', label: 'Skills', type: 'textarea', rows: 3 },
-      { key: 'slots', label: 'Slots (ex.: 2-1-1)', type: 'text' }
+      { key: 'slots', label: 'Slots (ex.: 2-1-1)', type: 'text' },
+      { key: 'photo', label: 'Foto do equipamento', type: 'photo' }
     ],
     onSave: data => store.dispatch('saveArmor', { id: item?.id, data }),
     onDelete: item ? () => store.dispatch('deleteArmor', { id: item.id }) : null

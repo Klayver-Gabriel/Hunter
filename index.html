@@ -117,6 +117,14 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
         </div>
       </div>
 
+      <div class="guild-card__portrait">
+        <button type="button" class="guild-card__portrait-trigger" id="btn-character-photo" aria-haspopup="dialog" aria-controls="character-photo-editor" aria-label="Adicionar foto do personagem">
+          <img id="character-photo" alt="" hidden>
+          <span id="character-photo-placeholder">Adicionar<br>foto</span>
+          <span class="guild-card__portrait-edit" aria-hidden="true">✎</span>
+        </button>
+      </div>
+
       <div class="guild-seal" id="guild-seal">
         <div class="guild-seal__ring"></div>
         <div class="guild-seal__core">
@@ -254,6 +262,38 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   </div>
   <footer class="app-footer">Cheets &middot; Fichas de personagem</footer>
 </main>
+
+<dialog class="modal rules-dialog character-photo-dialog" id="character-photo-editor" aria-labelledby="character-photo-editor-title">
+  <form id="character-photo-editor-form" novalidate>
+    <div class="modal__header">
+      <h2 id="character-photo-editor-title">Foto do personagem</h2>
+      <p>Troque ou remova o retrato e ajuste o enquadramento.</p>
+    </div>
+    <div class="character-photo-editor__preview-wrap">
+      <div class="character-photo-editor__preview" id="character-photo-editor-preview">
+        <img id="character-photo-editor-image" alt="Prévia do retrato">
+        <span id="character-photo-editor-placeholder">Adicione uma foto para ver a prévia.</span>
+      </div>
+    </div>
+    <div class="character-photo-editor__actions">
+      <input id="character-photo-editor-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" hidden>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-character-photo-replace">Adicionar foto</button>
+      <button type="button" class="btn btn--ghost btn--sm" id="btn-character-photo-delete" hidden>Remover foto</button>
+    </div>
+    <div class="character-photo-editor__controls">
+      <label>Largura (px)<input name="width" type="number" min="120" max="360" step="1" required></label>
+      <label>Altura (px)<input name="height" type="number" min="120" max="360" step="1" required></label>
+      <label>Zoom <output id="character-photo-zoom-value">100%</output><input name="zoom" type="range" min="100" max="250" step="1"></label>
+      <label>Posição horizontal <output id="character-photo-x-value">50%</output><input name="x" type="range" min="0" max="100" step="1"></label>
+      <label>Posição vertical <output id="character-photo-y-value">50%</output><input name="y" type="range" min="0" max="100" step="1"></label>
+    </div>
+    <p id="character-photo-editor-status" class="character-photo-editor__status" role="status" aria-live="polite"></p>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost" id="btn-character-photo-cancel">Cancelar</button>
+      <button type="submit" class="btn btn--primary" id="btn-character-photo-apply">Aplicar</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog class="modal rules-dialog" id="skill-template-editor" aria-labelledby="skill-template-title" aria-describedby="skill-template-description">
   <form id="skill-template-form">

@@ -46,6 +46,20 @@ dialog.name-editor, dialog.rules-dialog { position: fixed; inset: 0; }
 [data-calculation-target] { cursor: pointer; border-radius: 3px; }
 [data-calculation-target]:focus-visible { outline: 2px solid var(--guild-gold); outline-offset: 3px; }
 .component-editor pre { font: inherit; font-size: .8rem; }
+.character-photo-dialog { width: min(620px, calc(100vw - 24px)); max-height: 90dvh; overflow-y: auto; margin: auto; color: var(--parchment); }
+.character-photo-dialog .modal__header p { margin-top: .4rem; color: var(--parchment-dim); }
+.character-photo-editor__preview-wrap { display: grid; place-items: center; min-height: 290px; padding: 12px; overflow: auto; border: 1px solid var(--iron-line); border-radius: var(--radius-md); background: var(--void-deep); }
+.character-photo-editor__preview { width: min(var(--portrait-width, 180px), 100%); height: min(var(--portrait-height, 220px), 265px); display: grid; place-items: center; overflow: hidden; border: 1px solid var(--guild-gold-dim); border-radius: var(--radius-sm); background: var(--iron-panel); }
+.character-photo-editor__preview img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--portrait-x, 50%) var(--portrait-y, 50%); transform: scale(var(--portrait-zoom, 1)); }
+.character-photo-editor__preview span { max-width: 240px; color: var(--parchment-faint); font-size: .85rem; text-align: center; }
+.character-photo-editor__actions { display: flex; gap: var(--sp-2); margin-block: var(--sp-3); }
+.character-photo-editor__controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+.character-photo-editor__controls label { display: grid; gap: 5px; color: var(--parchment-dim); font-size: .78rem; }
+.character-photo-editor__controls output { float: right; color: var(--guild-gold-br); font-family: var(--font-mono); }
+.character-photo-editor__controls input[type="number"] { width: 100%; padding: 7px; border: 1px solid var(--iron-line-lt); border-radius: var(--radius-sm); background: var(--void-deep); color: var(--parchment); }
+.character-photo-editor__controls input[type="range"] { width: 100%; accent-color: var(--guild-gold); }
+.character-photo-editor__status { min-height: 1.2em; margin-top: var(--sp-2); color: var(--parchment-dim); font-size: .78rem; }
+@media (max-width: 560px) { .character-photo-editor__controls { grid-template-columns: 1fr; } }
 @media (pointer: coarse) { .component-edit { min-width: 32px; min-height: 32px; opacity: 1; } }
 .skill-template-row { display: grid; grid-template-columns: 2fr 1.2fr 1fr auto; gap: .6rem; align-items: center; border-block-end: 1px solid var(--iron-line-lt); }
 .skill-template-row > label { min-width: 0; }

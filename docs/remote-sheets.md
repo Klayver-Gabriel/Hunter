@@ -30,7 +30,7 @@ Preencha `.env` com a configuração do ambiente:
 | `HOST` | Interface interna; padrão `127.0.0.1` |
 | `PORT` | Porta interna; padrão `4173` |
 | `SESSION_SECONDS` | Validade da sessão em segundos; padrão `28800` |
-| `MAX_BODY_BYTES` | Tamanho máximo do corpo JSON da API; padrão `1048576` bytes |
+| `MAX_BODY_BYTES` | Tamanho máximo do corpo JSON da API; padrão `8388608` bytes |
 | `TRUSTED_PROXY_IPS` | IPs exatos do proxy conectado diretamente ao serviço, separados por vírgula |
 | `RATE_AUTH_START` | Inícios de login por IP a cada minuto; padrão `20` |
 | `RATE_AUTH_CALLBACK` | Callbacks de login por IP a cada minuto; padrão `40` |

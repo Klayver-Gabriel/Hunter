@@ -5,6 +5,7 @@ import { advanceEvent } from './temporal.js';
 import * as D from '../domain/catalog.js';
 import { assertSkillTemplate, saveSkillTemplate } from '../domain/skillTemplates.js';
 import { resourceNonNegative, limitResourceCurrent } from '../domain/calculationTargets.js';
+import { validateEquipmentPhoto, validatePhotoDataUrl } from '../domain/equipmentPhoto.js';
 const numeric = value => Number.isFinite(Number(value)) ? Number(value) : 0;
 const fields = new Set([
   ...Object.keys(C.createDefault().info).map(key => `info.${key}`),
@@ -25,11 +26,32 @@ export function applyCommand(c, type, p = {}) {
       saveSkillTemplate(c, p.id, p.skills); break;
     case 'setField':
       if (!fields.has(p.path)) throw Error('Campo inválido.');
-      C.set(c, p.path, p.value); break;
+      C.set(c, p.path, p.path === 'info.photo' ? validatePhotoDataUrl(p.value, 'Foto do personagem') : p.value); break;
+    case 'setCharacterPortrait': {
+      const settings = {};
+      const ranges = [
+        ['width', 'photoWidth', 120, 360], ['height', 'photoHeight', 120, 360],
+        ['x', 'photoX', 0, 100], ['y', 'photoY', 0, 100], ['zoom', 'photoZoom', 100, 250]
+      ];
+      for (const [key, property, min, max] of ranges) {
+        const value = p[key];
+        if (value == null || value === '' || !Number.isFinite(Number(value))) throw Error('Dimensões ou posição da foto inválidas.');
+        settings[property] = Math.round(Math.max(min, Math.min(max, Number(value))));
+      }
+      c.info = { ...c.info, photo: validatePhotoDataUrl(p.photo, 'Foto do personagem'), ...settings };
+      c.meta.updatedAt = new Date().toISOString();
+      break;
+    }
     case 'setAttribute':
       if (!C.ATTRS.includes(p.key)) throw Error('Atributo inválido.');
-      if (c.calculations.rules[`attribute:${p.key}`] && !['default', 'manual'].includes(c.calculations.rules[`attribute:${p.key}`].mode)) throw Error('Edite o cálculo com duplo clique no nome do atributo.');
-      c.attributes[p.key] = Math.max(1, Math.min(30, numeric(p.value) || 10)); break;
+      {
+        const rule = c.calculations.rules[`attribute:${p.key}`];
+        if (rule && !['default', 'manual'].includes(rule.mode)) throw Error('Edite o cálculo com o botão de configuração do atributo.');
+        const minimum = rule?.min ?? -Infinity, maximum = rule?.max ?? Infinity;
+        const value = p.value === '' || p.value == null ? 10 : numeric(p.value);
+        c.attributes[p.key] = Math.max(minimum, Math.min(maximum, value));
+      }
+      break;
     case 'addResource': C.addResource(c, { name: 'Novo Recurso', current: 10, max: 10 }); break;
     case 'removeResource':
       if (lookup(c.resources, p.id)?.removable) { C.removeResource(c, p.id); delete c.calculations.rules[`resource:${p.id}`]; } break;
@@ -72,11 +94,12 @@ export function applyCommand(c, type, p = {}) {
       break;
     }
     case 'saveWeapon': {
-      const d = p.data, id = p.id || C.uid('weapon');
-      upsert(c.library.weapons, { ...lookup(c.library.weapons, id), id, name: d.title,
+      const d = p.data, id = p.id || C.uid('weapon'), old = lookup(c.library.weapons, id);
+      upsert(c.library.weapons, { ...old, id, name: d.title,
         icon: d.icon || '⚔', damageDice: d.damageDice || '1d6', ability: d.ability || 'for',
         proficient: d.proficient !== 'false' && d.proficient !== false, critMin: numeric(d.critMin) || 20,
-        dndElement: d.dndElement || '', masteryUnlocks: d.masteryUnlocks || '' });
+        dndElement: d.dndElement || '', masteryUnlocks: d.masteryUnlocks || '',
+        photo: Object.hasOwn(d, 'photo') ? validateEquipmentPhoto(d.photo) : old?.photo || '' });
       c.masteries[id] ||= { level: 1, xp: 0, xpToNext: 100 }; break;
     }
     case 'deleteWeapon':
@@ -89,7 +112,8 @@ export function applyCommand(c, type, p = {}) {
       if (!D.ARMOR_SLOTS.some(s => s.key === slot)) throw Error('Peça inválida.');
       if (old && old.slot !== slot && c.equipment.armor[old.slot] === id) c.equipment.armor[old.slot] = null;
       upsert(c.library.armors, { ...old, id, name: d.title, slot, acBonus: numeric(d.acBonus),
-        resistances: d.resistances || '', skills: d.skills || '', slots: d.slots || '' }); break;
+        resistances: d.resistances || '', skills: d.skills || '', slots: d.slots || '',
+        photo: Object.hasOwn(d, 'photo') ? validateEquipmentPhoto(d.photo) : old?.photo || '' }); break;
     }
     case 'deleteArmor':
       c.library.armors = c.library.armors.filter(a => a.id !== p.id);

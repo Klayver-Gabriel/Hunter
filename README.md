@@ -81,6 +81,10 @@ O popup oferece **Padrão**, **Manual**, **Fórmula** e **Progressão por nível
 
 Nomes de registros são gravados no cadastro; nomes estruturais são rótulos de apresentação. Os componentes utilizam IDs estáveis. O documento exportado inclui as configurações de aparência e cálculo.
 
+Na **Biblioteca da Guilda**, edite uma arma ou armadura e selecione uma foto. A imagem é compactada para até 400 KB, fica salva junto à ficha e aparece na biblioteca e nas áreas em que o item está equipado. No cartão de cada atributo, use o lápis para abrir **Configurações** de cálculo; os campos de limite mínimo e máximo ficam visíveis ao abrir esse editor.
+
+No cabeçalho da ficha, clique no retrato para abrir os controles de troca, remoção, largura, altura, zoom e posição do enquadramento. A foto e seus ajustes são salvos na ficha e incluídos no JSON exportado.
+
 ## Formato e recuperação
 
 O JSON exportado usa este envelope:

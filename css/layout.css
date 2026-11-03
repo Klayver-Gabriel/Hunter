@@ -17,7 +17,7 @@
   box-shadow: var(--shadow-panel);
   padding: var(--sp-5) var(--sp-6);
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--sp-4);
   align-items: center;
 }
@@ -86,7 +86,10 @@
 
 @media (max-width: 860px) {
   .sheet-grid { grid-template-columns: 1fr; }
-  .guild-card { grid-template-columns: 1fr; text-align: left; }
+  .guild-card { grid-template-columns: minmax(0, 1fr) auto auto; text-align: left; }
+  .guild-card__identity { grid-column: 1 / -1; }
+  .guild-card__portrait { grid-column: 2; }
+  .guild-seal { grid-column: 3; }
   .guild-card__meta-row { justify-content: flex-start; }
   #app { padding: var(--sp-4) var(--sp-3) var(--sp-7); }
   .guild-card__name { font-size: 1.6rem; }

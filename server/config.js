@@ -14,7 +14,7 @@ export function readConfig(env = process.env) {
     publicUrl: publicUrl.origin, callbackUrl: callbackUrl.href, secure: publicUrl.protocol === 'https:',
     databaseUrl: env.DATABASE_URL, googleClientId: env.GOOGLE_CLIENT_ID, googleClientSecret: env.GOOGLE_CLIENT_SECRET,
     port: positive('PORT', 4173), host: env.HOST || '127.0.0.1', sessionSeconds: positive('SESSION_SECONDS', 28800),
-    bodyLimit: positive('MAX_BODY_BYTES', 1048576), trustedProxies: (env.TRUSTED_PROXY_IPS || '').split(',').map(v => v.trim()).filter(Boolean),
+    bodyLimit: positive('MAX_BODY_BYTES', 8388608), trustedProxies: (env.TRUSTED_PROXY_IPS || '').split(',').map(v => v.trim()).filter(Boolean),
     limits: { authStart: positive('RATE_AUTH_START', 20), authCallback: positive('RATE_AUTH_CALLBACK', 40),
       read: positive('RATE_READ', 300), save: positive('RATE_SAVE', 120), mutation: positive('RATE_MUTATION', 30) }
   };
