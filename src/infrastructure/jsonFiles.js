@@ -1,5 +1,6 @@
-export function exportJSON(sheet) {
-    const blob = new Blob([JSON.stringify(sheet, null, 2)], { type: 'application/json' });
+export function exportJSON(sheet, system = null) {
+    const bundle = system ? { ...sheet, systemBundle: structuredClone(system) } : sheet;
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const safeName = String(sheet.character.info.name || 'cacador').trim().replace(/[^a-z0-9\-_]+/gi, '_').toLowerCase();

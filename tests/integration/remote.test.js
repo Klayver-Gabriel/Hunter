@@ -3,17 +3,21 @@ import assert from 'node:assert/strict';
 import { randomUUID, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import http from 'node:http';
-import { createPool, createPostgresAuth, createPostgresSheets, createPostgresLimiter } from '../../server/infrastructure/postgres.js';
+import { createPool, createPostgresAuth, createPostgresSheets, createPostgresSystems, createPostgresLimiter } from '../../server/infrastructure/postgres.js';
 import { hash, fingerprint, normalizeDocument } from '../../server/infrastructure/documents.js';
 import { createSheets } from '../../server/application/sheets.js';
+import { createSystems } from '../../server/application/systems.js';
 import { createHandler } from '../../server/http/handler.js';
 import { emptyDocument } from '../../src/application/remoteSession.js';
 
 // TEST_DATABASE_URL identifies the local database used for disposable test schemas.
 const url = process.env.TEST_DATABASE_URL;
-if (!url || !['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname) || !new URL(url).pathname.endsWith('_test')) throw Error('TEST_DATABASE_URL deve apontar para banco local com nome terminado em _test.');
+if (!url) {
+  test('remote persistence integration requires TEST_DATABASE_URL', { skip: true }, () => {});
+} else {
+if (!['localhost', '127.0.0.1', '[::1]'].includes(new URL(url).hostname) || !new URL(url).pathname.endsWith('_test')) throw Error('TEST_DATABASE_URL deve apontar para banco local com nome terminado em _test.');
 const db = createPool(url), schema = `hunter_test_${randomUUID().replaceAll('-', '')}`;
-let auth, sheets, limiter, server, origin, userA, userB, sessionA, sessionB, isolated;
+let auth, sheets, systems, systemRepository, limiter, server, origin, userA, userB, sessionA, sessionB, isolated;
 const csrf = 'test-csrf', name = () => randomBytes(32).toString('base64url');
 before(async () => {
   await db.query(`CREATE SCHEMA ${schema}`);
@@ -22,8 +26,12 @@ before(async () => {
   isolated = new pg.default.Pool({ connectionString: url, max: 10, options: `-c search_path=${schema}` });
   assert.equal((await isolated.query('SELECT current_schema() AS schema')).rows[0].schema, schema);
   await isolated.query(await readFile(new URL('../../server/migrations/001_remote.sql', import.meta.url), 'utf8'));
+  await isolated.query(await readFile(new URL('../../server/migrations/002_systems.sql', import.meta.url), 'utf8'));
   auth = createPostgresAuth(isolated); limiter = createPostgresLimiter(isolated);
-  sheets = createSheets({ repository: createPostgresSheets(isolated), normalize: normalizeDocument, fingerprint, newId: randomUUID });
+  systemRepository = createPostgresSystems(isolated);
+  sheets = createSheets({ repository: createPostgresSheets(isolated), normalize: normalizeDocument, fingerprint, newId: randomUUID,
+    systemExists: async (owner, id) => Boolean(await systemRepository.get(owner, id)) });
+  systems = createSystems({ repository: systemRepository, newId: randomUUID });
   sessionA = name(); sessionB = name();
   userA = await auth.createSession(hash(sessionA), csrf, { issuer: 'https://accounts.google.com', subject: 'a', name: 'A' }, 3600);
   userB = await auth.createSession(hash(sessionB), csrf, { issuer: 'https://accounts.google.com', subject: 'b', name: 'B' }, 3600);
@@ -35,7 +43,7 @@ before(async () => {
     async start() { return { url: 'https://accounts.google.com/test', state: 'state', nonce: 'nonce', verifier: 'verifier' }; },
     async finish(url, flow) { assert.equal(flow.state, 'state'); assert.equal(url.origin, origin); return { issuer: 'https://accounts.google.com', subject: 'oidc-test', name: 'Google Test' }; }
   };
-  server.on('request', createHandler({ config, sheets, auth, limiter, identity, health: () => isolated.query('SELECT 1'), logger: { error() {} } }));
+  server.on('request', createHandler({ config, sheets, systems, auth, limiter, identity, hash, health: () => isolated.query('SELECT 1'), logger: { error() {} } }));
 });
 after(async () => {
   if (server) await new Promise(resolve => server.close(resolve));
@@ -94,6 +102,29 @@ test('creation/import retry never duplicates and rejects a reused key with diffe
   const legacy = { document: { info: { name: 'Antiga' }, attributes: { for: 12 } }, key: randomUUID() };
   assert.equal((await sheets.create(userA.id, legacy)).id, (await sheets.create(userA.id, legacy)).id);
 });
+test('system profiles are account-scoped and linked systems cannot be removed', async () => {
+  const defaults = await (await request('/api/systems')).json();
+  assert.deepEqual(defaults.systems.map(system => system.id), ['dnd5e', 'tormenta20']);
+  const createdResponse = await request('/api/systems', { method: 'POST', body: { title: 'Campanha própria', config: defaults.systems[0].config } });
+  assert.equal(createdResponse.status, 201);
+  const profile = await createdResponse.json();
+  assert.match(profile.id, /^sys_/);
+
+  const foreignDocument = emptyDocument(profile.id, profile);
+  const b = { token: sessionB, owner: userB.id };
+  const rejected = await request('/api/sheets', { ...b, method: 'POST', body: creation(foreignDocument) });
+  assert.equal(rejected.status, 400);
+  assert.equal((await request(`/api/systems/${profile.id}`, b)).status, 404);
+
+  const made = await request('/api/sheets', { method: 'POST', body: creation(foreignDocument) });
+  assert.equal(made.status, 201);
+  const sheet = await made.json();
+  assert.equal((await request(`/api/systems/${profile.id}`, { method: 'DELETE', body: { revision: 1 } })).status, 409);
+  assert.equal((await request('/api/systems/dnd5e', { method: 'DELETE', body: { revision: 1 } })).status, 409);
+  await request(`/api/sheets/${sheet.id}`, { method: 'DELETE', body: { revision: 1, mutation: randomUUID() } });
+  assert.equal((await request(`/api/systems/${profile.id}`, { method: 'DELETE', body: { revision: 1 } })).status, 200);
+  assert.equal((await request(`/api/systems/${profile.id}`)).status, 404);
+});
 test('CSRF, account change, JSON size and schema validation reject unsafe writes', async () => {
   const body = creation();
   assert.equal((await request('/api/sheets', { method: 'POST', body, headers: { Origin: 'https://evil.example' } })).status, 403);
@@ -135,3 +166,4 @@ test('storage failure is not success; static routes never expose server/configur
     assert.equal((await request('/api/sheets', { method: 'POST', body: creation() })).status, 503);
   } finally { sheets.create = original; }
 });
+}

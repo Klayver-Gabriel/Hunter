@@ -1,8 +1,19 @@
 import { createStore } from './store.js';
 import { createDefault } from '../domain/character.js';
 import { createAppearance } from '../domain/sheetAppearance.js';
+import { createDefaultSystem } from '../domain/gameSystems.js';
 
-export const emptyDocument = () => ({ formatVersion: 1, character: createDefault(), sheetAppearance: createAppearance() });
+export function emptyDocument(systemId = 'dnd5e', system = createDefaultSystem(systemId)) {
+  const character = createDefault();
+  character.systemId = system.id;
+  character.systemTitle = system.title;
+  character.systemOverrides = {};
+  character.skillTables = { activeId: system.id, templates: { [system.id]: structuredClone(system.config.skills) } };
+  character.calculations = structuredClone(system.config.calculations);
+  character.attributes = { ...system.config.attributes.values };
+  character.resources = structuredClone(system.config.resources);
+  return { formatVersion: 1, character, sheetAppearance: structuredClone(system.config.appearance || createAppearance()) };
+}
 export function documentSignature(document) {
   const value = structuredClone(document);
   // Modification timestamps are excluded from document change detection.
@@ -10,11 +21,13 @@ export function documentSignature(document) {
   return JSON.stringify(value);
 }
 /** Serialized remote writes; an uncertain request keeps its key and captured payload for retry. */
-export function createRemoteSession({ api, migrate, onStatus = () => {}, delay = 700, newKey = () => crypto.randomUUID() }) {
+export function createRemoteSession({ api, migrate, systems = [], onStatus = () => {}, delay = 700, newKey = () => crypto.randomUUID() }) {
   const store = createStore(emptyDocument());
-  let entry = null, saved = documentSignature(store.getDocument()), status = 'empty';
+  store.setSystemProfiles(systems);
+  const currentDocument = () => store.getPersistentDocument?.() || store.getDocument();
+  let entry = null, saved = documentSignature(currentDocument()), status = 'empty';
   let timer, running, pending, copyRequest, creationContext, deletionRequest, changing = false, disposed = false, paused = false;
-  const dirty = () => Boolean(pending) || documentSignature(store.getDocument()) !== saved;
+  const dirty = () => Boolean(pending) || documentSignature(currentDocument()) !== saved;
   function report(value, error) { if (!disposed) { status = value; onStatus(value, error); } }
   function errorStatus(error) {
     if (paused) return 'expired';
@@ -40,7 +53,7 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
     running = (async () => {
       while (!disposed && dirty()) {
         if (!pending) {
-          const document = structuredClone(store.getDocument());
+          const document = structuredClone(currentDocument());
           pending = entry ? { id: entry.id, input: { document, revision: entry.revision, mutation: newKey() } }
             : { input: { document, key: newKey() } };
         }
@@ -57,15 +70,15 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
   }
   function activate(result, snapshot = result.document) {
     if (disposed || paused) throw Error('Sessão encerrada.');
-    clearTimeout(timer); pending = null; entry = result; saved = documentSignature(snapshot);
-    store.replaceDocument(migrate(snapshot, { allowRuntimeErrors: true })); report(dirty() ? 'pending' : 'saved');
+    clearTimeout(timer); pending = null; entry = result;
+    store.replaceDocument(migrate(snapshot, { allowRuntimeErrors: true })); saved = documentSignature(currentDocument()); report(dirty() ? 'pending' : 'saved');
   }
   async function open(id) {
-    await flush(); const before = documentSignature(store.getDocument());
+    await flush(); const before = documentSignature(currentDocument());
     changing = true;
     try {
       const result = await api.get(id);
-      if (dirty() || documentSignature(store.getDocument()) !== before) throw Error('A ficha foi editada durante a abertura. Salve e tente novamente.');
+      if (dirty() || documentSignature(currentDocument()) !== before) throw Error('A ficha foi editada durante a abertura. Salve e tente novamente.');
       activate(result);
     } finally { changing = false; schedulePending(); }
   }
@@ -80,7 +93,7 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
     const document = createStore(migrate(raw, { allowRuntimeErrors: true })).getDocument();
     // Copy and import retries reuse the captured payload and idempotency key.
     copyRequest ||= { document, key };
-    creationContext ||= { before: documentSignature(store.getDocument()), copy };
+    creationContext ||= { before: documentSignature(currentDocument()), copy };
     if (!copy && documentSignature(copyRequest.document) !== documentSignature(document)) throw Error('Use Salvar ficha → Salvar na conta para concluir a operação anterior antes de importar outra ficha.');
     const snapshot = copyRequest.document, context = creationContext;
     changing = true; clearTimeout(timer); report('saving');
@@ -88,7 +101,7 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
       const result = await api.create(copyRequest);
       if (disposed || paused) throw Error('Sessão encerrada. Entre novamente na mesma conta para recuperar a operação.');
       copyRequest = null; creationContext = null;
-      if (documentSignature(store.getDocument()) !== context.before) {
+      if (documentSignature(currentDocument()) !== context.before) {
         if (context.copy) { entry = result; pending = null; saved = documentSignature(snapshot); report('pending'); }
         else { report('pending'); throw Error('A nova ficha foi criada. A edição atual foi preservada; abra a nova ficha pela lista.'); }
       } else activate(result);
@@ -100,7 +113,7 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
     if (paused) throw Error('Entre novamente na mesma conta.');
     if (!deletionRequest) await flush();
     if (!entry) return;
-    deletionRequest ||= { id: entry.id, input: { revision: entry.revision, mutation: newKey() }, before: documentSignature(store.getDocument()) };
+    deletionRequest ||= { id: entry.id, input: { revision: entry.revision, mutation: newKey() }, before: documentSignature(currentDocument()) };
     changing = true; clearTimeout(timer); report('saving');
     try {
       await api.remove(deletionRequest.id, deletionRequest.input);
@@ -108,20 +121,21 @@ export function createRemoteSession({ api, migrate, onStatus = () => {}, delay =
       const before = deletionRequest.before; deletionRequest = null;
       // Edits made during deletion stay as a new, unsaved document.
       entry = null; pending = null;
-      if (documentSignature(store.getDocument()) === before) { const blank = emptyDocument(); store.replaceDocument(blank); saved = documentSignature(store.getDocument()); report('empty'); }
+      if (documentSignature(currentDocument()) === before) { const blank = emptyDocument(); store.replaceDocument(blank); saved = documentSignature(currentDocument()); report('empty'); }
       else { saved = ''; report('pending'); }
     } catch (error) { report(errorStatus(error), error); throw error; }
     finally { changing = false; schedulePending(); }
   }
   return {
-    store, flush, open, create, remove, hasPending: () => !disposed && (dirty() || Boolean(copyRequest) || Boolean(deletionRequest)), getEntry: () => entry, getStatus: () => status,
-    saveCopy: async () => { const result = await create(store.getDocument(), newKey(), { copy: true }); deletionRequest = null; return result; },
+    store, flush, open, create, remove, setSystems: profiles => store.setSystemProfiles(profiles), getSystems: () => store.getSystemProfiles(),
+    hasPending: () => !disposed && (dirty() || Boolean(copyRequest) || Boolean(deletionRequest)), getEntry: () => entry, getStatus: () => status,
+    saveCopy: async () => { const result = await create(currentDocument(), newKey(), { copy: true }); deletionRequest = null; return result; },
     retry: () => deletionRequest ? remove() : copyRequest ? create(copyRequest.document, copyRequest.key, { copy: creationContext.copy }) : flush(),
     async checkpoint() {
       clearTimeout(timer);
       if (running) await running.catch(() => {});
       if (changing) throw Error('Aguarde a operação atual antes de entrar novamente.');
-      return structuredClone({ version: 1, document: store.getDocument(), entry, saved, pending, copyRequest, creationContext, deletionRequest, status });
+      return structuredClone({ version: 1, document: currentDocument(), entry, saved, pending, copyRequest, creationContext, deletionRequest, status });
     },
     restore(value) {
       if (value?.version !== 1 || typeof value.saved !== 'string' || (value.entry && (typeof value.entry.id !== 'string' || !Number.isSafeInteger(value.entry.revision) || value.entry.revision < 1))) throw Error('Rascunho de recuperação inválido.');

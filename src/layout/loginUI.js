@@ -1,8 +1,18 @@
 export function showWorkspace(mode) {
   document.getElementById('login-screen').hidden = true;
+  document.getElementById('sheet-picker').hidden = true;
   for (const element of document.querySelectorAll('#app, .guild-nav, .skip-link, #save-indicator')) element.hidden = false;
   document.querySelector('.app-footer').textContent = mode === 'local' ? 'Cheets · Armazenamento neste navegador' : 'Cheets · Fichas da sua conta';
+  const pickerButton = document.getElementById('btn-my-sheets');
+  if (pickerButton) pickerButton.hidden = mode !== 'remote';
   document.documentElement.dataset.appState = 'workspace';
+}
+
+export function showSheetPicker() {
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('sheet-picker').hidden = false;
+  for (const element of document.querySelectorAll('#app, .guild-nav, .skip-link, #save-indicator')) element.hidden = true;
+  document.documentElement.dataset.appState = 'picker';
 }
 
 export function chooseLogin({ enabled, unavailable, error = false }) {

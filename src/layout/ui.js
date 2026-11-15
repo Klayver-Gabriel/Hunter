@@ -55,9 +55,9 @@ const ENTRY_CONFIG = {
 
 const TAB_LIST = ['powers', 'spells', 'journal'];
 
-function init(applicationStore) {
+function init(applicationStore, { systems = [], remote = false } = {}) {
   store = applicationStore; character = store.getState();
-  systemsUI.init(store); calculationsUI.init(store);
+  systemsUI.init(store, systems, { remote }); calculationsUI.init(store);
   nameEditor = createNameEditor(store, document.getElementById('app'));
   componentEditor = createComponentEditor(store, document.getElementById('app'));
   calculationsUI.setComponentEditor(componentEditor);
@@ -69,6 +69,7 @@ function init(applicationStore) {
 
 function renderAll() {
   renderInfoFields();
+  renderSystemLabel();
   renderCharacterPhoto();
   renderSeal();
   renderAttributes();
@@ -80,6 +81,14 @@ function renderAll() {
   nameEditor.render();
   componentEditor.render();
   navigation.render();
+}
+
+function renderSystemLabel() {
+  const field = document.getElementById('character-system-label');
+  const profiles = store.getSystemProfiles?.() || [];
+  const profile = profiles.find(item => item.id === character.systemId);
+  field.hidden = profiles.length === 0;
+  field.textContent = profiles.length ? `Sistema · ${profile?.title || character.systemTitle || character.systemId || ''}` : '';
 }
 
 function renderInfoFields() {

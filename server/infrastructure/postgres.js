@@ -1,31 +1,37 @@
 import pg from 'pg';
 import { randomUUID } from 'node:crypto';
+import { createDefaultSystems } from '../../src/domain/gameSystems.js';
 
 export function createPool(connectionString) {
   // Production connections use sslmode=verify-full and the provider's CA.
   return new pg.Pool({ connectionString, max: 10, connectionTimeoutMillis: 5000, statement_timeout: 10000, query_timeout: 12000 });
 }
-const metadata = 'id, title, schema_version AS "schemaVersion", revision, created_at AS "createdAt", updated_at AS "updatedAt"';
+const metadata = 'id, title, schema_version AS "schemaVersion", revision, system_id AS "systemId", created_at AS "createdAt", updated_at AS "updatedAt"';
 const full = `${metadata}, document, fingerprint`;
 export function createPostgresSheets(db) {
   return {
-    async list(owner) { return (await db.query(`SELECT ${metadata} FROM hunter_sheets WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1000`, [owner])).rows; },
+    async list(owner) { return (await db.query(`SELECT ${metadata}, (COALESCE(document->'character'->'info'->>'photo','') <> '') AS "hasPortrait"
+      FROM hunter_sheets WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1000`, [owner])).rows; },
     async get(owner, id) { return (await db.query(`SELECT ${full} FROM hunter_sheets WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL`, [owner, id])).rows[0]; },
+    async portrait(owner, id) {
+      const row = (await db.query(`SELECT document->'character'->'info'->>'photo' AS photo FROM hunter_sheets WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL`, [owner, id])).rows[0];
+      return row?.photo || null;
+    },
     async create(owner, value) {
-      const result = await db.query(`INSERT INTO hunter_sheets (id,owner_id,title,schema_version,document,fingerprint,creation_key,creation_fingerprint)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (owner_id,creation_key) DO UPDATE SET creation_key=EXCLUDED.creation_key
+      const result = await db.query(`INSERT INTO hunter_sheets (id,owner_id,title,schema_version,document,fingerprint,creation_key,creation_fingerprint,system_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (owner_id,creation_key) DO UPDATE SET creation_key=EXCLUDED.creation_key
         WHERE hunter_sheets.creation_fingerprint=EXCLUDED.creation_fingerprint AND hunter_sheets.deleted_at IS NULL RETURNING ${full}`,
-      [value.id, owner, value.title, value.schemaVersion, value.document, value.fingerprint, value.key, value.creationFingerprint]);
+      [value.id, owner, value.title, value.schemaVersion, value.document, value.fingerprint, value.key, value.creationFingerprint, value.systemId]);
       return result.rows[0];
     },
     async update(owner, id, value) {
-      const result = await db.query(`UPDATE hunter_sheets SET title=$5, schema_version=$6, document=$7, fingerprint=$8,
+      const result = await db.query(`UPDATE hunter_sheets SET title=$5, schema_version=$6, document=$7, fingerprint=$8, system_id=$9,
         revision=CASE WHEN fingerprint=$8 THEN revision ELSE revision+1 END,
         updated_at=CASE WHEN fingerprint=$8 THEN updated_at ELSE now() END, last_mutation=$4, last_base_revision=$3
         WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL AND
         ((revision=$3 AND (last_mutation IS DISTINCT FROM $4 OR fingerprint=$8)) OR
          (last_mutation=$4 AND last_base_revision=$3 AND fingerprint=$8)) RETURNING ${full}`,
-      [owner, id, value.revision, value.mutation, value.title, value.schemaVersion, value.document, value.fingerprint]);
+      [owner, id, value.revision, value.mutation, value.title, value.schemaVersion, value.document, value.fingerprint, value.systemId]);
       return result.rows[0];
     },
     async remove(owner, id, revision, mutation) {
@@ -38,6 +44,46 @@ export function createPostgresSheets(db) {
     }
   };
 }
+export function createPostgresSystems(db) {
+  return {
+    async seed(owner, profiles) {
+      for (const profile of profiles) await db.query(`INSERT INTO hunter_systems (owner_id,id,title,revision,config)
+        VALUES ($1,$2,$3,1,$4) ON CONFLICT (owner_id,id) DO NOTHING`, [owner, profile.id, profile.title, profile.config]);
+      await db.query(`UPDATE hunter_sheets s SET system_id=CASE
+        WHEN EXISTS (SELECT 1 FROM hunter_systems g WHERE g.owner_id=s.owner_id AND g.id=COALESCE(s.document->'character'->>'systemId',s.document->'character'->'skillTables'->>'activeId','dnd5e'))
+          THEN COALESCE(s.document->'character'->>'systemId',s.document->'character'->'skillTables'->>'activeId','dnd5e')
+        WHEN s.document->'character'->'skillTables'->>'activeId'='tormenta20' THEN 'tormenta20' ELSE 'dnd5e' END
+        WHERE s.owner_id=$1 AND s.system_id IS NULL AND s.deleted_at IS NULL`, [owner]);
+    },
+    async list(owner) { return (await db.query(`SELECT id,title,revision,config,updated_at AS "updatedAt" FROM hunter_systems
+      WHERE owner_id=$1 AND deleted_at IS NULL ORDER BY created_at,id`, [owner])).rows; },
+    async get(owner, id) { return (await db.query(`SELECT id,title,revision,config,updated_at AS "updatedAt" FROM hunter_systems
+      WHERE owner_id=$1 AND id=$2 AND deleted_at IS NULL`, [owner,id])).rows[0]; },
+    async create(owner, profile) {
+      const result = await db.query(`INSERT INTO hunter_systems (owner_id,id,title,revision,config) VALUES ($1,$2,$3,1,$4)
+        ON CONFLICT (owner_id,id) DO NOTHING RETURNING id,title,revision,config,updated_at AS "updatedAt"`, [owner,profile.id,profile.title,profile.config]);
+      return result.rows[0];
+    },
+    async update(owner, id, revision, profile) {
+      const result = await db.query(`UPDATE hunter_systems SET title=$4,config=$5,revision=revision+1,updated_at=now()
+        WHERE owner_id=$1 AND id=$2 AND revision=$3 AND deleted_at IS NULL RETURNING id,title,revision,config,updated_at AS "updatedAt"`,
+      [owner,id,revision,profile.title,profile.config]);
+      return result.rows[0];
+    },
+    async remove(owner, id, revision) {
+      const result = await db.query(`UPDATE hunter_systems g SET deleted_at=now(),updated_at=now()
+        WHERE g.owner_id=$1 AND g.id=$2 AND g.revision=$3 AND g.deleted_at IS NULL AND NOT EXISTS (
+          SELECT 1 FROM hunter_sheets s WHERE s.owner_id=$1 AND s.deleted_at IS NULL AND
+          COALESCE(s.system_id,s.document->'character'->>'systemId',s.document->'character'->'skillTables'->>'activeId','dnd5e')=$2
+        ) RETURNING g.id`, [owner,id,revision]);
+      if (result.rowCount) return true;
+      const used = await db.query(`SELECT 1 FROM hunter_sheets WHERE owner_id=$1 AND deleted_at IS NULL AND
+        COALESCE(system_id,document->'character'->>'systemId',document->'character'->'skillTables'->>'activeId','dnd5e')=$2 LIMIT 1`, [owner,id]);
+      if (used.rowCount) return 'used';
+      return false;
+    }
+  };
+}
 export function createPostgresAuth(db) {
   return {
     async putFlow(token, data) { await db.query("INSERT INTO hunter_auth_flows VALUES ($1,$2,now()+interval '10 minutes')", [token, data]); },
@@ -46,6 +92,8 @@ export function createPostgresAuth(db) {
       // Provider identity is keyed by issuer and subject.
       const user = (await db.query(`INSERT INTO hunter_users (id,issuer,subject,name) VALUES ($1,$2,$3,$4)
         ON CONFLICT (issuer,subject) DO UPDATE SET name=EXCLUDED.name RETURNING id,name`, [randomUUID(), identity.issuer, identity.subject, identity.name])).rows[0];
+      for (const profile of createDefaultSystems()) await db.query(`INSERT INTO hunter_systems (owner_id,id,title,revision,config)
+        VALUES ($1,$2,$3,1,$4) ON CONFLICT (owner_id,id) DO NOTHING`, [user.id,profile.id,profile.title,profile.config]);
       await db.query("INSERT INTO hunter_sessions VALUES ($1,$2,$3,now()+$4*interval '1 second')", [token, user.id, csrf, ttl]);
       return user;
     },

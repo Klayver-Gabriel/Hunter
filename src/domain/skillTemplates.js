@@ -23,25 +23,24 @@ export function createSkillTables() {
 }
 
 export function assertSkillTemplate(id) {
-  if (!SKILL_TEMPLATES.some(template => template.id === id)) throw Error('Tabela de perícias inválida.');
+  if (typeof id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(id)
+    || ['__proto__', 'constructor', 'prototype'].includes(id)) throw Error('Tabela de perícias inválida.');
 }
 
 /** Validates both saved tables, including the inactive one, without mutating the input. */
 export function validateSkillTables(tables) {
   if (!tables || typeof tables !== 'object' || Array.isArray(tables)) throw Error('Tabelas de perícias inválidas.');
   assertSkillTemplate(tables.activeId);
-  if (!tables.templates || Object.keys(tables.templates).length !== SKILL_TEMPLATES.length) throw Error('Templates de perícias inválidos.');
+  if (!tables.templates || typeof tables.templates !== 'object' || Array.isArray(tables.templates)
+    || Object.keys(tables.templates).length > 100 || !Object.hasOwn(tables.templates, tables.activeId)) throw Error('Templates de perícias inválidos.');
   const keys = new Set();
-  for (const { id } of SKILL_TEMPLATES) {
-    const rows = tables.templates[id];
+  for (const [id, rows] of Object.entries(tables.templates)) {
+    assertSkillTemplate(id);
     if (!Array.isArray(rows) || rows.length > 100) throw Error('Cada tabela aceita até 100 perícias.');
     for (const row of rows) {
       if (!row || typeof row !== 'object' || Array.isArray(row)
         || typeof row.key !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(row.key)
         || ['__proto__', 'constructor', 'prototype'].includes(row.key) || keys.has(row.key)) throw Error('Identificador de perícia inválido ou duplicado.');
-      // Preserve D&D identities and keep Tormenta/custom rows in separate namespaces.
-      if (!(id === 'dnd5e' && SKILLS.some(skill => skill.key === row.key))
-        && !row.key.startsWith(id === 'dnd5e' ? 'custom_dnd5e_' : 't20_')) throw Error('Identificador não pertence à tabela.');
       if (typeof row.name !== 'string' || !row.name.trim() || row.name.length > 120) throw Error('Nome da perícia deve conter de 1 a 120 caracteres.');
       if (!ABILITIES.some(ability => ability.key === row.ability)) throw Error('Atributo de perícia inválido.');
       if (typeof row.bonus !== 'number' || !Number.isFinite(row.bonus)) throw Error('Bônus de perícia inválido.');
@@ -74,6 +73,7 @@ export function initializeSkillTables(character) {
 
 export function saveSkillTemplate(character, id, skills) {
   assertSkillTemplate(id);
+  if (!Object.hasOwn(character.skillTables.templates, id)) throw Error('Tabela de perícias inexistente.');
   const tables = structuredClone(character.skillTables);
   tables.templates[id] = structuredClone(skills);
   validateSkillTables(tables);

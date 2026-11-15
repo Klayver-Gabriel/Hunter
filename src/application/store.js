@@ -7,6 +7,7 @@ import { componentCatalog, recordFor, recordNameKey } from '../domain/componentC
 import { initializeSkillTables } from '../domain/skillTemplates.js';
 import { currentResourceId } from '../domain/calculationTargets.js';
 import { applyComponentConfiguration } from './componentConfiguration.js';
+import { captureSystemOverrides, resolveSystemDocument, validateSystemProfile } from '../domain/gameSystems.js';
 export function freeze(value) {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
     Object.values(value).forEach(freeze); Object.freeze(value);
@@ -27,8 +28,28 @@ function synchronize(c) {
   return c;
 }
 export function createStore(initial) {
-  let state = freeze(synchronize(structuredClone(initial.character || initial)));
-  let appearance = freeze(validateAppearance(initial.sheetAppearance || createAppearance()));
+  const systemProfiles = new Map();
+  function withSystem(document) {
+    const profile = systemProfiles.get(document.character.systemId);
+    return profile ? resolveSystemDocument(document, profile) : document;
+  }
+  function documentSnapshot() {
+    const document = { formatVersion: 1, character: state, sheetAppearance: appearance };
+    const profile = systemProfiles.get(state.systemId);
+    const snapshot = profile ? captureSystemOverrides(document, profile) : structuredClone(document);
+    delete snapshot.character.systemTitle; delete snapshot.character.systemTitles;
+    return snapshot;
+  }
+  function withSystemTitles(document) {
+    const result = structuredClone(document);
+    if (!result.character.systemId) return result;
+    result.character.systemTitles = Object.fromEntries([...systemProfiles.values()].map(profile => [profile.id, profile.title]));
+    result.character.systemTitle = systemProfiles.get(result.character.systemId)?.title || result.character.systemId;
+    return result;
+  }
+  const prepared = withSystemTitles(withSystem(initial.character ? initial : { formatVersion: 1, character: initial, sheetAppearance: createAppearance() }));
+  let state = freeze(synchronize(structuredClone(prepared.character || prepared)));
+  let appearance = freeze(validateAppearance(prepared.sheetAppearance || createAppearance()));
   const listeners = new Set();
   function publish(next, scope, nextAppearance = appearance) {
     state = freeze(synchronize(next));
@@ -52,9 +73,38 @@ export function createStore(initial) {
   return {
     getState: () => state,
     getDocument: () => ({ formatVersion: 1, character: state, sheetAppearance: appearance }),
+    getPersistentDocument: documentSnapshot,
+    setSystemProfiles(profiles) {
+      const snapshot = documentSnapshot();
+      systemProfiles.clear();
+      for (const value of profiles || []) {
+        const profile = validateSystemProfile(value);
+        systemProfiles.set(profile.id, profile);
+      }
+      const next = withSystemTitles(withSystem(snapshot));
+      state = freeze(synchronize(structuredClone(next.character)));
+      appearance = freeze(validateAppearance(next.sheetAppearance));
+      for (const listener of listeners) listener(state, 'systemProfiles');
+      return [...systemProfiles.values()];
+    },
+    getSystemProfiles: () => [...systemProfiles.values()],
+    selectSystem(id) {
+      const profile = systemProfiles.get(id);
+      if (!profile) throw Error('Sistema indisponível nesta conta.');
+      if (id === state.systemId) return true;
+      const snapshot = documentSnapshot();
+      snapshot.character.systemId = id;
+      snapshot.sheetAppearance = createAppearance();
+      const next = withSystemTitles(resolveSystemDocument(snapshot, profile, { allowLegacy: false }));
+      state = freeze(synchronize(structuredClone(next.character)));
+      appearance = freeze(validateAppearance(next.sheetAppearance));
+      for (const listener of listeners) listener(state, 'selectSystem');
+      return true;
+    },
     replaceDocument(next) {
-      const nextAppearance = freeze(validateAppearance(next.sheetAppearance));
-      const nextState = freeze(synchronize(structuredClone(next.character)));
+      const resolved = withSystemTitles(withSystem(next));
+      const nextAppearance = freeze(validateAppearance(resolved.sheetAppearance));
+      const nextState = freeze(synchronize(structuredClone(resolved.character)));
       appearance = nextAppearance; state = nextState;
       for (const listener of listeners) listener(state, 'replace');
       return true;

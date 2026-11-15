@@ -18,13 +18,14 @@
 }
 .guild-nav .guild-nav__brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
+  justify-content: center;
+  gap: 9px;
   width: auto;
   height: auto;
   margin: 0 4px;
-  padding: 4px 0 16px;
+  padding: 4px 0 18px;
   border: 0;
   border-bottom: 1px solid var(--iron-line);
   border-radius: 0;
@@ -34,19 +35,9 @@
   background: none;
   transform: none;
 }
-.guild-nav__monogram {
-  display: grid;
-  place-items: center;
-  flex: 0 0 34px;
-  height: 40px;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  color: var(--guild-gold-br);
-  border: 1px solid var(--guild-gold-dim);
-  border-radius: 10px 10px 14px 14px;
-}
-.guild-nav .guild-nav__wordmark { width: auto; color: var(--parchment); font-family: var(--font-display); font-size: .95rem; letter-spacing: 0; }
-.guild-nav__wordmark small { display: block; margin-top: 2px; color: var(--parchment-faint); font-family: var(--font-body); font-size: .67rem; }
+.guild-nav .guild-nav__symbol { display: block; width: 116px; height: 116px; flex: 0 0 auto; object-fit: contain; }
+.guild-nav .guild-nav__wordmark { width: 100%; color: var(--parchment); font-family: var(--font-display); font-size: 1.2rem; font-weight: 750; letter-spacing: .1em; text-align: center; }
+.guild-nav__wordmark small { display: block; margin-top: 5px; color: var(--parchment-faint); font-family: var(--font-body); font-size: .48rem; font-weight: 650; letter-spacing: .045em; line-height: 1.4; text-transform: uppercase; }
 .guild-nav__links { display: grid; gap: 6px; }
 .guild-nav .guild-nav__link {
   display: flex;
@@ -73,7 +64,7 @@
 .guild-nav .guild-nav__link:hover { color: var(--parchment); background: var(--iron-panel-lt); transform: none; }
 .guild-nav .guild-nav__link[aria-current="page"] { color: var(--guild-gold-br); background: var(--iron-panel-lt); border-color: var(--iron-line-lt); box-shadow: inset 2px 0 var(--guild-gold); }
 .guild-nav__settings { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--iron-line); }
-#app { width: auto; max-width: 1240px; margin-left: calc(24px + var(--sidebar-width) + var(--sidebar-gap)); margin-right: 28px; padding: 28px 0 24px; gap: 20px; }
+#app { width: auto; max-width: 1240px; margin-left: calc(24px + var(--sidebar-width) + var(--sidebar-gap) + max(0px, calc(50vw - 768px))); margin-right: calc(28px + max(0px, calc(50vw - 768px))); padding: 28px 0 24px; gap: 20px; }
 .workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 2px; }
 .workspace-heading__eyebrow { color: var(--parchment-faint); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .13em; text-transform: uppercase; }
 #page-title { margin-top: 5px; color: var(--parchment); font-size: 1.8rem; font-weight: 500; letter-spacing: -.02em; }
@@ -90,6 +81,7 @@
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 8px 12px; background: var(--iron-panel); transform: translateY(-150%); }
 .skip-link:focus { transform: none; }
 .guild-nav[hidden] ~ #app { margin: 0 auto; padding: 28px 18px; }
+.remote-locked #app { width: auto; margin-inline: auto; padding-inline: clamp(14px, 4vw, 36px); }
 #attack-panel { container-type: inline-size; }
 @container (max-width: 780px) {
   .weapon-summary[data-attack-count] { grid-template-columns: auto minmax(0, 1fr); }
@@ -112,19 +104,70 @@
   :root { --sidebar-width: 68px; --sidebar-gap: 18px; }
   .guild-nav { inset: 16px auto 16px 16px; padding: 16px 9px; gap: 22px; }
   .guild-nav .guild-nav__brand { justify-content: center; margin: 0; }
+  .guild-nav .guild-nav__symbol { width: 44px; height: 44px; }
   .guild-nav .guild-nav__wordmark, .guild-nav [data-nav-label] { display: none; }
   .guild-nav .guild-nav__link { justify-content: center; padding: 12px; min-height: 46px; }
   #app { margin-left: calc(16px + var(--sidebar-width) + var(--sidebar-gap)); margin-right: 18px; }
   .rules-layout, .skill-groups { grid-template-columns: 1fr; }
 }
-@media (max-width: 600px) {
-  :root { --sidebar-width: 54px; --sidebar-gap: 10px; }
-  .guild-nav { inset: 10px auto 10px 8px; padding: 12px 4px; gap: 16px; border-radius: 12px; }
-  .guild-nav .guild-nav__link { padding: 10px; min-height: 44px; }
-  .guild-nav__monogram { flex-basis: 28px; height: 34px; font-size: 1.25rem; }
-  .guild-nav__links { gap: 4px; }
-  #app { margin-left: calc(8px + var(--sidebar-width) + var(--sidebar-gap)); margin-right: 10px; padding-top: 18px; gap: 14px; }
-  #page-title { font-size: 1.45rem; }
+/* Compact touch navigation leaves the full viewport width for the character sheet. */
+@media (max-width: 720px) {
+  :root { --sidebar-width: 0px; --sidebar-gap: 0px; }
+  .guild-nav {
+    position: fixed;
+    inset: auto 0 0;
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0;
+    width: 100%;
+    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
+    overflow: visible;
+    border: 0;
+    border-top: 1px solid var(--iron-line-lt);
+    border-radius: 14px 14px 0 0;
+    background: color-mix(in srgb, var(--iron-panel) 94%, transparent);
+    box-shadow: 0 -8px 26px #0004;
+    backdrop-filter: blur(14px);
+  }
+  .guild-nav .guild-nav__brand { display: none; }
+  .guild-nav__links, .guild-nav__settings { display: contents; }
+  .guild-nav__settings { margin: 0; padding: 0; border: 0; }
+  .guild-nav .guild-nav__link {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding: 5px 1px;
+    border-radius: 8px;
+  }
+  .guild-nav .guild-nav__link svg { flex: 0 0 19px; width: 19px; height: 19px; }
+  .guild-nav .guild-nav__link[aria-current="page"] { box-shadow: inset 0 2px var(--guild-gold); }
+  .guild-nav .guild-nav__link[title="Configurações"] { display: flex; }
+  .guild-nav .guild-nav__link[title="Configurações"] svg { display: block; }
+  .guild-nav [data-nav-label] {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    color: inherit;
+    font-size: clamp(.48rem, 2vw, .62rem);
+    line-height: 1.1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  #app {
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px 14px calc(84px + env(safe-area-inset-bottom));
+    gap: 14px;
+  }
+  .remote-locked #app { padding-bottom: clamp(28px, 4vw, 48px); }
+  .workspace-heading { align-items: flex-start; flex-direction: column; }
+  #page-title { font-size: clamp(1.3rem, 6vw, 1.6rem); }
   #page-description { font-size: .78rem; }
   .workspace-heading__eyebrow { font-size: .53rem; }
   .sheet-page { gap: 14px; }
@@ -133,10 +176,10 @@
   .guild-card__meta-row { gap: 12px; }
   .guild-card__byline .field { flex-wrap: wrap; }
   .equipment-navigation { align-self: stretch; justify-content: space-between; gap: 0; padding: 3px; }
-  .equipment-navigation__link { flex: 1 1 0; justify-content: center; padding: 8px 5px; font-size: .68rem; min-width: 0; overflow-wrap: anywhere; }
+  .equipment-navigation__link { flex: 1 1 0; justify-content: center; min-width: 0; padding: 8px 5px; font-size: .68rem; overflow-wrap: anywhere; }
   .equipment-navigation__link svg { display: none; }
   .panel__header { gap: 8px; flex-wrap: wrap; }
   .panel__title { font-size: .88rem; }
   .top-actions { gap: 6px; }
-  .top-actions .btn { font-size: .62rem; padding: 7px 8px; }
+  .top-actions .btn { padding: 7px 8px; font-size: .62rem; }
 }

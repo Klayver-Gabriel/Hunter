@@ -51,6 +51,8 @@ function createDefault() {
   const starterWeapon = createStarterWeapon();
   return {
     schemaVersion: 5,
+    systemId: 'dnd5e',
+    systemOverrides: { skillsBySystem: {} },
     skillTables: createSkillTables(),
     calculations: { rules: {}, characteristics: [], spellcasting: { ability: 'int', formula: '8 + PROFICIENCIA + MOD_CONJURACAO + BONUS_DT', bonus: 0 } },
     temporal: { turn: 0, round: 0, rest: 0, effects: [] },

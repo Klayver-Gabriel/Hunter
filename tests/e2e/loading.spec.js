@@ -8,7 +8,7 @@ function gate() {
   return { promise, release: resolve };
 }
 
-test('mantém a ficha oculta até concluir o carregamento remoto durante o refresh', async ({ page }) => {
+test('mantém a seleção de fichas oculta até concluir o carregamento remoto durante o refresh', async ({ page }) => {
   const response = gate(), requested = gate();
   let hold = false;
   await page.route('**/api/session', route => route.fulfill({ json: session }));
@@ -16,7 +16,8 @@ test('mantém a ficha oculta até concluir o carregamento remoto durante o refre
     if (hold) { requested.release(); await response.promise; }
     await route.fulfill({ json: { sheets: [] } });
   });
-  await page.goto('/#records'); await expect(page.locator('#page-records')).toBeVisible();
+  await page.goto('/#records'); await expect(page.locator('#sheet-picker')).toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
   hold = true;
   try {
     await page.reload({ waitUntil: 'domcontentloaded' }); await requested.promise;
@@ -26,8 +27,8 @@ test('mantém a ficha oculta até concluir o carregamento remoto durante o refre
     await expect(page.locator('#save-indicator')).toBeHidden();
     await expect(page.locator('.login-options')).toBeHidden();
   } finally { response.release(); }
-  await expect(page.locator('#page-records')).toBeVisible();
-  await expect(page.locator('#page-guild-card')).toBeHidden();
+  await expect(page.locator('#sheet-picker')).toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
   await expect(page.locator('#login-screen')).toBeHidden();
 });
 

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/unit/*.test.js",
+    "test:all": "npm run lint && npm test && npm run test:integration && npm run test:e2e",
     "dev": "node scripts/serve.js",
     "start": "node --env-file-if-exists=.env server/main.js",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.js",

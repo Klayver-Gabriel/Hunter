@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" fill="none">
+  <g stroke="#65738D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="120" cy="120" r="108"/>
+    <circle cx="120" cy="120" r="99"/>
+    <circle cx="120" cy="120" r="73"/>
+    <circle cx="120" cy="120" r="57" stroke="#23B8D0"/>
+
+    <path d="m120 27 66 27 27 66-27 66-66 27-66-27-27-66 27-66 66-27Z"/>
+    <path d="m120 35 85 85-85 85-85-85 85-85Z" stroke="#23B8D0"/>
+    <path d="M54 54h132v132H54z" transform="rotate(45 120 120)"/>
+    <path d="m120 47 52 21 21 52-21 52-52 21-52-21-21-52 21-52 52-21Z"/>
+    <path d="M120 12v35m0 146v35M12 120h35m146 0h35M44 44l25 25m102 102 25 25m0-152-25 25M69 171l-25 25"/>
+    <path d="m120 47 0 25m73 48h-25m-48 73v-25m-73-48h25m-28-49 18 18m102 102-18-18m0-84 18-18m-102 102 18-18" stroke="#D8B443"/>
+
+    <path d="m120 64 49 28v56l-49 28-49-28V92l49-28Z" stroke="#23B8D0"/>
+    <path d="m120 64 0 28 49 0m0 56-49 0v28m-49-28 24-14-24-14m0-28 24 14 0-28m98 56-24-14 24-14m-49-28 0 28 49-28" stroke-width="1.6"/>
+  </g>
+
+  <g fill="#0D1628" stroke="#23B8D0" stroke-width="2">
+    <circle cx="120" cy="12" r="4.5"/><circle cx="196" cy="44" r="4.5"/>
+    <circle cx="228" cy="120" r="4.5"/><circle cx="196" cy="196" r="4.5"/>
+    <circle cx="120" cy="228" r="4.5"/><circle cx="44" cy="196" r="4.5"/>
+    <circle cx="12" cy="120" r="4.5"/><circle cx="44" cy="44" r="4.5"/>
+  </g>
+  <g fill="#D8B443" stroke="#65738D" stroke-width="1.6">
+    <circle cx="120" cy="47" r="4"/><circle cx="193" cy="120" r="4"/>
+    <circle cx="120" cy="193" r="4"/><circle cx="47" cy="120" r="4"/>
+    <circle cx="68" cy="68" r="3.5"/><circle cx="172" cy="68" r="3.5"/>
+    <circle cx="172" cy="172" r="3.5"/><circle cx="68" cy="172" r="3.5"/>
+  </g>
+
+  <!-- Faceted d20 in the center of the mandala. -->
+  <g stroke="#D8B443" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m120 78 31 18v48l-31 18-31-18V96l31-18Z"/>
+    <path d="m120 78 0 25m31-7-19 15m19 33-19-15m-12 33v-25m-31 7 19-15m-19-33 19 15" stroke="#23B8D0" stroke-width="1.8"/>
+    <path d="m120 92 19 11v34l-19 11-19-11v-34l19-11Z" stroke="#D8B443" stroke-width="1.5"/>
+  </g>
+  <text x="120" y="126" fill="#F0C75E" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">20</text>
+</svg>

@@ -22,7 +22,9 @@ export function createPageNavigation() {
 
   function pageFromHash() {
     const key = location.hash.slice(1);
-    return pages.find(page => page.dataset.sheetPage === key || page.contains(document.getElementById(key)))?.dataset.sheetPage || 'guild-card';
+    if (!key) return 'guild-card';
+    const target = document.getElementById(key);
+    return pages.find(page => page.dataset.sheetPage === key || (target && page.contains(target)))?.dataset.sheetPage || 'guild-card';
   }
   function available(key) {
     const section = document.getElementById(key);

@@ -122,7 +122,7 @@ test('documento da troca completa de sistema recupera o perfil D&D e os cadastro
   assert.deepEqual(raw, before);
   assert.equal(doc.character.schemaVersion, 5);
   assert.equal(doc.character.systemProfiles, undefined);
-  assert.equal(doc.character.systemId, undefined);
+  assert.equal(doc.character.systemId, 'tormenta20');
   assert.equal(doc.character.info.name, 'Caçador');
   assert.equal(doc.character.attributes.for, 18);
   assert.equal(doc.character.resources[0].current, 4);

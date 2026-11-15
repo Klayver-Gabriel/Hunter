@@ -6,5 +6,6 @@
  * IdentityProvider: start() -> {url,state,nonce,verifier}; finish(url,flow) -> {issuer,subject,name}.
  * AuthRepository: putFlow, takeFlow (single use), createSession, getSession, revokeSession.
  * RateLimiter: consume(key,limit,windowSeconds) -> {allowed,retryAfter} across all instances.
+ * Hash: hash(value) -> opaque digest for tokens, rate-limit keys, and document fingerprints.
  */
 export {};

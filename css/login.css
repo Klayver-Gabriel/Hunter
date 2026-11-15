@@ -28,10 +28,10 @@
   --login-accent: #add3bf;
 }
 .login-card { width: 100%; max-width: 400px; padding: 38px 34px 28px; border: 1px solid var(--login-line); border-radius: 22px; background: var(--login-card); text-align: center; }
-.login-mark { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 20px; border: 1px solid var(--login-line); border-radius: 15px; color: var(--login-accent); }
-.login-mark svg { width: 29px; height: 29px; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-#login-title { color: var(--login-text); font: 650 40px/1.15 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -1.8px; }
-.login-description { margin: 12px 0 30px; color: var(--login-muted); font-size: 14px; }
+.login-mark { display: grid; place-items: center; width: clamp(88px, 22vw, 128px); aspect-ratio: 1; margin: 0 auto 12px; }
+.login-mark img { display: block; width: 100%; height: 100%; object-fit: contain; }
+#login-title { color: var(--login-text); font: 750 clamp(2.2rem, 10vw, 3.15rem)/1.05 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: .035em; }
+.login-description { margin: 7px 0 28px; color: var(--login-muted); font-size: 11px; font-weight: 650; letter-spacing: .055em; text-transform: uppercase; }
 .login-options button { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; border-radius: 8px; font: 500 14px/20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; transition: border-color .15s, background .15s; }
 .login-google { background: #fff; border: 1px solid #747775; color: #1f1f1f; }
 .login-google img { flex: 0 0 20px; object-fit: contain; }

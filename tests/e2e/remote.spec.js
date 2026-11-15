@@ -7,7 +7,7 @@ import { mockCloud } from './helpers/mockCloud.js';
 test('remote CRUD, failed save, retry, copy conflict and export preserve browser data', async ({ page }) => {
   const cloud = await mockCloud(page);
   await page.addInitScript(() => localStorage.setItem('hunterscodex:sheet:v1', 'private-local-original'));
-  await page.goto('/'); await expect(page.locator('#cloud-account')).toContainText('Conta A');
+  await page.goto('/'); await expect(page.locator('#picker-account')).toContainText('Conta A');
   await newSheet(page); await expect(page.locator('#save-indicator-text')).toHaveText('Salvo');
   await page.locator('[data-field="info.name"]').fill('Remota');
   await page.locator('[data-field="info.name"]').press('Enter');
@@ -62,15 +62,15 @@ test('logout clears the displayed private document without copying it into local
 test('local migration requires selection/confirmation and retains original on remote failure', async ({ page }) => {
   const cloud = await mockCloud(page);
   await page.addInitScript(() => localStorage.setItem('hunterscodex:sheet:v1', JSON.stringify({ info: { name: 'Ficha legada' }, attributes: { for: 12 } })));
-  await page.goto('/'); await expect(page.locator('#cloud-account')).toContainText('Conta A'); expect(cloud.records.size).toBe(0);
+  await page.goto('/'); await expect(page.locator('#picker-account')).toContainText('Conta A'); expect(cloud.records.size).toBe(0);
   await openSheetDialog(page, 'open'); await page.locator('[data-cloud="migrate"]').click();
-  await expect(page.locator('.cloud-import')).toContainText('Ficha legada'); expect(cloud.records.size).toBe(0);
+  await expect(page.locator('.cloud-import')).toContainText('Ficha legada'); expect(cloud.records.size).toBe(1);
   await page.locator('.cloud-import input').check(); cloud.fail = 503;
   await page.getByRole('button', { name: 'Confirmar importação das selecionadas' }).click();
   await expect(page.locator('.cloud-import [role="status"]')).toContainText('Falha');
   expect(JSON.parse(await page.evaluate(() => localStorage.getItem('hunterscodex:sheet:v1'))).info.name).toBe('Ficha legada');
   cloud.fail = null; await page.getByRole('button', { name: 'Confirmar importação das selecionadas' }).click();
-  await expect(page.locator('.cloud-import')).toHaveCount(0); expect(cloud.records.size).toBe(1);
+  await expect(page.locator('.cloud-import')).toHaveCount(0); expect(cloud.records.size).toBe(2);
 });
 
 test('unavailable session API requires explicit choice before using or modifying local data', async ({ page }) => {
@@ -112,7 +112,7 @@ test('signing into another account does not replay a previous account draft', as
   await page.locator('[data-field="info.name"]').fill('Rascunho privado de A'); await page.locator('[data-field="info.name"]').press('Enter');
   await expect(page.locator('#save-indicator-text')).toHaveText('Entre novamente para salvar');
   const writes = cloud.writes; await openPage(page, 'sheets'); await page.locator('[data-cloud="login"]').click();
-  await expect(page.locator('#cloud-account')).toContainText('Conta B');
+  await expect(page.locator('#picker-account')).toContainText('Conta B');
   await expect(page.locator('[data-field="info.name"]')).not.toHaveText('Rascunho privado de A');
   expect(cloud.writes).toBe(writes);
 });

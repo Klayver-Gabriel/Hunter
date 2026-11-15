@@ -32,7 +32,7 @@ async function boot() {
   if (account.user) {
     clearEntryMode();
     document.getElementById('login-status').textContent = 'Abrindo suas fichas…';
-    await bootRemote(account, setIndicator); showWorkspace('remote'); return;
+    await bootRemote(account, setIndicator); return;
   }
   if (!localModeSelected() || auth || account.unavailable) {
     const choice = await chooseLogin({ ...account, error: Boolean(auth) });
@@ -72,7 +72,7 @@ async function boot() {
   showWorkspace('local');
 }
 boot().catch(() => {
-  for (const element of document.querySelectorAll('#app, .guild-nav, .skip-link, #save-indicator')) element.hidden = true;
+  for (const element of document.querySelectorAll('#app, #sheet-picker, .guild-nav, .skip-link, #save-indicator')) element.hidden = true;
   document.getElementById('login-screen').hidden = false;
   document.documentElement.dataset.appState = 'error';
   document.getElementById('login-status').textContent = 'Não foi possível abrir o Cheets. Recarregue a página para tentar novamente.';

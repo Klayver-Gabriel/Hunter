@@ -1,14 +1,14 @@
 import { AppError, missing, conflict } from '../domain/errors.js';
 
 /** Persistence and document validation are injected dependencies. */
-export function createSheets({ repository, normalize, fingerprint, newId }) {
+export function createSheets({ repository, normalize, fingerprint, newId, systemExists = async () => true }) {
   function content(raw) {
     let document;
     try { document = normalize(raw); }
     catch { throw new AppError(400, 'invalid_document', 'Documento inválido ou incompatível.'); }
     const title = document.character.info.name || 'Sem título';
     if (typeof title !== 'string' || title.length > 200) throw new AppError(400, 'invalid_title', 'Nome deve ter até 200 caracteres.');
-    return { document, title, schemaVersion: document.character.schemaVersion, fingerprint: fingerprint(document), creationFingerprint: fingerprint(raw) };
+    return { document, title, schemaVersion: document.character.schemaVersion, systemId: document.character.systemId || document.character.skillTables?.activeId || 'dnd5e', fingerprint: fingerprint(document), creationFingerprint: fingerprint(raw) };
   }
   const revision = value => {
     if (!Number.isSafeInteger(value) || value < 1) throw new AppError(400, 'invalid_revision', 'Revisão inválida.');
@@ -21,14 +21,17 @@ export function createSheets({ repository, normalize, fingerprint, newId }) {
   return {
     list: owner => repository.list(owner),
     async get(owner, id) { const result = await repository.get(owner, id); if (!result) throw missing(); return result; },
+    async portrait(owner, id) { return repository.portrait(owner, id); },
     async create(owner, input) {
       const value = content(input.document);
+      if (!await systemExists(owner, value.systemId)) throw new AppError(400, 'invalid_system', 'Escolha um sistema disponível na sua conta.');
       const result = await repository.create(owner, { ...value, id: newId(), key: key(input.key) });
       if (!result) throw conflict();
       return result;
     },
     async update(owner, id, input) {
       const value = content(input.document);
+      if (!await systemExists(owner, value.systemId)) throw new AppError(400, 'invalid_system', 'Escolha um sistema disponível na sua conta.');
       const result = await repository.update(owner, id, { ...value, revision: revision(input.revision), mutation: key(input.mutation) });
       if (!result) { if (!await repository.get(owner, id)) throw missing(); throw conflict(); }
       return result;

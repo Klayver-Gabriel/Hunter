@@ -55,13 +55,12 @@ Para hospedar o modo local, publique `index.html`, `manifest.json`, `src/`, `css
 ## Verificações
 
 ```sh
-npm run lint
-npm test
+npm ci
 npx playwright install chromium
-npm run test:e2e
+npm run test:all
 ```
 
-Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia um servidor estático na porta `4174` e guarda traces das falhas em `test-results/`. A porta de teste pode ser alterada com `E2E_PORT`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
+`npm run test:all` executa lint, testes unitários, integração remota e E2E. Os testes de integração PostgreSQL são ignorados quando `TEST_DATABASE_URL` não está configurada; para executá-los, configure uma URL para um banco local de teste cujo nome termine em `_test`. Em Linux sem dependências gráficas, use `npx playwright install --with-deps chromium`. O Playwright inicia um servidor estático na porta `4174` e guarda traces das falhas em `test-results/`. A porta de teste pode ser alterada com `E2E_PORT`. O CI executa as mesmas verificações em pushes para `dev`/`main` e em pull requests.
 
 ## Configuração de componentes
 

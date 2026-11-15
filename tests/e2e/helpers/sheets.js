@@ -7,6 +7,11 @@ export async function openSheetDialog(page, kind) {
   await expect(page.locator(`#${kind}-sheet-dialog`)).toBeVisible();
 }
 export async function newSheet(page) {
+  if (await page.locator('#sheet-picker').isVisible()) {
+    await page.locator('#picker-new').click();
+    await expect(page.locator('#page-guild-card')).toBeVisible();
+    return;
+  }
   await openPage(page, 'sheets'); await page.locator('#btn-new').click();
   await expect(page.locator('#page-guild-card')).toBeVisible();
 }

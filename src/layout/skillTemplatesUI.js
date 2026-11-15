@@ -5,8 +5,9 @@ import { uid } from '../domain/character.js';
 import { escapeHTML as h } from './html.js';
 
 /** The editor owns a disposable draft; only submitting publishes a store command. */
-export function createSkillTemplateEditor(store) {
+export function createSkillTemplateEditor(store, _systemProfiles = [], { remote = false } = {}) {
   const selector = document.getElementById('skill-template-select');
+  const selectorField = document.getElementById('skill-template-select-field');
   const trigger = document.getElementById('btn-edit-skill-template');
   const dialog = document.getElementById('skill-template-editor');
   const rows = document.getElementById('skill-template-rows');
@@ -14,8 +15,17 @@ export function createSkillTemplateEditor(store) {
   const error = document.getElementById('skill-template-error');
   let editingId;
 
-  selector.innerHTML = SKILL_TEMPLATES.map(t => `<option value="${t.id}">${h(t.name)}</option>`).join('');
-  selector.addEventListener('change', () => store.dispatch('switchSkillTemplate', { id: selector.value }));
+  const profileTitle = id => store.getSystemProfiles?.().find(system => system.id === id)?.title;
+  const options = SKILL_TEMPLATES;
+  selector.innerHTML = options.map(t => `<option value="${h(t.id)}">${h(t.name)}</option>`).join('');
+  if (remote) {
+    selectorField.hidden = true;
+    document.getElementById('skill-template-help').textContent = 'O sistema define perícias e cálculos. Os ajustes desta tabela ficam apenas nesta ficha.';
+    trigger.textContent = 'Ajustar perícias';
+  } else {
+    selectorField.hidden = false;
+  }
+  if (!remote) selector.addEventListener('change', () => store.dispatch('switchSkillTemplate', { id: selector.value }));
 
   function appendRow(skill) {
     rows.insertAdjacentHTML('beforeend', `<div class="skill-template-row" data-template-skill="${h(skill.key)}">
@@ -29,15 +39,17 @@ export function createSkillTemplateEditor(store) {
   trigger.addEventListener('click', () => {
     const { character, sheetAppearance } = store.getDocument();
     editingId = character.skillTables.activeId;
-    document.getElementById('skill-template-title').textContent = `Editar perícias — ${SKILL_TEMPLATES.find(t => t.id === editingId).name}`;
+    const systemTitle = profileTitle(editingId) || character.systemTitle || options.find(t => t.id === editingId)?.name || editingId;
+    document.getElementById('skill-template-title').textContent = `Ajustar perícias — ${systemTitle}`;
+    document.getElementById('skill-template-current').textContent = `Perícias de ${systemTitle}`;
     rows.replaceChildren(); error.hidden = true;
-    for (const skill of character.skillTables.templates[editingId]) {
+    for (const skill of character.skillTables.templates[editingId] || []) {
       appendRow({ ...skill, name: displayName(character, sheetAppearance, `skill:${skill.key}`, skill.name) });
     }
     dialog.showModal(); (rows.querySelector('input') || add).focus();
   });
   add.addEventListener('click', () => {
-    appendRow({ key: uid(editingId === 'dnd5e' ? 'custom_dnd5e' : 't20_custom'), name: 'Nova perícia', ability: 'int', bonus: 0 });
+    appendRow({ key: uid(`custom_${editingId}`), name: 'Nova perícia', ability: 'int', bonus: 0 });
     const input = rows.lastElementChild.querySelector('input'); input.focus(); input.select();
   });
   rows.addEventListener('click', event => {
@@ -62,5 +74,11 @@ export function createSkillTemplateEditor(store) {
     } catch (cause) { error.textContent = cause.message; error.hidden = false; }
   });
 
-  return { render() { selector.value = store.getState().skillTables.activeId; } };
+  return { render() {
+    const state = store.getState();
+    const currentId = remote ? state.systemId : state.skillTables.activeId;
+    if (!remote) selector.value = currentId;
+    const title = profileTitle(currentId) || state.systemTitle || options.find(t => t.id === currentId)?.name || currentId;
+    document.getElementById('skill-template-current').textContent = `Perícias de ${title}`;
+  } };
 }

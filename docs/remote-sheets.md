@@ -7,7 +7,7 @@
 - Cliente OAuth Google do tipo aplicação Web.
 - Domínio HTTPS para produção.
 
-O serviço Node serve o frontend e a API na mesma origem. Usuários, sessões e fichas são armazenados no PostgreSQL. O conteúdo das fichas utiliza JSONB, com metadados de proprietário, schema, revisão e datas. O Compose padrão utiliza um banco em container com volume no host do Docker; `compose.remote.yaml` utiliza o banco externo indicado em `DATABASE_URL`.
+O serviço Node serve o frontend e a API na mesma origem. Usuários, sessões, fichas e sistemas de jogo da conta são armazenados no PostgreSQL. O conteúdo das fichas utiliza JSONB, com metadados de proprietário, schema, revisão e datas. O Compose padrão utiliza um banco em container com volume no host do Docker; `compose.remote.yaml` utiliza o banco externo indicado em `DATABASE_URL`.
 
 ## Configuração
 
@@ -72,6 +72,7 @@ A migração cria as tabelas com prefixo `hunter_`. Configure o papel de execuç
 | Banco | `CONNECT` |
 | Schema da aplicação | `USAGE` |
 | `hunter_users`, `hunter_sheets` | `SELECT`, `INSERT`, `UPDATE` |
+| `hunter_systems` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` |
 | `hunter_sessions`, `hunter_auth_flows`, `hunter_rate_limits` | `SELECT`, `INSERT`, `UPDATE`, `DELETE` |
 
 Restrinja o acesso de rede do PostgreSQL aos serviços autorizados. Para múltiplas instâncias da aplicação, dimensione o limite de conexões do banco ou configure um pooler.
@@ -261,13 +262,15 @@ O backend utiliza o último IP válido do cabeçalho recebido por esse proxy. Os
 
 1. Na tela inicial **Cheets**, clique em **Entrar com Google**.
 2. Selecione a conta Google. A autenticação ocorre na mesma janela e retorna à tela principal.
-3. Abra **Fichas**, primeiro item da barra lateral. Use **Abrir ficha**, selecione uma opção em **Minhas fichas** e clique em **Abrir da conta**. Para iniciar outro personagem, use **Nova ficha**.
+3. Escolha uma ficha pelo cartão exibido após o login. Os cartões mostram o retrato, o nome e o sistema. Use **Minhas fichas** na barra superior para voltar ao seletor; **Nova ficha** pede o sistema inicial.
 4. Edite os campos. Confirme campos de texto com Enter ou ao retirar o foco; campos numéricos são confirmados ao alterar o foco.
 5. Acompanhe o indicador de salvamento.
 
 **Salvar ficha → Salvar na conta** confirma o salvamento do documento ativo. Editar a ficha vazia também cria uma ficha na conta pelo autosave. **Salvar ficha → Salvar como JSON** baixa o documento ativo, incluindo personagem, aparência e configurações de cálculo.
 
 **Abrir ficha → Escolher arquivo JSON** solicita confirmação e cria uma ficha na conta com o conteúdo do arquivo. O arquivo é validado antes da substituição da ficha ativa.
+
+**Gerenciar sistemas** na tela de fichas permite renomear ou duplicar D&D 5e e Tormenta20, criar sistemas e personalizar perícias e configurações avançadas. Cada ficha escolhe seu sistema na lista de perícias. Os sistemas padrão incluem cálculos, características, atributos, recursos e aparência; alterações publicadas são aplicadas quando uma ficha vinculada é aberta ou atualizada. Ajustes próprios da ficha continuam separados. Exportações JSON incluem uma cópia do sistema para que a ficha possa ser importada em outra conta.
 
 Para usar fichas locais, escolha **Usar armazenamento local** na tela inicial. A escolha é mantida durante a sessão da aba. Na aba **Fichas**, use **Voltar ao início** para retornar à tela de entrada. As opções de JSON permanecem disponíveis; as opções da conta exigem login.
 

@@ -27,9 +27,9 @@ function equipmentPhoto(item, fallback) {
 const name = (id, fallback) => displayName(character, store.getDocument().sheetAppearance, id, fallback);
 const label = (id, fallback) => escapeHTML(name(id, fallback));
 
-function init(applicationStore) {
+function init(applicationStore, systemProfiles = [], { remote = false } = {}) {
   store = applicationStore; character = store.getState();
-  skillTemplateEditor = createSkillTemplateEditor(store);
+  skillTemplateEditor = createSkillTemplateEditor(store, systemProfiles, { remote });
   store.subscribe(next => { character = next; });
   bindStaticActions();
 }
@@ -302,7 +302,9 @@ function openArmorEditor(item) {
 }
 
 function openBuffEditor(buff) {
-  const skillOptions = SKILL_TEMPLATES.flatMap(template => character.skillTables.templates[template.id].map(skill => ({ value: skill.key, label: `${template.name} · ${name(`skill:${skill.key}`, skill.name)}` })));
+  const skillOptions = Object.entries(character.skillTables.templates).flatMap(([id, skills]) => skills.map(skill => ({
+    value: skill.key, label: `${character.systemTitles?.[id] || SKILL_TEMPLATES.find(template => template.id === id)?.name || id} · ${name(`skill:${skill.key}`, skill.name)}`
+  })));
   if (buff?.skill && !skillOptions.some(option => option.value === buff.skill)) skillOptions.push({ value: buff.skill, label: `${buff.skill} (fora da tabela)` });
   const fields = [
     { key: 'source', label: 'Origem (item, skill, talento)', type: 'text' },

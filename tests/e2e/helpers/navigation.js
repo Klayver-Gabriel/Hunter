@@ -1,6 +1,11 @@
 import { expect } from '@playwright/test';
 
 export async function openPage(page, key) {
+  if (await page.locator('#sheet-picker').isVisible()) {
+    const first = page.locator('.picker-card__open').first();
+    if (await first.count()) await first.click(); else await page.locator('#picker-new').click();
+    await expect(page.locator('#app')).toBeVisible();
+  }
   if (await page.locator('html').getAttribute('data-active-page') === key) return;
   if (key === 'calculations') await page.locator('[data-page-key="calculations"]').click();
   else if (['armory', 'library'].includes(key)) {

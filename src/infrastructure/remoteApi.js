@@ -21,6 +21,11 @@ export function createRemoteApi({ user, csrf, fetcher = fetch }) {
   }
   return {
     list: async () => (await request('/api/sheets')).sheets,
+    listSystems: async () => (await request('/api/systems')).systems,
+    createSystem: input => request('/api/systems', 'POST', input),
+    updateSystem: (id, input) => request(`/api/systems/${encodeURIComponent(id)}`, 'PUT', input),
+    deleteSystem: (id, input) => request(`/api/systems/${encodeURIComponent(id)}`, 'DELETE', input),
+    portraitUrl: id => `/api/sheets/${encodeURIComponent(id)}/portrait`,
     get: id => request(`/api/sheets/${encodeURIComponent(id)}`),
     create: input => request('/api/sheets', 'POST', input),
     update: (id, input) => request(`/api/sheets/${encodeURIComponent(id)}`, 'PUT', input),

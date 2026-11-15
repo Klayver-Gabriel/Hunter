@@ -3,6 +3,7 @@ import { createCalculations, createTemporal, validateCalculations } from '../../
 import { assertCalculations, characterLevel, baseValue, calculateCharacter } from '../../auto_calc_engine/characterCalculator.js';
 import * as D from '../../domain/catalog.js';
 import { initializeSkillTables } from '../../domain/skillTemplates.js';
+import { legacySystemOverrides } from '../../domain/gameSystems.js';
 import { restoreDndProfile } from './retiredSystemProfiles.js';
 import { validateEquipmentPhoto, validatePhotoDataUrl } from '../../domain/equipmentPhoto.js';
 
@@ -89,6 +90,21 @@ export function migrateCharacter(raw, options = {}) {
     masteries: raw.masteries && typeof raw.masteries === 'object' ? raw.masteries : {},
     library: { ...sourceLibrary, weapons, armors },
     meta: { ...defaults.meta, ...(raw.meta || {}) }
+  };
+  const inferredSystem = migrated.skillTables.activeId === 'tormenta20' ? 'tormenta20' : 'dnd5e';
+  migrated.systemId = typeof raw.systemId === 'string' ? raw.systemId : inferredSystem;
+  if (typeof migrated.systemId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(migrated.systemId)
+    || ['__proto__', 'constructor', 'prototype'].includes(migrated.systemId)) throw Error('Sistema da ficha inválido.');
+  const savedOverrides = raw.systemOverrides && typeof raw.systemOverrides === 'object' && !Array.isArray(raw.systemOverrides)
+    ? structuredClone(raw.systemOverrides) : {};
+  const hasSavedOverrides = Object.keys(savedOverrides).length > 0;
+  const hasCurrentSystemMetadata = Object.hasOwn(raw, 'systemId') && Object.hasOwn(raw, 'systemOverrides');
+  const legacyOverrides = !hasSavedOverrides && !hasCurrentSystemMetadata && ['dnd5e', 'tormenta20'].includes(migrated.systemId)
+    ? legacySystemOverrides(migrated) : {};
+  migrated.systemOverrides = {
+    ...legacyOverrides,
+    ...savedOverrides,
+    skillsBySystem: { ...(legacyOverrides.skillsBySystem || {}), ...(savedOverrides.skillsBySystem || {}) }
   };
   migrated.info.photo = validatePhotoDataUrl(migrated.info.photo, 'Foto do personagem');
   for (const [key, min, max] of [['photoWidth', 120, 360], ['photoHeight', 120, 360], ['photoX', 0, 100], ['photoY', 0, 100], ['photoZoom', 100, 250]]) {

@@ -21,14 +21,15 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
 <link rel="stylesheet" href="css/navigation.css">
 <link rel="stylesheet" href="css/cloud.css">
 <link rel="stylesheet" href="css/login.css">
+<link rel="stylesheet" href="css/picker.css">
 </head>
 <body>
 
 <main id="login-screen" class="login-screen" aria-labelledby="login-title">
   <div class="login-card">
-    <div class="login-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><rect x="9" y="5" width="17" height="22" rx="3"/><path d="M6 9H5a2 2 0 0 0-2 2v15a3 3 0 0 0 3 3h14M14 12h7M14 17h7M14 22h4"/></svg></div>
-    <h1 id="login-title">Cheets</h1>
-    <p class="login-description">Suas fichas, em um só lugar.</p>
+    <div class="login-mark"><img src="assets/icons/cheets-mark.svg" alt=""></div>
+    <h1 id="login-title">CHEETS</h1>
+    <p class="login-description">Universal RPG Character Sheet System</p>
     <div class="login-options">
       <button type="button" class="login-google" id="login-google" disabled><img src="assets/icons/google-g.png" width="20" height="20" alt=""><span>Entrar com Google</span></button>
       <div class="login-divider"><span>ou</span></div>
@@ -43,8 +44,9 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
 </main>
 
 <a class="skip-link" href="#page-title" hidden>Ir para o conteúdo</a>
+<main id="sheet-picker" class="sheet-picker" hidden aria-labelledby="picker-title"></main>
 <nav class="guild-nav" aria-label="Páginas da ficha" hidden>
-  <a class="guild-nav__brand" href="#guild-card" aria-label="Cheets — visão geral"><span class="guild-nav__monogram" aria-hidden="true">C</span><span class="guild-nav__wordmark">Cheets<small>Suas fichas de personagem</small></span></a>
+  <a class="guild-nav__brand" href="#guild-card" aria-label="CHEETS — visão geral"><img class="guild-nav__symbol" src="assets/icons/cheets-mark.svg" alt=""><span class="guild-nav__wordmark">CHEETS<small>Universal RPG Character Sheet System</small></span></a>
   <div class="guild-nav__links">
     <a class="guild-nav__link" data-page-link href="#sheets" aria-controls="page-sheets" title="Fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h10l3 3v14H8zM18 3v4h3M4 6H3v15h12M11 11h7M11 15h7"/></svg><span data-nav-label>Fichas</span></a>
     <a class="guild-nav__link" data-page-link href="#guild-card" aria-controls="page-guild-card" title="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-nav-label>Visão geral</span></a>
@@ -64,6 +66,7 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   <header class="workspace-heading"><div><span class="workspace-heading__eyebrow">Hunter’s Codex / Ficha</span><h2 id="page-title" tabindex="-1">Visão geral</h2><p id="page-description">Identidade, atributos e recursos do seu caçador.</p></div></header>
 
   <div class="top-actions">
+    <button class="btn btn--ghost btn--sm" id="btn-my-sheets" hidden>Minhas fichas</button>
     <button class="btn btn--ghost btn--sm" id="btn-theme" title="Alternar tema" aria-label="Alternar tema"><span aria-hidden="true">◐</span></button>
     <button class="btn btn--ghost btn--sm" id="btn-edit-names">Editar componentes</button>
     <button class="btn btn--ghost btn--sm" id="btn-remove-components" aria-pressed="false">Remover componentes</button>
@@ -92,6 +95,8 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
           <h1 class="guild-card__name field-input" contenteditable="true" data-field="info.name"
               data-placeholder="Nome do Caçador">Nome do Caçador</h1>
         </div>
+
+        <p class="field system-display" id="character-system-label" aria-label="Sistema da ficha"></p>
 
         <div class="guild-card__byline">
           <span class="field"><label data-component-label="field:info.class">Classe</label><span class="field-input" contenteditable="true" data-field="info.class">—</span></span>
@@ -172,10 +177,11 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
         <div class="skills-column">
           <h3 class="subsection-title" data-component-label="subsection:skills">Perícias</h3>
           <div class="skill-template-toolbar">
-            <label for="skill-template-select">Tabela de perícias <select id="skill-template-select" aria-describedby="skill-template-help"></select></label>
+            <label id="skill-template-select-field" for="skill-template-select">Tabela de perícias <select id="skill-template-select" aria-describedby="skill-template-help"></select></label>
             <button type="button" class="btn btn--ghost btn--sm" id="btn-edit-skill-template">Editar tabela</button>
           </div>
-          <p class="skill-template-help" id="skill-template-help">Escolha um template e personalize suas perícias. As duas tabelas usam o cálculo atual: modificador de atributo, proficiência ou expertise e bônus.</p>
+          <p class="skill-template-current" id="skill-template-current" aria-live="polite"></p>
+          <p class="skill-template-help" id="skill-template-help">Escolha uma tabela e personalize suas perícias. As tabelas usam o cálculo atual: modificador de atributo, proficiência ou expertise e bônus.</p>
           <div class="skill-legend"><span>○ Proficiência</span><span>◇ Expertise</span><span>Resultado</span></div>
           <p id="skill-template-empty" hidden>Tabela vazia. Use Editar tabela para adicionar perícias.</p>
           <div class="skill-groups" id="skill-groups"></div>

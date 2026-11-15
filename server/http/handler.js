@@ -1,6 +1,5 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { isIP } from 'node:net';
-import { hash } from '../infrastructure/documents.js';
 import { AppError } from '../domain/errors.js';
 import { serveStatic } from './static.js';
 
@@ -28,7 +27,7 @@ export function clientIp(req, trusted) {
   const forwarded = req.headers['x-forwarded-for']?.split(',').at(-1)?.trim();
   return forwarded && isIP(forwarded) ? forwarded : peer;
 }
-export function createHandler({ config, sheets, auth, identity, limiter, health, root = process.cwd(), logger = console }) {
+export function createHandler({ config, sheets, systems, auth, identity, limiter, hash, health, root = process.cwd(), logger = console }) {
   const sessionName = config.secure ? '__Host-hunter_session' : 'hunter_session';
   const flowName = config.secure ? '__Host-hunter_flow' : 'hunter_flow';
   const cookie = (name, value, seconds) => `${name}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${seconds}${config.secure ? '; Secure' : ''}`;
@@ -77,13 +76,30 @@ export function createHandler({ config, sheets, auth, identity, limiter, health,
         if (route === '/api/session' && req.method === 'GET') return json(res, 200, { enabled: true, user: session ? { id: session.id, name: session.name } : null, csrf: session?.csrf });
         if (!session) throw new AppError(401, 'session_expired', 'Entre com Google para continuar. Sua edição permanece na memória.');
         await consume(res, group, session.id, config.limits[group]);
-        if (req.headers['x-account-id'] !== session.id) throw new AppError(409, 'account_changed', 'A conta mudou. A edição anterior não será enviada para outra conta.');
+        if ((req.headers['x-account-id'] && req.headers['x-account-id'] !== session.id)
+          || (req.method !== 'GET' && req.headers['x-account-id'] !== session.id)) throw new AppError(409, 'account_changed', 'A conta mudou. A edição anterior não será enviada para outra conta.');
         if (req.method !== 'GET' && (req.headers.origin !== config.publicUrl || !equal(req.headers['x-csrf-token'], session.csrf))) throw new AppError(403, 'csrf', 'Sessão de edição inválida. Entre novamente.');
         if (route === '/api/logout' && req.method === 'POST') {
           await auth.revokeSession(hash(token)); res.setHeader('Set-Cookie', cookie(sessionName, '', 0)); return json(res, 200, { ok: true });
         }
+        if (route === '/api/systems' && req.method === 'GET') return json(res, 200, { systems: await systems.list(session.id) });
+        if (route === '/api/systems' && req.method === 'POST') return json(res, 201, await systems.create(session.id, await readBody(req, config.bodyLimit)));
+        const systemMatch = route.match(/^\/api\/systems\/([a-zA-Z0-9_-]{1,100})$/);
+        if (systemMatch) {
+          if (req.method === 'PUT') return json(res, 200, await systems.update(session.id, systemMatch[1], await readBody(req, config.bodyLimit)));
+          if (req.method === 'DELETE') { await systems.remove(session.id, systemMatch[1], await readBody(req, config.bodyLimit)); return json(res, 200, { ok: true }); }
+        }
         if (route === '/api/sheets' && req.method === 'GET') return json(res, 200, { sheets: await sheets.list(session.id) });
         if (route === '/api/sheets' && req.method === 'POST') return json(res, 201, await sheets.create(session.id, await readBody(req, config.bodyLimit)));
+        const portraitMatch = route.match(/^\/api\/sheets\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\/portrait$/i);
+        if (portraitMatch && req.method === 'GET') {
+          const photo = await sheets.portrait(session.id, portraitMatch[1]);
+          if (!photo) { res.writeHead(204); return res.end(); }
+          const image = photo.match(/^data:image\/jpeg;base64,([A-Za-z0-9+/]+={0,2})$/);
+          if (!image) throw new AppError(404, 'not_found', 'Retrato não encontrado.');
+          res.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, max-age=60', 'Content-Length': Buffer.from(image[1], 'base64').length });
+          return res.end(Buffer.from(image[1], 'base64'));
+        }
         const match = route.match(/^\/api\/sheets\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/i);
         if (match) {
           if (req.method === 'GET') return json(res, 200, await sheets.get(session.id, match[1]));

@@ -11,6 +11,7 @@ export async function configureRuntimeRole(db, password) {
     await db.query(connect);
     await db.query('GRANT USAGE ON SCHEMA public TO hunter_runtime');
     await db.query('GRANT SELECT, INSERT, UPDATE ON hunter_users, hunter_sheets TO hunter_runtime');
+    await db.query('GRANT SELECT, INSERT, UPDATE, DELETE ON hunter_systems TO hunter_runtime');
     await db.query('GRANT SELECT, INSERT, UPDATE, DELETE ON hunter_sessions, hunter_auth_flows, hunter_rate_limits TO hunter_runtime');
     await db.query('COMMIT');
   } catch (error) { await db.query('ROLLBACK'); throw error; }

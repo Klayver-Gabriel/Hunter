@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test';
 import { openPage } from './helpers/navigation.js';
+import { createDefaultSystems } from '../../src/domain/gameSystems.js';
 
 async function mockSession(page, initial = null) {
   const state = { user: initial };
   await page.route('**/api/session', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ enabled: true, user: state.user, csrf: 'csrf' }) }));
+  await page.route('**/api/systems', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ systems: createDefaultSystems() }) }));
   await page.route('**/api/sheets', route => route.fulfill({ contentType: 'application/json', body: JSON.stringify({ sheets: [] }) }));
   return state;
 }
@@ -29,8 +31,8 @@ test('Google login redirects in the same tab and returns to the authenticated wo
     await route.fulfill({ status: 303, headers: { location: '/?auth=complete' }, body: '' });
   });
   await page.goto('/'); await page.locator('#login-google').click();
-  await expect(page.locator('#cloud-account')).toContainText('Conta A');
-  await expect(page.locator('#app')).toBeVisible(); await expect(page.locator('#login-screen')).not.toBeVisible();
+  await expect(page.locator('#picker-account')).toContainText('Conta A');
+  await expect(page.locator('#sheet-picker')).toBeVisible(); await expect(page.locator('#app')).not.toBeVisible(); await expect(page.locator('#login-screen')).not.toBeVisible();
   await expect(page.locator('[data-cloud="login"]')).not.toBeVisible();
   await expect(page).toHaveURL('/'); expect(context.pages()).toHaveLength(1);
 });
