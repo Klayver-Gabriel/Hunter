@@ -1,47 +1,66 @@
 :root {
   color-scheme: dark;
-  --void:          #12100d;
-  --void-deep:      #0b0a08;
-  --iron-panel:     #211c16;
-  --iron-panel-lt:  #2b241c;
-  --iron-line:      #3c3226;
-  --iron-line-lt:   #524432;
 
-  --parchment:      #e9dfc4;
-  --parchment-dim:  #b3a888;
-  --parchment-faint: #8a806a;
+  /* Core surfaces */
+  --void: #0a1020;
+  --void-deep: #080d18;
+  --iron-panel: #121b2b;
+  --iron-panel-lt: #19253a;
+  --iron-line: #29374d;
+  --iron-line-lt: #3b4d67;
 
-  --ember:          #c9622f;
-  --ember-bright:   #e37c42;
-  --ember-dim:      #7a3a1c;
+  /* Text and accents */
+  --parchment: #e8edf5;
+  --parchment-dim: #a8b4c7;
+  --parchment-faint: #7e8ca3;
+  --guild-gold: #c79b46;
+  --guild-gold-br: #e5bf68;
+  --guild-gold-dim: #80652f;
+  --on-gold: #101827;
+  --accent-cyan: #37b9d1;
+  --accent-cyan-dim: #247c94;
+  --surface-recessed: color-mix(in srgb, var(--void-deep) 72%, var(--iron-panel));
+  --surface-hover: color-mix(in srgb, var(--accent-cyan) 7%, var(--iron-panel));
+  --state-success-bg: color-mix(in srgb, var(--moss) 14%, var(--iron-panel));
+  --state-error-bg: color-mix(in srgb, var(--blood) 14%, var(--iron-panel));
+  --overlay-backdrop: rgb(3 8 18 / 76%);
+  --ember: var(--guild-gold);
+  --ember-bright: var(--guild-gold-br);
+  --ember-dim: var(--guild-gold-dim);
 
-  --guild-gold:     #b8925a;
-  --guild-gold-br:  #d6b378;
-  --guild-gold-dim: #7d6234;
+  /* Semantic states */
+  --blood: #8d3945;
+  --blood-bright: #ee8991;
+  --moss: #356c61;
+  --moss-bright: #78c2a3;
+  --arcane: #465a79;
+  --arcane-bright: #87a6d8;
+  --sanity: #786aa0;
+  --corruption: #653b63;
+  --rank-low: #c79b46;
+  --rank-high: #9aa9bd;
+  --rank-master: #e5bf68;
+  --rank-mhunter: #e17880;
 
-  --blood:          #8c2c2c;
-  --blood-bright:   #b8433a;
-  --moss:           #5c6b45;
-  --moss-bright:    #7c8f5c;
-  --arcane:         #4a5a78;
-  --arcane-bright:  #647aa3;
-  --sanity:         #7a6a9c;
-  --corruption:     #5e2a4a;
+  /* Type */
+  --font-display: "Aptos Display", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Aptos", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --text-xs: .72rem;
+  --text-sm: .84rem;
+  --text-md: 1rem;
+  --text-lg: 1.2rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.6rem;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-body: 1.5;
 
-  --rank-low:       #a1652f;
-  --rank-high:      #9aa3ab;
-  --rank-master:    #cfa347;
-  --rank-mhunter:   #b8433a;
-
-  --font-display: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-  --font-body:    Georgia, 'Times New Roman', serif;
-  --font-mono:    Consolas, 'Lucida Console', 'Courier New', monospace;
-
-  --shadow-panel: 0 4px 18px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.03);
-  --shadow-inset: inset 0 2px 6px rgba(0,0,0,0.5);
-  --shadow-lift:  0 10px 30px rgba(0,0,0,0.6);
-  --rivet: radial-gradient(circle at 35% 30%, var(--guild-gold-br), var(--guild-gold) 45%, var(--guild-gold-dim) 100%);
-
+  /* Spacing, shape and control geometry */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -50,27 +69,64 @@
   --sp-6: 32px;
   --sp-7: 48px;
   --sp-8: 64px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 13px;
+  --radius-xl: 18px;
+  --control-height: 40px;
 
-  --radius-sm: 3px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-
+  /* Borders and elevation */
   --border-thin: 1px solid var(--iron-line);
+  --border-subtle: 1px solid color-mix(in srgb, var(--iron-line) 68%, transparent);
   --border-gold: 1px solid var(--guild-gold-dim);
+  --shadow-panel: 0 10px 28px rgb(0 0 0 / 18%);
+  --shadow-inset: inset 0 1px rgb(255 255 255 / 3%);
+  --shadow-lift: 0 14px 34px rgb(0 0 0 / 24%);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent-cyan) 32%, transparent);
+  --shadow-nav: 0 8px 28px rgb(0 0 0 / 20%);
+  --rivet: var(--iron-line-lt);
+  --transition-fast: 140ms ease;
+  --transition-base: 200ms ease;
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --guild-gold: #80591e;
-  --guild-gold-br: #62400d;
-  --guild-gold-dim: #715121;
-  --void:         #d9cba4;
-  --void-deep:    #cabb92;
-  --iron-panel:   #ece0bd;
-  --iron-panel-lt:#f2e8cb;
-  --iron-line:    #b7a678;
-  --iron-line-lt: #a1906a;
-  --parchment:    #2c2415;
-  --parchment-dim:#4f4530;
-  --parchment-faint:#6b6142;
+  --void: #f1f4f8;
+  --void-deep: #e8edf4;
+  --iron-panel: #fff;
+  --iron-panel-lt: #f6f8fb;
+  --iron-line: #d6deea;
+  --iron-line-lt: #b9c6d7;
+  --parchment: #192538;
+  --parchment-dim: #4d5d74;
+  --parchment-faint: #64738a;
+  --guild-gold: #8f691e;
+  --guild-gold-br: #745317;
+  --guild-gold-dim: #b28b3c;
+  --on-gold: #fff;
+  --accent-cyan: #087d91;
+  --accent-cyan-dim: #176475;
+  --surface-recessed: #edf1f7;
+  --surface-hover: #f1f8fa;
+  --state-success-bg: #edf5f1;
+  --state-error-bg: #faeff0;
+  --overlay-backdrop: rgb(12 20 32 / 56%);
+  --blood: #a33f4c;
+  --blood-bright: #9c3542;
+  --moss: #427c68;
+  --moss-bright: #28745a;
+  --arcane: #596f91;
+  --arcane-bright: #45658f;
+  --sanity: #786aa0;
+  --corruption: #75476e;
+  --rank-low: #986c22;
+  --rank-high: #63758d;
+  --rank-master: #87621b;
+  --rank-mhunter: #a33f4c;
+  --shadow-panel: 0 8px 24px rgb(27 42 64 / 8%);
+  --shadow-inset: inset 0 1px rgb(16 33 55 / 4%);
+  --shadow-lift: 0 14px 34px rgb(27 42 64 / 14%);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent-cyan) 24%, transparent);
+  --shadow-nav: 0 8px 28px rgb(27 42 64 / 9%);
 }

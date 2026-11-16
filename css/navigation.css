@@ -1,5 +1,5 @@
 /* Navigation uses the sheet palette, with a quieter frame around each workspace. */
-:root { --sidebar-width: 216px; --sidebar-gap: 28px; }
+:root { --sidebar-width: 216px; --sidebar-gap: var(--sp-6); }
 .guild-nav {
   position: fixed;
   inset: 24px auto 24px 24px;
@@ -7,12 +7,12 @@
   width: var(--sidebar-width);
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding: 20px 12px;
+  gap: var(--sp-6);
+  padding: var(--sp-5) var(--sp-3);
   background: var(--iron-panel);
-  border: 1px solid var(--iron-line);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.06);
+  border: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-nav);
   transform: none;
   overflow-y: auto;
 }
@@ -21,11 +21,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: var(--sp-2);
   width: auto;
   height: auto;
   margin: 0 4px;
-  padding: 4px 0 18px;
+  padding: var(--sp-1) 0 var(--sp-4);
   border: 0;
   border-bottom: 1px solid var(--iron-line);
   border-radius: 0;
@@ -35,23 +35,22 @@
   background: none;
   transform: none;
 }
-.guild-nav .guild-nav__symbol { display: block; width: 116px; height: 116px; flex: 0 0 auto; object-fit: contain; }
-.guild-nav .guild-nav__wordmark { width: 100%; color: var(--parchment); font-family: var(--font-display); font-size: 1.2rem; font-weight: 750; letter-spacing: .1em; text-align: center; }
-.guild-nav__wordmark small { display: block; margin-top: 5px; color: var(--parchment-faint); font-family: var(--font-body); font-size: .48rem; font-weight: 650; letter-spacing: .045em; line-height: 1.4; text-transform: uppercase; }
-.guild-nav__links { display: grid; gap: 6px; }
+.guild-nav .guild-nav__symbol { display: block; width: 84px; height: 84px; flex: 0 0 auto; object-fit: contain; }
+.guild-nav .guild-nav__wordmark { width: 100%; color: var(--parchment); font-family: var(--font-display); font-size: 1.1rem; font-weight: var(--weight-bold); letter-spacing: .08em; text-align: center; }
+.guild-nav__links { display: grid; gap: var(--sp-1); }
 .guild-nav .guild-nav__link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--sp-3);
   width: 100%;
-  min-height: 46px;
-  padding: 10px 12px;
+  min-height: var(--control-height);
+  padding: var(--sp-2) var(--sp-3);
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--parchment-dim);
   font-family: var(--font-body);
-  font-size: .86rem;
+  font-size: var(--text-sm);
   letter-spacing: 0;
   line-height: 1.35;
   text-align: left;
@@ -62,21 +61,20 @@
 .guild-nav__link svg, .equipment-navigation__link svg { flex: 0 0 19px; width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; }
 .guild-nav a [data-nav-label] { width: auto; min-width: 0; color: inherit; overflow-wrap: anywhere; }
 .guild-nav .guild-nav__link:hover { color: var(--parchment); background: var(--iron-panel-lt); transform: none; }
-.guild-nav .guild-nav__link[aria-current="page"] { color: var(--guild-gold-br); background: var(--iron-panel-lt); border-color: var(--iron-line-lt); box-shadow: inset 2px 0 var(--guild-gold); }
-.guild-nav__settings { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--iron-line); }
-#app { width: auto; max-width: 1240px; margin-left: calc(24px + var(--sidebar-width) + var(--sidebar-gap) + max(0px, calc(50vw - 768px))); margin-right: calc(28px + max(0px, calc(50vw - 768px))); padding: 28px 0 24px; gap: 20px; }
+.guild-nav .guild-nav__link[aria-current="page"] { color: var(--guild-gold-br); background: var(--surface-hover); border-color: var(--iron-line); box-shadow: inset 2px 0 var(--guild-gold); }
+.guild-nav__settings { margin-top: auto; padding-top: var(--sp-4); border-top: var(--border-subtle); }
+#app { width: auto; max-width: 1240px; margin-left: calc(var(--sp-5) + var(--sidebar-width) + var(--sidebar-gap) + max(0px, calc(50vw - 768px))); margin-right: calc(var(--sp-5) + max(0px, calc(50vw - 768px))); padding: var(--sp-5) 0 var(--sp-4); gap: var(--sp-5); }
 .workspace-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 2px; }
-.workspace-heading__eyebrow { color: var(--parchment-faint); font-family: var(--font-mono); font-size: .62rem; letter-spacing: .13em; text-transform: uppercase; }
-#page-title { margin-top: 5px; color: var(--parchment); font-size: 1.8rem; font-weight: 500; letter-spacing: -.02em; }
+#page-title { margin-top: 0; color: var(--parchment); font-size: clamp(var(--text-2xl), 3vw, var(--text-3xl)); font-weight: var(--weight-semibold); letter-spacing: -.02em; }
 #page-title:focus { outline: none; }
-#page-description { margin: 4px 0 0; color: var(--parchment-faint); font-size: .84rem; }
-.sheet-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
-.top-actions { padding-bottom: 16px; border-bottom: 1px solid var(--iron-line); }
+#page-description { margin: var(--sp-1) 0 0; color: var(--parchment-dim); font-size: var(--text-sm); }
+.sheet-page { display: flex; flex-direction: column; gap: var(--sp-5); min-width: 0; }
+.top-actions { padding-bottom: var(--sp-3); border-bottom: var(--border-subtle); }
 #theme-status:empty { display: none; }
-#app .app-footer { padding-top: 4px; font-size: .67rem; color: var(--parchment-faint); }
-.equipment-navigation { display: flex; flex-wrap: wrap; gap: 5px; align-self: flex-start; padding: 4px; border: 1px solid var(--iron-line); border-radius: 10px; background: var(--iron-panel); max-width: 100%; }
-.equipment-navigation__link { display: flex; align-items: center; gap: 8px; padding: 9px 14px; min-height: 40px; border: 1px solid transparent; border-radius: 7px; text-decoration: none; color: var(--parchment-dim); font-size: .8rem; }
-.equipment-navigation__link[aria-current="page"] { background: var(--iron-panel-lt); color: var(--guild-gold-br); border-color: var(--iron-line-lt); }
+#app .app-footer { padding-top: var(--sp-2); font-size: var(--text-xs); color: var(--parchment-faint); }
+.equipment-navigation { display: flex; flex-wrap: wrap; gap: var(--sp-1); align-self: flex-start; padding: var(--sp-1); border: var(--border-subtle); border-radius: var(--radius-md); background: var(--iron-panel); max-width: 100%; }
+.equipment-navigation__link { display: flex; align-items: center; gap: var(--sp-2); padding: var(--sp-2) var(--sp-3); min-height: 38px; border: 1px solid transparent; border-radius: var(--radius-sm); text-decoration: none; color: var(--parchment-dim); font-size: var(--text-sm); }
+.equipment-navigation__link[aria-current="page"] { background: var(--surface-hover); color: var(--parchment); border-color: var(--iron-line); box-shadow: inset 0 -2px var(--accent-cyan); }
 .equipment-navigation__link:hover { color: var(--parchment); }
 .skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 8px 12px; background: var(--iron-panel); transform: translateY(-150%); }
 .skip-link:focus { transform: none; }
@@ -101,13 +99,13 @@
   .skill-row > strong { grid-column: 4; grid-row: 1 / 3; }
 }
 @media (max-width: 1100px) {
-  :root { --sidebar-width: 68px; --sidebar-gap: 18px; }
-  .guild-nav { inset: 16px auto 16px 16px; padding: 16px 9px; gap: 22px; }
+  :root { --sidebar-width: 68px; --sidebar-gap: var(--sp-4); }
+  .guild-nav { inset: var(--sp-4) auto var(--sp-4) var(--sp-4); padding: var(--sp-4) var(--sp-2); gap: var(--sp-5); }
   .guild-nav .guild-nav__brand { justify-content: center; margin: 0; }
   .guild-nav .guild-nav__symbol { width: 44px; height: 44px; }
   .guild-nav .guild-nav__wordmark, .guild-nav [data-nav-label] { display: none; }
   .guild-nav .guild-nav__link { justify-content: center; padding: 12px; min-height: 46px; }
-  #app { margin-left: calc(16px + var(--sidebar-width) + var(--sidebar-gap)); margin-right: 18px; }
+  #app { margin-left: calc(var(--sp-4) + var(--sidebar-width) + var(--sidebar-gap)); margin-right: var(--sp-4); }
   .rules-layout, .skill-groups { grid-template-columns: 1fr; }
 }
 /* Compact touch navigation leaves the full viewport width for the character sheet. */
@@ -120,13 +118,13 @@
     grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 0;
     width: 100%;
-    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
+    padding: var(--sp-1) var(--sp-1) calc(var(--sp-1) + env(safe-area-inset-bottom));
     overflow: visible;
     border: 0;
     border-top: 1px solid var(--iron-line-lt);
-    border-radius: 14px 14px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background: color-mix(in srgb, var(--iron-panel) 94%, transparent);
-    box-shadow: 0 -8px 26px #0004;
+    box-shadow: var(--shadow-nav);
     backdrop-filter: blur(14px);
   }
   .guild-nav .guild-nav__brand { display: none; }
@@ -162,8 +160,8 @@
     width: 100%;
     max-width: 1240px;
     margin: 0 auto;
-    padding: 18px 14px calc(84px + env(safe-area-inset-bottom));
-    gap: 14px;
+    padding: var(--sp-4) var(--sp-3) calc(84px + env(safe-area-inset-bottom));
+    gap: var(--sp-4);
   }
   .remote-locked #app { padding-bottom: clamp(28px, 4vw, 48px); }
   .workspace-heading { align-items: flex-start; flex-direction: column; }

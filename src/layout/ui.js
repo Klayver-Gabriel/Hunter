@@ -61,7 +61,7 @@ function init(applicationStore, { systems = [], remote = false } = {}) {
   nameEditor = createNameEditor(store, document.getElementById('app'));
   componentEditor = createComponentEditor(store, document.getElementById('app'));
   calculationsUI.setComponentEditor(componentEditor);
-  navigation = createPageNavigation();
+  navigation = createPageNavigation({ remote });
   bindFieldInputs(); bindCharacterPhoto(); bindResourceAdd(); bindTabs();
   store.subscribe(next => { character = next; preserveFocus(renderAll); });
   renderAll();

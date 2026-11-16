@@ -12,13 +12,13 @@ export function createSheetPickerUI(user) {
     <aside class="picker-rail" aria-label="CHEETS">
       <a class="picker-brand" href="#picker-title" aria-label="CHEETS — suas fichas">
         <img src="assets/icons/cheets-mark.svg" alt="">
-        <span class="picker-brand__text"><strong>CHEETS</strong><small>Universal RPG Character Sheet System</small></span>
+        <span class="picker-brand__text"><strong>CHEETS</strong></span>
       </a>
       <span class="picker-rail__ornament" aria-hidden="true"></span>
     </aside>
     <div class="picker-main">
       <header class="picker-heading"><div><span class="sheet-eyebrow">Sua conta</span><p id="picker-account"></p></div>
-        <div class="picker-actions"><label class="picker-system-select">Sistema da nova ficha<select id="picker-system-select"></select></label><button class="btn" id="picker-new">Nova ficha</button><label class="btn btn--ghost" for="picker-file">Importar JSON</label><input id="picker-file" type="file" accept=".json,application/json" hidden>
+        <div class="picker-actions"><label class="picker-system-select">Sistema da nova ficha<select id="picker-system-select"></select></label><button class="btn btn--primary" id="picker-new">Nova ficha</button><label class="btn btn--ghost" for="picker-file">Importar JSON</label><input id="picker-file" type="file" accept=".json,application/json" hidden>
           <button class="btn btn--ghost" id="picker-systems" aria-expanded="false" aria-controls="system-library">Gerenciar sistemas</button><button class="btn btn--ghost" id="picker-refresh">Atualizar</button><button class="btn btn--ghost" id="picker-logout">Sair</button></div></header>
       <p class="picker-feedback" id="picker-feedback" role="status" aria-live="polite"></p>
       <section class="picker-sheets" aria-labelledby="picker-title"><div class="picker-section-title"><h1 id="picker-title">Suas fichas</h1><span aria-hidden="true"></span></div>
@@ -29,11 +29,10 @@ export function createSheetPickerUI(user) {
         <p>Perícias, cálculos, atributos, recursos e aparência compartilhados pelas fichas vinculadas.</p><div id="system-list"></div>
       </section>
       <section class="developer-support" aria-labelledby="developer-support-title">
-        <div class="developer-support__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/><circle cx="12" cy="12" r="7"/></svg></div>
-        <div class="developer-support__copy"><h2 id="developer-support-title">Apoie o desenvolvimento do CHEETS</h2><p>Este projeto é desenvolvido com dedicação para a comunidade de RPG. Sua contribuição ajuda a manter e melhorar a plataforma.</p></div>
+        <div class="developer-support__mark" aria-hidden="true">PIX</div>
+        <div class="developer-support__copy"><h2 id="developer-support-title">Apoiar o projeto</h2><p>Contribuições via PIX ajudam a manter o CHEETS.</p></div>
         <div class="developer-support__pix"><span>Chave PIX</span><code id="picker-pix-key">${PIX_KEY}</code><button class="btn btn--ghost btn--sm" id="picker-copy-pix" type="button"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>Copiar chave</button><p id="picker-pix-feedback" role="status" aria-live="polite"></p></div>
       </section>
-      <footer class="picker-footer">CHEETS · Fichas de RPG</footer>
     </div>
   </div>
   <dialog class="sheet-system-dialog" id="sheet-system-dialog" aria-labelledby="sheet-system-title">

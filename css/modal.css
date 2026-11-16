@@ -1,8 +1,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(6,5,3,0.72);
-  backdrop-filter: blur(2px);
+  background: var(--overlay-backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -15,9 +14,9 @@
   width: min(560px, 100%);
   max-height: 88vh;
   overflow-y: auto;
-  background: linear-gradient(160deg, var(--iron-panel-lt), var(--iron-panel));
-  border: var(--border-gold);
-  border-radius: var(--radius-lg);
+  background: var(--iron-panel);
+  border: var(--border-subtle);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lift);
   padding: var(--sp-5);
   position: relative;
@@ -35,7 +34,7 @@
   padding: 4px 8px;
   border-radius: var(--radius-sm);
 }
-.modal__close:hover { color: var(--blood-bright); background: rgba(140,44,44,0.12); }
+.modal__close:hover { color: var(--blood-bright); background: var(--state-error-bg); }
 
 .modal__header {
   margin-bottom: var(--sp-4);
@@ -59,7 +58,7 @@
   padding: 4px 0;
   margin-top: 4px;
 }
-.modal__title-input:focus { outline: none; border-color: var(--ember); }
+.modal__title-input:focus { outline: none; border-color: var(--accent-cyan); box-shadow: var(--shadow-focus); }
 
 .modal__field { margin-bottom: var(--sp-3); }
 .modal__field label {
@@ -75,20 +74,20 @@
 .modal__field input,
 .modal__field select {
   width: 100%;
-  background: var(--void-deep);
-  border: 1px solid var(--iron-line);
+  background: var(--iron-panel-lt);
+  border: var(--border-thin);
   border-radius: var(--radius-sm);
   padding: 9px 10px;
   color: var(--parchment);
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   resize: vertical;
 }
 .modal__field textarea:focus,
 .modal__field input:focus,
 .modal__field select:focus {
   outline: none;
-  border-color: var(--ember-dim);
-  box-shadow: 0 0 0 2px rgba(201,98,47,0.15);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--shadow-focus);
 }
 .modal__field--row { display: flex; gap: var(--sp-3); }
 .modal__field--row > div { flex: 1; }
@@ -106,7 +105,7 @@
 }
 
 .name-editor { margin: auto; color: var(--parchment); }
-.name-editor::backdrop { background: rgba(6,5,3,0.72); backdrop-filter: blur(2px); }
+.name-editor::backdrop { background: var(--overlay-backdrop); }
 .name-editor .modal__header { padding-right: 0; }
 .name-editor .modal__footer { flex-wrap: wrap; }
 .name-editor .btn-row { margin-left: auto; }

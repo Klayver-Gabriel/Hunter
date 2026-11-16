@@ -11,11 +11,11 @@
 
 .guild-card {
   position: relative;
-  background: linear-gradient(155deg, var(--iron-panel) 0%, var(--iron-panel-lt) 100%);
+  background: var(--iron-panel);
   border: var(--border-thin);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
-  padding: var(--sp-5) var(--sp-6);
+  padding: var(--sp-5);
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--sp-4);
@@ -23,11 +23,7 @@
 }
 
 .guild-card .rivet {
-  position: absolute;
-  width: 9px; height: 9px;
-  border-radius: 50%;
-  background: var(--rivet);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  display: none;
 }
 .guild-card .rivet.tl { top: 10px; left: 10px; }
 .guild-card .rivet.tr { top: 10px; right: 10px; }
@@ -44,8 +40,9 @@
 }
 
 .guild-card__name {
-  font-size: 2.1rem;
+  font-size: clamp(1.75rem, 3vw, var(--text-3xl));
   line-height: 1.1;
+  font-weight: var(--weight-semibold);
   outline: none;
 }
 
@@ -55,7 +52,7 @@
   flex-wrap: wrap;
   gap: var(--sp-1) var(--sp-4);
   color: var(--parchment-dim);
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   font-family: var(--font-mono);
 }
 
@@ -110,20 +107,20 @@
   justify-content: space-between;
   margin-bottom: var(--sp-4);
   padding-bottom: var(--sp-3);
-  border-bottom: var(--border-thin);
+  border-bottom: var(--border-subtle);
 }
 
 .panel__title {
-  font-size: 1.05rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--text-lg);
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .codex-section { scroll-margin-top: var(--sp-4); }
 
 .rules-layout {
   display: grid;
-  grid-template-columns: minmax(240px, .72fr) minmax(520px, 1.6fr);
+  grid-template-columns: minmax(220px, .72fr) minmax(0, 1.6fr);
   gap: var(--sp-5);
   align-items: start;
 }
@@ -209,11 +206,11 @@
 }
 
 footer.app-footer {
-  text-align: center;
+  text-align: right;
   color: var(--parchment-faint);
-  font-size: 0.8rem;
-  font-family: var(--font-mono);
-  padding-top: var(--sp-4);
+  font-size: var(--text-xs);
+  padding-top: var(--sp-3);
+  border-top: var(--border-subtle);
 }
 
 [data-component-hidden], [data-component-empty] { display: none !important; }

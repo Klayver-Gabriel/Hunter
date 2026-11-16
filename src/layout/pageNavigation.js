@@ -9,11 +9,12 @@ const descriptions = {
   calculations: 'Crie características e gerencie componentes. Edite cálculos diretamente na ficha.',
   temporal: 'Gerencie os efeitos de cada turno, rodada e descanso.'
 };
+const pageTitles = { sheets: 'Ficha e conta' };
 const equipmentPages = ['equipment', 'armory', 'library'];
 const keyOf = control => control.dataset.pageKey || control.hash.slice(1);
 
 /** Page selection is local UI state; switching pages never changes the sheet. */
-export function createPageNavigation() {
+export function createPageNavigation({ remote = false } = {}) {
   const nav = document.querySelector('.guild-nav');
   const controls = [...document.querySelectorAll('[data-page-link]')];
   const pages = [...document.querySelectorAll('[data-sheet-page]')];
@@ -27,6 +28,7 @@ export function createPageNavigation() {
     return pages.find(page => page.dataset.sheetPage === key || (target && page.contains(target)))?.dataset.sheetPage || 'guild-card';
   }
   function available(key) {
+    if (remote && key === 'sheets' && !document.documentElement.classList.contains('remote-locked')) return false;
     const section = document.getElementById(key);
     return section && !section.matches('[data-component-hidden], [data-component-empty]');
   }
@@ -38,12 +40,14 @@ export function createPageNavigation() {
     for (const page of pages) page.hidden = page.dataset.sheetPage !== active;
     for (const control of controls) {
       const key = keyOf(control);
+      if (key === 'sheets') control.hidden = remote && !document.documentElement.classList.contains('remote-locked');
       const selected = key === active || (control.matches('.guild-nav__link') && key === 'equipment' && equipmentPages.includes(active));
       if (selected) control.setAttribute('aria-current', 'page'); else control.removeAttribute('aria-current');
       const label = control.querySelector('[data-nav-label]').textContent.trim();
       control.setAttribute('aria-label', label);
       if (key === active) title.textContent = label;
     }
+    if (!controls.some(control => keyOf(control) === active)) title.textContent = pageTitles[active] || '';
     document.querySelector('.equipment-navigation').hidden = !equipmentPages.includes(active);
     document.getElementById(`page-${active}`).setAttribute('aria-label', title.textContent);
     document.getElementById('page-description').textContent = descriptions[active];
@@ -69,7 +73,7 @@ export function createPageNavigation() {
   nav.addEventListener('keydown', event => {
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key) || !event.target.matches('[data-page-link]')) return;
     event.preventDefault();
-    const visible = controls.filter(control => nav.contains(control) && !control.hasAttribute('data-component-hidden'));
+    const visible = controls.filter(control => nav.contains(control) && !control.hidden && !control.hasAttribute('data-component-hidden'));
     const index = visible.indexOf(event.target);
     const next = event.key === 'Home' ? 0 : event.key === 'End' ? visible.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + visible.length) % visible.length;
     visible[next]?.focus();

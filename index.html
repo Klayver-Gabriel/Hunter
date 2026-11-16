@@ -29,7 +29,6 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   <div class="login-card">
     <div class="login-mark"><img src="assets/icons/cheets-mark.svg" alt=""></div>
     <h1 id="login-title">CHEETS</h1>
-    <p class="login-description">Universal RPG Character Sheet System</p>
     <div class="login-options">
       <button type="button" class="login-google" id="login-google" disabled><img src="assets/icons/google-g.png" width="20" height="20" alt=""><span>Entrar com Google</span></button>
       <div class="login-divider"><span>ou</span></div>
@@ -40,15 +39,13 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
     <button type="button" class="login-retry" id="login-retry" hidden>Tentar conexão novamente</button>
     <noscript>Ative o JavaScript para abrir suas fichas.</noscript>
   </div>
-  <p class="login-footer">Um espaço para cada personagem.</p>
 </main>
 
 <a class="skip-link" href="#page-title" hidden>Ir para o conteúdo</a>
 <main id="sheet-picker" class="sheet-picker" hidden aria-labelledby="picker-title"></main>
 <nav class="guild-nav" aria-label="Páginas da ficha" hidden>
-  <a class="guild-nav__brand" href="#guild-card" aria-label="CHEETS — visão geral"><img class="guild-nav__symbol" src="assets/icons/cheets-mark.svg" alt=""><span class="guild-nav__wordmark">CHEETS<small>Universal RPG Character Sheet System</small></span></a>
+  <a class="guild-nav__brand" href="#guild-card" aria-label="CHEETS — visão geral"><img class="guild-nav__symbol" src="assets/icons/cheets-mark.svg" alt=""><span class="guild-nav__wordmark">CHEETS</span></a>
   <div class="guild-nav__links">
-    <a class="guild-nav__link" data-page-link href="#sheets" aria-controls="page-sheets" title="Fichas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h10l3 3v14H8zM18 3v4h3M4 6H3v15h12M11 11h7M11 15h7"/></svg><span data-nav-label>Fichas</span></a>
     <a class="guild-nav__link" data-page-link href="#guild-card" aria-controls="page-guild-card" title="Visão geral"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span data-nav-label>Visão geral</span></a>
     <a class="guild-nav__link" data-page-link href="#dnd-rules" aria-controls="page-dnd-rules" title="Perícias"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 6v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="M12 7v10M8 12h8"/></svg><span data-nav-label>Perícias</span></a>
     <a class="guild-nav__link" data-page-link href="#equipment" aria-controls="page-equipment" title="Equipamento"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 3-5 5 4 4v9h10v-9l4-4-5-5-4 3z"/><path d="M9 3a3 3 0 0 0 6 0"/></svg><span data-nav-label>Equipamento</span></a>
@@ -57,13 +54,13 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   </div>
   <div class="guild-nav__settings">
     <button class="guild-nav__link" data-page-link data-page-key="calculations" aria-controls="page-calculations" title="Configurações">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-1 3-3 1-2 4 2 3v4l4 2 3-1 3 1 4-2v-4l2-3-2-4-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg><span data-nav-label>Configurações</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-1 3-3 1-2 4 2 3v4l4 2 3-1 3 1 4-2v-4l2-3-2-4-3-1-1-3z"/><circle cx="12" cy="12" r="3"/></svg><span data-nav-label>Ajustes</span>
     </button>
   </div>
 </nav>
 
 <main id="app" hidden>
-  <header class="workspace-heading"><div><span class="workspace-heading__eyebrow">Hunter’s Codex / Ficha</span><h2 id="page-title" tabindex="-1">Visão geral</h2><p id="page-description">Identidade, atributos e recursos do seu caçador.</p></div></header>
+  <header class="workspace-heading"><div><h2 id="page-title" tabindex="-1">Visão geral</h2><p id="page-description">Identidade, atributos e recursos do seu caçador.</p></div></header>
 
   <div class="top-actions">
     <button class="btn btn--ghost btn--sm" id="btn-my-sheets" hidden>Minhas fichas</button>
@@ -193,7 +190,7 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   <div class="sheet-page" id="page-armory" data-sheet-page="armory" hidden>
     <section class="panel codex-section" id="armory" aria-label="Ataques">
       <div class="panel__header">
-        <div><span class="section-kicker">Cálculo automático</span><h2 class="panel__title" data-component-label="section:armory">Ataques</h2></div>
+        <div><h2 class="panel__title" data-component-label="section:armory">Ataques</h2></div>
       </div>
       <div id="attack-panel"></div>
       <div class="mastery-section">
@@ -206,12 +203,12 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   <div class="sheet-page" id="page-equipment" data-sheet-page="equipment" hidden>
     <section class="panel codex-section" id="equipment" aria-label="Equipamentos e buffs">
       <div class="panel__header">
-        <div><span class="section-kicker">Loadout do Caçador</span><h2 class="panel__title" data-component-label="section:equipment">Equipamento &amp; Buffs</h2></div>
+        <div><h2 class="panel__title" data-component-label="section:equipment">Equipamento &amp; Buffs</h2></div>
         <button class="btn btn--ghost btn--sm" id="btn-add-buff">+ Buff</button>
       </div>
       <div class="equipment-layout">
         <div><h3 class="subsection-title" data-component-label="subsection:equipped-armor">Armadura equipada</h3><div class="armor-slots" id="armor-slots"></div></div>
-        <div><h3 class="subsection-title" data-component-label="subsection:buffs">Buff Engine</h3><div class="buff-list" id="buff-list"></div></div>
+        <div><h3 class="subsection-title" data-component-label="subsection:buffs">Efeitos ativos</h3><div class="buff-list" id="buff-list"></div></div>
       </div>
     </section>
 
@@ -219,7 +216,7 @@ html[data-app-state="loading"] :is(#app, .guild-nav, .skip-link, #save-indicator
   <div class="sheet-page" id="page-library" data-sheet-page="library" hidden>
     <section class="panel codex-section" id="library" aria-label="Biblioteca de equipamentos">
       <div class="panel__header">
-        <div><span class="section-kicker">Crie uma vez, equipe quando quiser</span><h2 class="panel__title" data-component-label="section:library">Biblioteca da Guilda</h2></div>
+        <div><h2 class="panel__title" data-component-label="section:library">Biblioteca</h2></div>
       </div>
       <div class="library-block">
         <div class="library-heading"><h3 class="subsection-title" data-component-label="subsection:weapons">Armas</h3><button class="btn btn--ghost btn--sm" id="btn-add-weapon">+ Arma</button></div>
